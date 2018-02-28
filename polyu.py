@@ -40,7 +40,7 @@ class Dataset:
       shuffle: Overrides dataset split shuffle behavior, ie if data should be shuffled.
 
     Returns:
-      The sampled window batch as an np array.
+      The sampled window batch and corresponding labels as np arrays.
     '''
     if shuffle is None:
       shuffle = self._shuffle_behavior
@@ -96,7 +96,7 @@ class Dataset:
       shuffle: Overrides dataset split shuffle behavior, ie if data should be shuffled.
 
     Returns:
-      The sampled image batch as an np array.
+      The sampled image batch and corresponding labels as np arrays.
     '''
     start = self._image_index_in_epoch
 

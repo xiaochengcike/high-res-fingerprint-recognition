@@ -14,7 +14,7 @@ import util
 
 
 def window_validation(sess, preds, batch_size, windows_pl, labels_pl, dataset):
-  # dataset statistics
+  # initialize dataset statistics
   true_preds = []
   false_preds = []
   total = 0
