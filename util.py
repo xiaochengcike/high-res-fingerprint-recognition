@@ -9,6 +9,15 @@ import matplotlib.pyplot as plt
 import io
 
 
+def to_windows(img, window_size):
+  windows = []
+  for i in range(img.shape[0] - window_size):
+    for j in range(img.shape[1] - window_size):
+      windows.append(img[i:i + window_size, j:j + window_size])
+
+  return windows
+
+
 def window_placeholder_inputs():
   windows = tf.placeholder(tf.float32, [None, None, None, 1])
   labels = tf.placeholder(tf.float32, [None, 1])

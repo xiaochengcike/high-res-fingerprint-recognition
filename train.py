@@ -13,6 +13,42 @@ import polyu
 import util
 
 
+def image_validation(sess, pred_op, batch_size, windows_pl, dataset):
+  window_size = dataset.window_size
+  half_window_size = window_size // 2
+  preds = []
+  for _ in range(dataset.num_images):
+    # get next image and corresponding image label
+    img, label = dataset.next_image_batch(1)
+    img = img[0]
+    label = label[0]
+
+    # convert 'img' to windows
+    windows = np.array(util.to_windows(img, window_size))
+
+    # predict for each window
+    pred = []
+    for i in range((len(windows) + batch_size - 1) // batch_size):
+      # sample batch
+      batch_windows = windows[batch_size * i:batch_size * (i + 1)].reshape(
+          [-1, window_size, window_size, 1])
+
+      # predict for batch
+      batch_preds = sess.run(pred_op, feed_dict={windows_pl: batch_windows})
+
+      # update image pred
+      pred.extend(batch_preds)
+
+    # put predictions in image format
+    pred = np.array(pred).reshape(img.shape[0] - window_size,
+                                  img.shape[1] - window_size)
+    pred = np.pad(pred, ((half_window_size, half_window_size),
+                         (half_window_size, half_window_size)), 'constant')
+
+    # add image prediction to predictions
+    preds.append(pred)
+
+
 def window_validation(sess, preds, batch_size, windows_pl, labels_pl, dataset):
   # initialize dataset statistics
   true_preds = []
@@ -143,6 +179,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
           tdrs, fdrs, f_score, fdr, tdr, thr = window_validation(
               sess, pore_det.preds, batch_size, windows_pl, labels_pl,
               dataset.val)
+          image_validation(sess, pore_det.preds, batch_size, windows_pl,
+                           dataset.val)
           print(
               'Evaluation:',
               '\tTDR = {}'.format(tdr),
