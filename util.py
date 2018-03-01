@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -64,3 +65,36 @@ def plot(tdr, fdr, path):
   plt.clf()
 
   return buf
+
+
+def nms(centers, probs, window_size, thr):
+  area = window_size * window_size
+  half_window_size = window_size // 2
+
+  xs, ys = np.transpose(centers)
+  x1 = xs - half_window_size
+  x2 = xs + half_window_size
+  y1 = ys - half_window_size
+  y2 = ys + half_window_size
+
+  order = np.argsort(probs)[::-1]
+
+  dets = []
+  eps = 1e-5
+  while len(order) > 0:
+    i = order[0]
+    dets.append(centers[i])
+    xx1 = np.maximum(x1[i], x1[order[1:]])
+    yy1 = np.maximum(y1[i], y1[order[1:]])
+    xx2 = np.minimum(x2[i], x2[order[1:]])
+    yy2 = np.minimum(y2[i], y2[order[1:]])
+
+    w = np.maximum(0.0, xx2 - xx1 + 1)
+    h = np.maximum(0.0, yy2 - yy1 + 1)
+    inter = w * h
+    ovr = inter / (area - inter + eps)
+
+    inds = np.where(ovr <= thr)[0]
+    order = order[inds + 1]
+
+  return dets

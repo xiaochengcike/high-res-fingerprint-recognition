@@ -17,6 +17,7 @@ def image_validation(sess, pred_op, batch_size, windows_pl, dataset):
   window_size = dataset.window_size
   half_window_size = window_size // 2
   preds = []
+  pores = []
   for _ in range(dataset.num_images):
     # get next image and corresponding image label
     img, label = dataset.next_image_batch(1)
@@ -47,6 +48,95 @@ def image_validation(sess, pred_op, batch_size, windows_pl, dataset):
 
     # add image prediction to predictions
     preds.append(pred)
+
+    # turn pore label image into list of pore coordinates
+    pores.append(np.array(np.where(label > 0)).T)
+
+  # validate over thresholds
+  thrs = np.arange(1, -0.01, -0.01)
+  nms_inter_thrs = np.arange(0.1, 1, 0.1)
+  dist_thrs = np.arange(1, 18)
+
+  best_f_score = 0
+  best_tdr = None
+  best_fdr = None
+  best_prob_thr = None
+  best_nms_inter_thr = None
+  best_nms_dist_thr = None
+  best_ngh_dist_thr = None
+
+  for prob_thr in thrs:
+    # filter detections by probability threshold
+    selected = []
+    probs = []
+    for i in range(dataset.num_images):
+      img_preds = preds[i]
+      pick = img_preds > prob_thr
+      selected.append(np.array(np.where(pick)).T)
+      probs.append(img_preds[pick])
+
+    for nms_inter_thr in nms_inter_thrs:
+      for nms_dist_thr in dist_thrs:
+        # filter detections with nms
+        dets = []
+        for i in range(dataset.num_images):
+          dets.append(
+              util.nms(selected[i], probs[i], nms_dist_thr, nms_inter_thr))
+
+        # find correspondences between detections and pores
+        for ngh_dist_thr in dist_thrs:
+          true_dets = 0
+          false_dets = 0
+          total = 0
+
+          for i in range(dataset.num_images):
+            # update total number of pores
+            total += len(pores[i])
+
+            # find pore-detection and detection-pore correspondences
+            pore_corrs = np.full(len(pores[i]), -1, dtype=np.int32)
+            pore_dcorrs = np.full(len(pores[i]), np.inf)
+            det_corrs = np.full(len(dets[i]), -1, dtype=np.int32)
+            det_dcorrs = np.full(len(dets[i]), np.inf)
+            for pore_ind, pore in enumerate(pores[i]):
+              for det_ind, det in enumerate(dets[i]):
+                # pore-detection distance
+                dist = np.linalg.norm(pore - det)
+
+                # update pore-detection correspondence
+                if dist < ngh_dist_thr and dist < pore_dcorrs[pore_ind]:
+                  pore_dcorrs[pore_ind] = dist
+                  pore_corrs[pore_ind] = det_ind
+
+                # update detection-pore correspondence
+                if dist < ngh_dist_thr and dist < det_dcorrs[det_ind]:
+                  det_dcorrs[det_ind] = dist
+                  det_corrs[det_ind] = pore_ind
+
+            # coincidences in pore-detection and detection-pore correspondences are true detections
+            for det_ind, det_corr in enumerate(det_corrs):
+              if pore_corrs[det_corr] == det_ind:
+                true_dets += 1
+              else:
+                false_dets += 1
+
+          # compute tdr, fdr and f score
+          eps = 1e-5
+          tdr = true_dets / (total + eps)
+          fdr = false_dets / (true_dets + false_dets + eps)
+          f_score = 2 * (tdr * (1 - fdr)) / (tdr + (1 - fdr))
+
+          # update best parameters
+          if f_score > best_f_score:
+            best_f_score = f_score
+            best_tdr = tdr
+            best_fdr = fdr
+            best_prob_thr = prob_thr
+            best_nms_inter_thr = nms_inter_thr
+            best_nms_dist_thr = nms_dist_thr
+            best_ngh_dist_thr = ngh_dist_thr
+
+  return best_f_score, best_tdr, best_fdr, best_prob_thr, best_nms_inter_thr, best_nms_dist_thr, best_ngh_dist_thr
 
 
 def window_validation(sess, preds, batch_size, windows_pl, labels_pl, dataset):
@@ -90,8 +180,7 @@ def window_validation(sess, preds, batch_size, windows_pl, labels_pl, dataset):
   false_pointer = 0
 
   eps = 1e-5
-  thrs = list(np.arange(0, 1.01, 0.01))
-  thrs.reverse()
+  thrs = np.arange(1.01, -0.01, -0.01)
   for thr in thrs:
     # compute true positives
     while true_pointer < len(true_preds) and true_preds[true_pointer] >= thr:
@@ -143,6 +232,15 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
     fdr_summary_op = tf.summary.scalar('fdr', fdr_pl)
     loss_summary_op = tf.summary.scalar('loss', pore_det.loss)
 
+    # add summaries to plot image f score, tdr and fdr
+    image_f_score_pl = tf.placeholder(tf.float32, shape=())
+    image_tdr_pl = tf.placeholder(tf.float32, shape=())
+    image_fdr_pl = tf.placeholder(tf.float32, shape=())
+    image_f_score_summary_op = tf.summary.scalar('image_f_score',
+                                                 image_f_score_pl)
+    image_tdr_summary_op = tf.summary.scalar('image_image_tdr', image_tdr_pl)
+    image_fdr_summary_op = tf.summary.scalar('image_image_fdr', image_fdr_pl)
+
     # resources to tensorboard plots
     plot_buf_pl = tf.placeholder(tf.string)
     plot_png = tf.image.decode_png(plot_buf_pl)
@@ -179,13 +277,20 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
           tdrs, fdrs, f_score, fdr, tdr, thr = window_validation(
               sess, pore_det.preds, batch_size, windows_pl, labels_pl,
               dataset.val)
-          image_validation(sess, pore_det.preds, batch_size, windows_pl,
-                           dataset.val)
           print(
               'Evaluation:',
               '\tTDR = {}'.format(tdr),
               '\tFDR = {}'.format(fdr),
               '\tF score = {}'.format(f_score),
+              sep='\n')
+
+          image_f_score, image_tdr, image_fdr, _ = image_validation(
+              sess, pore_det.preds, batch_size, windows_pl, dataset.val)
+          print(
+              'Whole image evaluation:',
+              '\tTDR = {}'.format(image_tdr),
+              '\tFDR = {}'.format(image_fdr),
+              '\tF score = {}'.format(image_f_score),
               sep='\n')
 
           # early stopping
@@ -208,6 +313,20 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
               feed_dict={f_score_pl: f_score,
                          tdr_pl: tdr,
                          fdr_pl: fdr})
+          for score_summary in score_summaries:
+            summary_writer.add_summary(score_summary, global_step=step)
+
+          # write image f score, tdr and fdr to summary
+          score_summaries = sess.run(
+              [
+                  image_f_score_summary_op, image_tdr_summary_op,
+                  image_fdr_summary_op
+              ],
+              feed_dict={
+                  image_f_score_pl: image_f_score,
+                  image_tdr_pl: image_tdr,
+                  image_fdr_pl: image_fdr
+              })
           for score_summary in score_summaries:
             summary_writer.add_summary(score_summary, global_step=step)
 
