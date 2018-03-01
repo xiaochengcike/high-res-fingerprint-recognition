@@ -205,8 +205,8 @@ class PolyUDataset:
         shuffle_behavior=False,
         one_hot=one_hot)
     self.test = Dataset(
-        self._images[split[1]:split[1] + split[2]],
-        self._labels[split[1]:split[1] + split[2]],
+        self._images[split[0] + split[1]:split[0] + split[1] + split[2]],
+        self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
         window_size,
         shuffle_behavior=False,
         one_hot=one_hot)
