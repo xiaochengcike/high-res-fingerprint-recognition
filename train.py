@@ -53,9 +53,9 @@ def image_validation(sess, pred_op, batch_size, windows_pl, dataset):
     pores.append(np.array(np.where(label > 0)).T)
 
   # validate over thresholds
-  thrs = np.arange(1, -0.01, -0.01)
-  nms_inter_thrs = np.arange(0.1, 1, 0.1)
-  dist_thrs = np.arange(1, 18)
+  thrs = np.arange(0, 1.05, 0.05)
+  nms_inter_thrs = np.arange(0.3, 0.9, 0.2)
+  dist_thrs = np.arange(2, 18, 2)
 
   best_f_score = 0
   best_tdr = None
