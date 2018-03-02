@@ -80,7 +80,6 @@ def nms(centers, probs, window_size, thr):
   order = np.argsort(probs)[::-1]
 
   dets = []
-  eps = 1e-5
   while len(order) > 0:
     i = order[0]
     dets.append(centers[i])
@@ -92,7 +91,7 @@ def nms(centers, probs, window_size, thr):
     w = np.maximum(0.0, xx2 - xx1 + 1)
     h = np.maximum(0.0, yy2 - yy1 + 1)
     inter = w * h
-    ovr = inter / (area - inter + eps)
+    ovr = inter / (2 * area - inter)
 
     inds = np.where(ovr <= thr)[0]
     order = order[inds + 1]
