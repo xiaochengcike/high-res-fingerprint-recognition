@@ -171,11 +171,11 @@ class Dataset:
       center = size // 2
       if self._one_hot:
         labels[index, 0] = np.max(self._labels[
-            k, i + center - 3:i + center + 3, j + center - 3:j + center + 3])
+            k, i + center - 3:i + center + 4, j + center - 3:j + center + 4])
         labels[index, 1] = 1 - labels[index, 0]
       else:
-        labels[index] = np.max(self._labels[k, i + center - 3:i + center + 3,
-                                            j + center - 3:j + center + 3])
+        labels[index] = np.max(self._labels[k, i + center - 3:i + center + 4,
+                                            j + center - 3:j + center + 4])
 
     return windows, labels
 
