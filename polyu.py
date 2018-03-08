@@ -9,12 +9,14 @@ import scipy.misc
 
 
 class Dataset:
-  def __init__(self, images, labels, window_size, shuffle_behavior, one_hot):
+  def __init__(self, images, labels, window_size, shuffle_behavior, one_hot,
+               incomplete_batches):
     self._images = np.array(images, dtype=np.float32)
     self._labels = np.array(labels, dtype=np.float32)
     self.window_size = window_size
     self._shuffle_behavior = shuffle_behavior
     self._one_hot = one_hot
+    self._incomplete_batches = incomplete_batches
 
     # window batch pointers
     self._index_in_epoch = 0
@@ -31,20 +33,24 @@ class Dataset:
       self.num_samples = self.num_images * (self._image_rows - window_size) * (
           self._image_cols - window_size)
 
-  def next_batch(self, batch_size, shuffle=None):
+  def next_batch(self, batch_size, shuffle=None, incomplete=None):
     '''
     Sample next batch, of size 'batch_size', of image windows.
 
     Args:
       batch_size: Size of batch to be sampled.
       shuffle: Overrides dataset split shuffle behavior, ie if data should be shuffled.
+      incomplete: Overrides dataset incomplete batch behavior, ie if when completing an epoch, a batch should be provided with less samples than predicted so to not get samples from different epochs.
 
     Returns:
       The sampled window batch and corresponding labels as np arrays.
     '''
-    # determine shuffle behavior
+    # determine shuffle and incomplete behaviors
     if shuffle is None:
       shuffle = self._shuffle_behavior
+
+    if incomplete is None:
+      incomplete = self._incomplete_batches
 
     start = self._index_in_epoch
 
@@ -55,7 +61,7 @@ class Dataset:
         np.random.shuffle(self._perm)
 
     # go to next epoch
-    if start + batch_size > self.num_samples:
+    if start + batch_size >= self.num_samples:
       # finished epoch
       self._epochs_completed += 1
 
@@ -67,6 +73,11 @@ class Dataset:
       if shuffle:
         self._perm = np.arange(self.num_samples)
         np.random.shuffle(self._perm)
+
+      # return incomplete batch
+      if incomplete:
+        self._index_in_epoch = 0
+        return images_rest_part, labels_rest_part
 
       # start next epoch
       start = 0
@@ -85,20 +96,24 @@ class Dataset:
       end = self._index_in_epoch
       return self._to_windows(self._perm[start:end])
 
-  def next_image_batch(self, batch_size, shuffle=None):
+  def next_image_batch(self, batch_size, shuffle=None, incomplete=None):
     '''
     Sample next batch, of size 'batch_size', of images.
 
     Args:
       batch_size: Size of batch to be sampled.
       shuffle: Overrides dataset split shuffle behavior, ie if data should be shuffled.
+      incomplete: Overrides dataset incomplete batch behavior, ie if when completing an epoch, a batch should be provided with less images than predicted so to not get images from different epochs.
 
     Returns:
       The sampled image batch and corresponding labels as np arrays.
     '''
-    # determine shuffle behavior
+    # determine shuffle and incomplete behaviors
     if shuffle is None:
       shuffle = self._shuffle_behavior
+
+    if incomplete is None:
+      incomplete = self._incomplete_batches
 
     start = self._image_index_in_epoch
 
@@ -109,7 +124,7 @@ class Dataset:
         np.random.shuffle(self._image_perm)
 
     # go to next epoch
-    if start + batch_size > self.num_images:
+    if start + batch_size >= self.num_images:
       # finished epoch
       self._image_epochs_completed += 1
 
@@ -122,6 +137,11 @@ class Dataset:
       if shuffle:
         self._image_perm = np.arange(self.num_images)
         np.random.shuffle(self._image_perm)
+
+      # return incomplete batch
+      if incomplete:
+        self._image_index_in_epoch = 0
+        return images_rest_part, labels_rest_part
 
       # start next epoch
       start = 0
@@ -207,19 +227,22 @@ class PolyUDataset:
         self._labels[:split[0]],
         window_size,
         shuffle_behavior=should_shuffle,
-        one_hot=one_hot)
+        one_hot=one_hot,
+        incomplete_batches=False)
     self.val = Dataset(
         self._images[split[0]:split[0] + split[1]],
         self._labels[split[0]:split[0] + split[1]],
         window_size,
         shuffle_behavior=False,
-        one_hot=one_hot)
+        one_hot=one_hot,
+        incomplete_batches=True)
     self.test = Dataset(
         self._images[split[0] + split[1]:split[0] + split[1] + split[2]],
         self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
         window_size,
         shuffle_behavior=False,
-        one_hot=one_hot)
+        one_hot=one_hot,
+        incomplete_batches=True)
 
   def _load_images(self, folder_path):
     '''

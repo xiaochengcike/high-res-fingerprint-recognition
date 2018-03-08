@@ -145,8 +145,8 @@ def window_validation(sess, preds, batch_size, windows_pl, labels_pl, dataset):
   false_preds = []
   total = 0
 
-  steps_per_epoch = dataset.num_samples // batch_size
-  for step in range(steps_per_epoch):
+  steps_per_epoch = (dataset.num_samples + batch_size - 1) // batch_size
+  for _ in range(steps_per_epoch):
     feed_dict = util.fill_window_feed_dict(dataset, windows_pl, labels_pl,
                                            batch_size)
 
