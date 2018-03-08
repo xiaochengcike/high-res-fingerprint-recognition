@@ -42,6 +42,7 @@ class Dataset:
     Returns:
       The sampled window batch and corresponding labels as np arrays.
     '''
+    # determine shuffle behavior
     if shuffle is None:
       shuffle = self._shuffle_behavior
 
@@ -73,9 +74,6 @@ class Dataset:
       end = self._index_in_epoch
 
       # retrive samples in the new epoch
-      start = 0
-      self._index_in_epoch = batch_size - rest_num_samples
-      end = self._index_in_epoch
       images_new_part, labels_new_part = self._to_windows(
           self._perm[start:end])
 
@@ -87,7 +85,7 @@ class Dataset:
       end = self._index_in_epoch
       return self._to_windows(self._perm[start:end])
 
-  def next_image_batch(self, batch_size):
+  def next_image_batch(self, batch_size, shuffle=None):
     '''
     Sample next batch, of size 'batch_size', of images.
 
@@ -98,7 +96,17 @@ class Dataset:
     Returns:
       The sampled image batch and corresponding labels as np arrays.
     '''
+    # determine shuffle behavior
+    if shuffle is None:
+      shuffle = self._shuffle_behavior
+
     start = self._image_index_in_epoch
+
+    # shuffle for first epoch
+    if self._image_epochs_completed == 0 and start == 0:
+      self._image_perm = np.arange(self.num_images)
+      if shuffle:
+        np.random.shuffle(self._image_perm)
 
     # go to next epoch
     if start + batch_size > self.num_images:
@@ -110,15 +118,17 @@ class Dataset:
       images_rest_part, labels_rest_part = self._images[start:], self._labels[
           start:]
 
+      # shuffle the data
+      if shuffle:
+        self._image_perm = np.arange(self.num_images)
+        np.random.shuffle(self._image_perm)
+
       # start next epoch
       start = 0
       self._image_index_in_epoch = batch_size - rest_num_images
       end = self._image_index_in_epoch
 
       # retrive images in the new epoch
-      start = 0
-      self._image_index_in_epoch = batch_size - rest_num_images
-      end = self._image_index_in_epoch
       images_new_part, labels_new_part = self._images[start:end], self._labels[
           start:end]
 
