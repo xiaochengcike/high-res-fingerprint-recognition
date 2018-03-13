@@ -41,8 +41,8 @@ def image_validation(sess, pred_op, batch_size, windows_pl, dataset):
       pred.extend(batch_preds)
 
     # put predictions in image format
-    pred = np.array(pred).reshape(img.shape[0] - window_size,
-                                  img.shape[1] - window_size)
+    pred = np.array(pred).reshape(img.shape[0] - window_size + 1,
+                                  img.shape[1] - window_size + 1)
     pred = np.pad(pred, ((half_window_size, half_window_size),
                          (half_window_size, half_window_size)), 'constant')
 

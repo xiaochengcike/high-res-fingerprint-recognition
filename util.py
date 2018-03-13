@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from six.moves import range
 
 import tensorflow as tf
 import numpy as np
@@ -12,8 +13,8 @@ import io
 
 def to_windows(img, window_size):
   windows = []
-  for i in range(img.shape[0] - window_size):
-    for j in range(img.shape[1] - window_size):
+  for i in range(img.shape[0] - window_size + 1):
+    for j in range(img.shape[1] - window_size + 1):
       windows.append(img[i:i + window_size, j:j + window_size])
 
   return windows
