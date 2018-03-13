@@ -98,3 +98,48 @@ def nms(centers, probs, window_size, thr):
     order = order[inds + 1]
 
   return dets
+
+
+def project_and_find_correspondences(pores, dets, dist_thr, proj_shape=None):
+  # compute projection shape, if not given
+  if proj_shape is None:
+    ys = dets.T[0]
+    xs = dets.T[1]
+    proj_shape = (np.max(ys) + 1, np.max(xs) + 1)
+
+  # project detections
+  projection = np.zeros(proj_shape, dtype=np.int32)
+  for i, (y, x) in enumerate(dets):
+    projection[y, x] = i + 1
+
+  # find correspondences
+  pore_corrs = np.full(len(pores), -1, dtype=np.int32)
+  pore_dcorrs = np.full(len(pores), dist_thr)
+  det_corrs = np.full(len(dets), -1, dtype=np.int32)
+  det_dcorrs = np.full(len(dets), dist_thr)
+  for pore_ind, pore in enumerate(pores):
+    # all detections within l2 'dist_thr' distance from
+    # 'pore' are within l1 'dist_thr' distance from it
+    pore_i, pore_j = pore
+    window = projection[pore_i - dist_thr:pore_i + dist_thr + 1,
+                        pore_j - dist_thr:pore_j + dist_thr + 1]
+
+    for det, det_ind in np.ndenumerate(window):
+      # check whether 'det' has a detection
+      if det_ind != 0:
+        det_ind -= 1
+
+        # compute pore-detection distance
+        dist = np.linalg.norm(det)
+
+        # update pore-detection correspondence
+        if dist < pore_dcorrs[pore_ind]:
+          pore_dcorrs[pore_ind] = dist
+          pore_corrs[pore_ind] = det_ind
+
+        # update detection-pore correspondence
+        if dist < det_dcorrs[det_ind]:
+          det_dcorrs[det_ind] = dist
+          det_corrs[det_ind] = pore_ind
+
+  return pore_corrs, det_corrs
