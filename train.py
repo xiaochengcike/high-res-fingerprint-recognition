@@ -325,12 +325,14 @@ def main(log_dir_path, polyu_path, window_size, max_steps, learning_rate,
                                                   learning_rate)
 
   # load polyu dataset
+  print('Loading PolyU-HRF dataset...')
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
   dataset = polyu.PolyUDataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
       window_size=window_size)
+  print('Loaded.')
 
   # train
   train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
