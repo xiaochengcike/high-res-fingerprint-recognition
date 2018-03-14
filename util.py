@@ -143,3 +143,13 @@ def project_and_find_correspondences(pores, dets, dist_thr, proj_shape=None):
           det_corrs[det_ind] = pore_ind
 
   return pore_corrs, det_corrs
+
+
+def restore_model(model_dir):
+  saver = tf.train.Saver()
+  ckpt = tf.train.get_checkpoint_state(model_dir)
+  if ckpt and ckpt.model_checkpoint_path:
+    print('Restoring model: {}'.format(ckpt.model_checkpoint_path))
+    saver.restore(sess, ckpt.model_checkpoint_path)
+  else:
+    raise IOError('No model found in {}.'.format(ckpt_dir))
