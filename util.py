@@ -145,6 +145,22 @@ def project_and_find_correspondences(pores, dets, dist_thr, proj_shape=None):
   return pore_corrs, det_corrs
 
 
+def matmul_corr_finding(pores, dets):
+  # memory efficient implementation based on Yaroslav Bulatov's answer in
+  # https://stackoverflow.com/questions/37009647/compute-pairwise-distance-in-a-batch-without-replicating-tensor-in-tensorflow
+  # compute pair-wise distances
+  D = np.sum(pores * pores, axis=1).reshape(-1, 1) - \
+      2 * np.dot(pores, dets.T) + np.sum(dets * dets, axis=1)
+
+  # get pore-detection correspondences
+  pore_corrs = np.argmin(D, axis=1)
+
+  # get detection-pore correspondences
+  det_corrs = np.argmin(D, axis=0)
+
+  return pore_corrs, det_corrs
+
+
 def restore_model(model_dir):
   saver = tf.train.Saver()
   ckpt = tf.train.get_checkpoint_state(model_dir)
