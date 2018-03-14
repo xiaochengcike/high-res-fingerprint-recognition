@@ -25,9 +25,9 @@ class PoreDetector:
 
     # flatten last conv layer
     last_conv_flat = tf.reshape(prev, [
-        -1, 2**((layers + 1) // 2 + 5) * (window_size -
-                                          (layers - 1) * kernel_size[0]) *
-        (window_size - (layers - 1) * kernel_size[1])
+        -1, 2**((layers + 1) // 2 + 5) *
+        (window_size - layers * (kernel_size[0] - 1)) * (window_size - layers *
+                                                         (kernel_size[1] - 1))
     ])
 
     # fc + relu layer
