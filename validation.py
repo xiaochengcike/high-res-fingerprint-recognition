@@ -160,7 +160,10 @@ def by_images(sess, pred_op, batch_size, windows_pl, dataset):
           pore_corrs, det_corrs = util.project_and_find_correspondences(
               pores[i], dets[i], ngh_dist_thr, preds[i].shape)
           for det_ind, det_corr in enumerate(det_corrs):
-            if det_corr != -1 and pore_corrs[det_corr] == det_ind:
+            # safe to not check if 'det_corr == -1' because if
+            # 'pore_corrs[-1] == det_ind', then
+            # 'dist(pores[-1], det) < dist_thr' and 'det_corr != -1'
+            if pore_corrs[det_corr] == det_ind:
               true_dets += 1
             else:
               false_dets += 1
