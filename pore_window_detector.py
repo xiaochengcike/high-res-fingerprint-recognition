@@ -15,13 +15,13 @@ class PoreDetector:
     prev = images
 
     # conv layers
-    for l in range(1, 1 + layers):
+    for i in range(1, 1 + layers):
       prev = tf.layers.conv2d(
           prev,
-          filters=2**((l + 1) // 2 + 5),
+          filters=2**((i + 1) // 2 + 5),
           kernel_size=kernel_size,
           activation=tf.nn.relu,
-          name='conv{}'.format(l))
+          name='conv{}'.format(i))
 
     # flatten last conv layer
     last_conv_flat = tf.reshape(prev, [
