@@ -113,8 +113,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
           summary_writer.add_summary(plot_summary, global_step=step)
 
 
-def main(log_dir_path, polyu_path, window_size, max_steps, learning_rate,
-         batch_size, tolerance):
+def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
+         max_steps, learning_rate, batch_size, tolerance):
   # create folders to save train resources
   log_dir, train_dir, plot_dir = util.create_dirs(log_dir_path, batch_size,
                                                   learning_rate)
@@ -126,7 +126,9 @@ def main(log_dir_path, polyu_path, window_size, max_steps, learning_rate,
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
-      window_size=window_size)
+      window_size=window_size,
+      label_mode=label_mode,
+      label_size=label_size)
   print('Loaded.')
 
   # train
@@ -150,7 +152,12 @@ if __name__ == '__main__':
       '--steps', type=int, default=100000, help='Maximum training steps.')
   parser.add_argument(
       '--window_size', type=int, default=17, help='Pore window size.')
+  parser.add_argument(
+      '--label_size', type=int, default=3, help='Pore window size.')
+  parser.add_argument(
+      '--label_mode', type=str, default='hard_l2', help='Pore window size.')
   FLAGS, unparsed = parser.parse_known_args()
 
-  main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.steps,
-       FLAGS.learning_rate, FLAGS.batch_size, FLAGS.tolerance)
+  main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.label_size,
+       FLAGS.label_mode, FLAGS.steps, FLAGS.learning_rate, FLAGS.batch_size,
+       FLAGS.tolerance)

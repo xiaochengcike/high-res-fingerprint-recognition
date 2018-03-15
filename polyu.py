@@ -10,7 +10,7 @@ import scipy.misc
 
 class Dataset:
   def __init__(self, images, labels, window_size, shuffle_behavior, one_hot,
-               incomplete_batches):
+               incomplete_batches, label_mode, label_size):
     self._images = np.array(images, dtype=np.float32)
     self._labels = np.array(labels, dtype=np.float32)
     self.window_size = window_size
@@ -32,6 +32,51 @@ class Dataset:
     if window_size is not None:
       self.num_samples = self.num_images * (self._image_rows - window_size) * (
           self._image_cols - window_size)
+
+    # create labels to be sampled by windows
+    if label_mode == 'hard_bb':
+      self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
+
+      # draw 'label_size' bounding box around pores
+      for k, i, j in np.ndindex(self._window_labels.shape):
+        i_ = max(i - label_size, 0)
+        j_ = max(j - label_size, 0)
+        self._window_labels[k, i, j] = np.max(
+            self._labels[k, i_:i + 1 + label_size, j_:j + 1 + label_size])
+
+    elif label_mode == 'hard_l1' or label_mode == 'hard_l2':
+      self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
+
+      # define norm to use
+      norm_l = int(label_mode[-1])
+
+      # enqueue pores with origins
+      queue = []
+      for pore in np.argwhere(self._labels >= 0.5):
+        self._window_labels[pore[0], pore[1], pore[2]] = self._labels[pore[
+            0], pore[1], pore[2]]
+        queue.append((pore, pore))
+
+      # bfs to draw l'norm_l' ball around pores
+      while queue:
+        # pop front
+        coords, anchor = queue[0]
+        queue = queue[1:]
+
+        # propagate pore anchor label
+        k, i, j = anchor
+        val = self._window_labels[k, i, j]
+
+        # enqueue valid neighbors
+        for d in [(0, 1, 0), (0, 0, 1), (0, -1, 0), (0, 0, -1)]:
+          ngh = coords + d
+          _, i, j = ngh
+          if 0 <= i < self._window_labels[k].shape[0] and \
+              0 <= j < self._window_labels[k].shape[1] and \
+              self._window_labels[k, i, j] == 0 and \
+              np.linalg.norm(ngh - anchor, norm_l) <= label_size:
+            self._window_labels[k, i, j] = val
+            queue.append((ngh, anchor))
 
   def next_batch(self, batch_size, shuffle=None, incomplete=None):
     '''
@@ -200,12 +245,10 @@ class Dataset:
       # generate corresponding label
       center = size // 2
       if self._one_hot:
-        labels[index, 0] = np.max(self._labels[
-            k, i + center - 3:i + center + 4, j + center - 3:j + center + 4])
+        labels[index, 0] = self._window_labels[k, i + size // 2, j + size // 2]
         labels[index, 1] = 1 - labels[index, 0]
       else:
-        labels[index] = np.max(self._labels[k, i + center - 3:i + center + 4,
-                                            j + center - 3:j + center + 4])
+        labels[index] = self._window_labels[k, i + size // 2, j + size // 2]
 
     return windows, labels
 
@@ -216,6 +259,8 @@ class PolyUDataset:
                labels_folder_path,
                split,
                window_size=None,
+               label_mode='hard_l2',
+               label_size=3,
                should_shuffle=True,
                one_hot=False):
     self._images = self._load_images(images_folder_path)
@@ -228,21 +273,27 @@ class PolyUDataset:
         window_size,
         shuffle_behavior=should_shuffle,
         one_hot=one_hot,
-        incomplete_batches=False)
+        incomplete_batches=False,
+        label_mode=label_mode,
+        label_size=label_size)
     self.val = Dataset(
         self._images[split[0]:split[0] + split[1]],
         self._labels[split[0]:split[0] + split[1]],
         window_size,
         shuffle_behavior=False,
         one_hot=one_hot,
-        incomplete_batches=True)
+        incomplete_batches=True,
+        label_mode=label_mode,
+        label_size=label_size)
     self.test = Dataset(
         self._images[split[0] + split[1]:split[0] + split[1] + split[2]],
         self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
         window_size,
         shuffle_behavior=False,
         one_hot=one_hot,
-        incomplete_batches=True)
+        incomplete_batches=True,
+        label_mode=label_mode,
+        label_size=label_size)
 
   def _load_images(self, folder_path):
     '''
