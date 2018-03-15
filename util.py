@@ -81,13 +81,17 @@ def nms(centers, probs, window_size, thr):
   order = np.argsort(probs)[::-1]
 
   dets = []
+  det_probs = []
   while len(order) > 0:
     i = order[0]
+    order = order[1:]
     dets.append(centers[i])
-    xx1 = np.maximum(x1[i], x1[order[1:]])
-    yy1 = np.maximum(y1[i], y1[order[1:]])
-    xx2 = np.minimum(x2[i], x2[order[1:]])
-    yy2 = np.minimum(y2[i], y2[order[1:]])
+    det_probs.append(probs[i])
+
+    xx1 = np.maximum(x1[i], x1[order])
+    yy1 = np.maximum(y1[i], y1[order])
+    xx2 = np.minimum(x2[i], x2[order])
+    yy2 = np.minimum(y2[i], y2[order])
 
     w = np.maximum(0.0, xx2 - xx1 + 1)
     h = np.maximum(0.0, yy2 - yy1 + 1)
@@ -95,16 +99,20 @@ def nms(centers, probs, window_size, thr):
     ovr = inter / (2 * area - inter)
 
     inds = np.where(ovr <= thr)[0]
-    order = order[inds + 1]
+    order = order[inds]
 
-  return dets
+  return np.array(dets), np.array(det_probs)
 
 
-def project_and_find_correspondences(pores, dets, dist_thr, proj_shape=None):
+def project_and_find_correspondences(pores,
+                                     dets,
+                                     dist_thr=np.inf,
+                                     proj_shape=None,
+                                     mode='window'):
   # compute projection shape, if not given
   if proj_shape is None:
-    ys = dets.T[0]
-    xs = dets.T[1]
+    ys = np.concatenate([dets.T[0], pores.T[0]])
+    xs = np.concatenate([dets.T[1], pores.T[1]])
     proj_shape = (np.max(ys) + 1, np.max(xs) + 1)
 
   # project detections
@@ -117,32 +125,69 @@ def project_and_find_correspondences(pores, dets, dist_thr, proj_shape=None):
   pore_dcorrs = np.full(len(pores), dist_thr)
   det_corrs = np.full(len(dets), -1, dtype=np.int32)
   det_dcorrs = np.full(len(dets), dist_thr)
-  for pore_ind, pore in enumerate(pores):
-    # all detections within l2 'dist_thr' distance from
-    # 'pore' are within l1 'dist_thr' distance from it
-    pore_i, pore_j = pore
-    window = projection[pore_i - dist_thr:pore_i + dist_thr + 1,
-                        pore_j - dist_thr:pore_j + dist_thr + 1]
+  if mode == 'window':
+    for pore_ind, (pore_i, pore_j) in enumerate(pores):
+      # all detections within l2 'dist_thr' distance from
+      # 'pore' are within l1 'dist_thr' distance from it
+      window = projection[pore_i - dist_thr:pore_i + dist_thr + 1,
+                          pore_j - dist_thr:pore_j + dist_thr + 1]
 
-    for det, det_ind in np.ndenumerate(window):
-      # check whether 'det' has a detection
-      if det_ind != 0:
-        det_ind -= 1
+      for det, det_ind in np.ndenumerate(window):
+        # check whether 'det' has a detection
+        if det_ind != 0:
+          det_ind -= 1
 
-        # compute pore-detection distance
-        dist = np.linalg.norm(det)
+          # compute pore-detection distance
+          dist = np.linalg.norm(det)
 
-        # update pore-detection correspondence
-        if dist < pore_dcorrs[pore_ind]:
-          pore_dcorrs[pore_ind] = dist
-          pore_corrs[pore_ind] = det_ind
+          # update pore-detection correspondence
+          if dist < pore_dcorrs[pore_ind]:
+            pore_dcorrs[pore_ind] = dist
+            pore_corrs[pore_ind] = det_ind
 
-        # update detection-pore correspondence
-        if dist < det_dcorrs[det_ind]:
-          det_dcorrs[det_ind] = dist
-          det_corrs[det_ind] = pore_ind
+          # update detection-pore correspondence
+          if dist < det_dcorrs[det_ind]:
+            det_dcorrs[det_ind] = dist
+            det_corrs[det_ind] = pore_ind
+  else:
+    for pore_ind, pore in enumerate(pores):
+      # enqueue 'pore'
+      queue = [pore]
 
-  return pore_corrs, det_corrs
+      # do not revisit pore
+      projection[pore[0], pore[1]] = -1
+
+      # bfs over possible correspondences
+      while len(queue) > 0:
+        # pop front of queue
+        coords = queue[0]
+        queue = queue[1:]
+        dist = np.linalg.norm(coords - pore)
+
+        # only consider correspondences better than current
+        if dist <= pore_dcorrs[pore_ind]:
+          # enqueue valid neighbors
+          for d in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            ngh = coords + d
+            if 0 <= ngh[0] < proj_shape[0] and \
+                0 <= ngh[1] < proj_shape[1] and \
+                projection[ngh[0], ngh[1]] >= 0:
+              queue.append(ngh)
+
+          # check whether 'det' has a detection
+          det_ind = projection[coords[0], coords[1]] - 1
+          if det_ind > -1:
+            # update pore-detection correspondence
+            if dist < pore_dcorrs[pore_ind]:
+              pore_dcorrs[pore_ind] = dist
+              pore_corrs[pore_ind] = det_ind
+
+            # update detection-pore correspondence
+            if dist < det_dcorrs[det_ind]:
+              det_dcorrs[det_ind] = dist
+              det_corrs[det_ind] = pore_ind
+
+  return pore_corrs, pore_dcorrs, det_corrs, det_dcorrs
 
 
 def matmul_corr_finding(pores, dets):
@@ -167,5 +212,6 @@ def restore_model(sess, model_dir):
   if ckpt and ckpt.model_checkpoint_path:
     print('Restoring model: {}'.format(ckpt.model_checkpoint_path))
     saver.restore(sess, ckpt.model_checkpoint_path)
+    print('Restored.')
   else:
     raise IOError('No model found in {}.'.format(model_dir))

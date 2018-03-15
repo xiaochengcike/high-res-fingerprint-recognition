@@ -82,6 +82,7 @@ def by_images(sess, pred_op, batch_size, windows_pl, dataset):
   half_window_size = window_size // 2
   preds = []
   pores = []
+  print('Predicting pores...')
   for _ in range(dataset.num_images):
     # get next image and corresponding image label
     img, label = dataset.next_image_batch(1)
@@ -116,71 +117,66 @@ def by_images(sess, pred_op, batch_size, windows_pl, dataset):
     preds.append(pred)
 
     # turn pore label image into list of pore coordinates
-    pores.append(np.array(np.where(label > 0)).T)
+    pores.append(np.argwhere(label))
+  print('Done.')
+
+  # put inference in nms proper format
+  coords = []
+  probs = []
+  for i in range(dataset.num_images):
+    img_preds = preds[i]
+    pick = img_preds > 0.05
+    coords.append(np.argwhere(pick))
+    probs.append(img_preds[pick])
 
   # validate over thresholds
-  thrs = np.arange(0, 1.1, 0.1)
-  nms_inter_thrs = np.arange(.7, -.1, -.2)
-  dist_thrs = np.arange(2, 10)
+  inter_thrs = np.arange(0.7, 0, -0.1)
+  dist_thrs = np.arange(5, 100)
 
   best_f_score = 0
   best_tdr = None
   best_fdr = None
-  best_prob_thr = None
-  best_nms_inter_thr = None
-  best_ngh_dist_thr = None
+  best_inter_thr = None
+  best_dist_thr = None
 
-  for prob_thr in thrs:
-    # filter detections by probability threshold
-    selected = []
-    probs = []
-    for i in range(dataset.num_images):
-      img_preds = preds[i]
-      pick = img_preds >= prob_thr
-      selected.append(np.array(np.where(pick)).T)
-      probs.append(img_preds[pick])
+  for dist_thr in dist_thrs:
+    # initialize detections without filtering
+    dets = coords[0:]
+    det_probs = probs[0:]
 
-    for nms_inter_thr in nms_inter_thrs:
-      # filter detections with nms
-      dets = []
+    for inter_thr in inter_thrs:
+      # further filter detections with nms
       for i in range(dataset.num_images):
-        dets.append(util.nms(selected[i], probs[i], 7, nms_inter_thr))
+        dets[i], det_probs[i] = util.nms(dets[i], det_probs[i], dist_thr,
+                                         inter_thr)
 
       # find correspondences between detections and pores
-      for ngh_dist_thr in dist_thrs:
-        true_dets = 0
-        false_dets = 0
-        total = 0
+      total_pores = 0
+      total_dets = 0
+      true_dets = 0
+      for i in range(dataset.num_images):
+        # update totals
+        total_pores += len(pores[i])
+        total_dets += len(dets[i])
 
-        for i in range(dataset.num_images):
-          # update total number of pores
-          total += len(pores[i])
+        # coincidences in pore-detection and detection-pore correspondences are true detections
+        pore_corrs, det_corrs = util.matmul_corr_finding(pores[i], dets[i])
+        for pore_ind, pore_corr in enumerate(pore_corrs):
+          if det_corrs[pore_corr] == pore_ind:
+            true_dets += 1
 
-          # coincidences in pore-detection and detection-pore correspondences are true detections
-          pore_corrs, det_corrs = util.project_and_find_correspondences(
-              pores[i], dets[i], ngh_dist_thr, preds[i].shape)
-          for det_ind, det_corr in enumerate(det_corrs):
-            # safe to not check if 'det_corr == -1' because if
-            # 'pore_corrs[-1] == det_ind', then
-            # 'dist(pores[-1], det) < dist_thr' and 'det_corr != -1'
-            if pore_corrs[det_corr] == det_ind:
-              true_dets += 1
-            else:
-              false_dets += 1
+      # compute tdr, fdr and f score
+      eps = 1e-5
+      tdr = true_dets / (total_pores + eps)
+      fdr = (total_dets - true_dets) / (total_dets + eps)
+      f_score = 2 * (tdr * (1 - fdr)) / (tdr + (1 - fdr))
 
-        # compute tdr, fdr and f score
-        eps = 1e-5
-        tdr = true_dets / (total + eps)
-        fdr = false_dets / (true_dets + false_dets + eps)
-        f_score = 2 * (tdr * (1 - fdr)) / (tdr + (1 - fdr))
+      # update best parameters
+      if f_score > best_f_score:
+        best_f_score = f_score
+        best_tdr = tdr
+        best_fdr = fdr
+        best_inter_thr = inter_thr
+        best_dist_thr = dist_thr
 
-        # update best parameters
-        if f_score > best_f_score:
-          best_f_score = f_score
-          best_tdr = tdr
-          best_fdr = fdr
-          best_prob_thr = prob_thr
-          best_nms_inter_thr = nms_inter_thr
-          best_ngh_dist_thr = ngh_dist_thr
-
-  return best_f_score, best_tdr, best_fdr, best_prob_thr, best_nms_inter_thr, best_ngh_dist_thr
+  return best_f_score, best_tdr, best_fdr, best_inter_thr, best_dist_thr
