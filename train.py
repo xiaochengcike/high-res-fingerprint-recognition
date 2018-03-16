@@ -70,11 +70,11 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
 
         # evaluate the model periodically
         if step % 1000 == 0:
+          print('Evaluation:')
           tdrs, fdrs, f_score, fdr, tdr, thr = validation.by_windows(
               sess, pore_det.preds, batch_size, windows_pl, labels_pl,
               dataset.val)
           print(
-              'Evaluation:',
               '\tTDR = {}'.format(tdr),
               '\tFDR = {}'.format(fdr),
               '\tF score = {}'.format(f_score),
