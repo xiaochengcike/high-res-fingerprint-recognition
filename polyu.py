@@ -267,33 +267,44 @@ class PolyUDataset:
     self._labels = self._load_labels(labels_folder_path)
 
     # splits loaded according to given 'split'
-    self.train = Dataset(
-        self._images[:split[0]],
-        self._labels[:split[0]],
-        window_size,
-        shuffle_behavior=should_shuffle,
-        one_hot=one_hot,
-        incomplete_batches=False,
-        label_mode=label_mode,
-        label_size=label_size)
-    self.val = Dataset(
-        self._images[split[0]:split[0] + split[1]],
-        self._labels[split[0]:split[0] + split[1]],
-        window_size,
-        shuffle_behavior=False,
-        one_hot=one_hot,
-        incomplete_batches=True,
-        label_mode=label_mode,
-        label_size=label_size)
-    self.test = Dataset(
-        self._images[split[0] + split[1]:split[0] + split[1] + split[2]],
-        self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
-        window_size,
-        shuffle_behavior=False,
-        one_hot=one_hot,
-        incomplete_batches=True,
-        label_mode=label_mode,
-        label_size=label_size)
+    if split[0] > 0:
+      self.train = Dataset(
+          self._images[:split[0]],
+          self._labels[:split[0]],
+          window_size,
+          shuffle_behavior=should_shuffle,
+          one_hot=one_hot,
+          incomplete_batches=False,
+          label_mode=label_mode,
+          label_size=label_size)
+    else:
+      self.train = None
+
+    if split[1] > 0:
+      self.val = Dataset(
+          self._images[split[0]:split[0] + split[1]],
+          self._labels[split[0]:split[0] + split[1]],
+          window_size,
+          shuffle_behavior=False,
+          one_hot=one_hot,
+          incomplete_batches=True,
+          label_mode=label_mode,
+          label_size=label_size)
+    else:
+      self.val = None
+
+    if split[2] > 0:
+      self.test = Dataset(
+          self._images[split[0] + split[1]:split[0] + split[1] + split[2]],
+          self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
+          window_size,
+          shuffle_behavior=False,
+          one_hot=one_hot,
+          incomplete_batches=True,
+          label_mode=label_mode,
+          label_size=label_size)
+    else:
+      self.test = None
 
   def _load_images(self, folder_path):
     '''
