@@ -23,8 +23,15 @@ def _load_image(image_path):
 
 
 class Dataset:
-  def __init__(self, images, labels, window_size, shuffle_behavior, one_hot,
-               incomplete_batches, label_mode, label_size):
+  def __init__(self,
+               images,
+               labels,
+               shuffle_behavior,
+               incomplete_batches,
+               window_size=None,
+               one_hot=False,
+               label_mode=None,
+               label_size=None):
     self._images = np.array(images, dtype=np.float32)
     self._labels = np.array(labels, dtype=np.float32)
     self.window_size = window_size
@@ -259,15 +266,15 @@ class Dataset:
       # generate corresponding label
       center = size // 2
       if self._one_hot:
-        labels[index, 0] = self._window_labels[k, i + size // 2, j + size // 2]
+        labels[index, 0] = self._window_labels[k, i + center, j + center]
         labels[index, 1] = 1 - labels[index, 0]
       else:
-        labels[index] = self._window_labels[k, i + size // 2, j + size // 2]
+        labels[index] = self._window_labels[k, i + center, j + center]
 
     return windows, labels
 
 
-class PolyUDataset:
+class PolyUDetectionDataset:
   def __init__(self,
                images_folder_path,
                labels_folder_path,
@@ -285,10 +292,10 @@ class PolyUDataset:
       self.train = Dataset(
           self._images[:split[0]],
           self._labels[:split[0]],
-          window_size,
           shuffle_behavior=should_shuffle,
-          one_hot=one_hot,
           incomplete_batches=False,
+          window_size=window_size,
+          one_hot=one_hot,
           label_mode=label_mode,
           label_size=label_size)
     else:
@@ -298,10 +305,10 @@ class PolyUDataset:
       self.val = Dataset(
           self._images[split[0]:split[0] + split[1]],
           self._labels[split[0]:split[0] + split[1]],
-          window_size,
           shuffle_behavior=False,
-          one_hot=one_hot,
           incomplete_batches=True,
+          window_size=window_size,
+          one_hot=one_hot,
           label_mode=label_mode,
           label_size=label_size)
     else:
@@ -311,10 +318,10 @@ class PolyUDataset:
       self.test = Dataset(
           self._images[split[0] + split[1]:split[0] + split[1] + split[2]],
           self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
-          window_size,
           shuffle_behavior=False,
-          one_hot=one_hot,
           incomplete_batches=True,
+          window_size=window_size,
+          one_hot=one_hot,
           label_mode=label_mode,
           label_size=label_size)
     else:
@@ -375,3 +382,49 @@ class PolyUDataset:
         label[row - 1, col - 1] = 1
 
     return label
+
+
+class PolyURecognitionDataset:
+  def __init__(self, images_folder_path, split, should_shuffle=True):
+    images, labels = self._load_images_with_labels(images_folder_path)
+
+    # split dataset according to 'split'
+    if split[0] > 0:
+      self.train = Dataset(
+          images[:split[0]],
+          labels[:split[0]],
+          shuffle_behavior=should_shuffle,
+          incomplete_batches=False)
+    else:
+      self.train = None
+
+    if split[1] > 0:
+      self.val = Dataset(
+          images[split[0]:split[0] + split[1]],
+          labels[split[0]:split[0] + split[1]],
+          shuffle_behavior=False,
+          incomplete_batches=True)
+    else:
+      self.val = None
+
+    if split[2] > 0:
+      self.test = Dataset(
+          images[split[0] + split[1]:split[0] + split[1] + split[2]],
+          labels[split[0] + split[1]:split[0] + split[1] + split[2]],
+          shuffle_behavior=False,
+          incomplete_batches=True)
+    else:
+      self.test = None
+
+  def _load_images_with_labels(self, folder_path):
+    images = []
+    labels = []
+    for image_path in sorted(os.listdir(folder_path)):
+      if image_path.endswith(('.jpg', '.png', '.bmp')):
+        images.append(_load_image(os.path.join(folder_path, image_path)))
+        labels.append(self._retrieve_label_from_image_path(image_path))
+
+    return images, labels
+
+  def _retrieve_label_from_image_path(self, image_path):
+    return int(image_path.split('_')[0])
