@@ -8,6 +8,20 @@ import numpy as np
 import scipy.misc
 
 
+def _load_image(image_path):
+  '''
+  Loads the image in 'image_path' as a single channel np float32 array in range [0, 1].
+
+  Args:
+    image_path: Path to the image being loaded.
+
+  Returns:
+    The loaded image as a single channel np float32 array in range [0, 1].
+  '''
+  return np.asarray(scipy.misc.imread(image_path, mode='F'),
+                    np.float32) / 255.0
+
+
 class Dataset:
   def __init__(self, images, labels, window_size, shuffle_behavior, one_hot,
                incomplete_batches, label_mode, label_size):
@@ -319,7 +333,7 @@ class PolyUDataset:
     images = []
     for image_path in sorted(os.listdir(folder_path)):
       if image_path.endswith(('.jpg', '.png', '.bmp')):
-        images.append(self._load_image(os.path.join(folder_path, image_path)))
+        images.append(_load_image(os.path.join(folder_path, image_path)))
 
     return images
 
@@ -361,16 +375,3 @@ class PolyUDataset:
         label[row - 1, col - 1] = 1
 
     return label
-
-  def _load_image(self, image_path):
-    '''
-    Loads the image in 'image_path' as a single channel np float32 array in range [0, 1].
-
-    Args:
-      image_path: Path to the image being loaded.
-
-    Returns:
-      The loaded image as a single channel np float32 array in range [0, 1].
-    '''
-    return np.asarray(scipy.misc.imread(image_path, mode='F'),
-                      np.float32) / 255.0
