@@ -33,50 +33,50 @@ class Dataset:
       self.num_samples = self.num_images * (self._image_rows - window_size) * (
           self._image_cols - window_size)
 
-    # create labels to be sampled by windows
-    if label_mode == 'hard_bb':
-      self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
+      # create labels to be sampled by windows
+      if label_mode == 'hard_bb':
+        self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
 
-      # draw 'label_size' bounding box around pores
-      for k, i, j in np.ndindex(self._window_labels.shape):
-        i_ = max(i - label_size, 0)
-        j_ = max(j - label_size, 0)
-        self._window_labels[k, i, j] = np.max(
-            self._labels[k, i_:i + 1 + label_size, j_:j + 1 + label_size])
+        # draw 'label_size' bounding box around pores
+        for k, i, j in np.ndindex(self._window_labels.shape):
+          i_ = max(i - label_size, 0)
+          j_ = max(j - label_size, 0)
+          self._window_labels[k, i, j] = np.max(
+              self._labels[k, i_:i + 1 + label_size, j_:j + 1 + label_size])
 
-    elif label_mode == 'hard_l1' or label_mode == 'hard_l2':
-      self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
+      elif label_mode == 'hard_l1' or label_mode == 'hard_l2':
+        self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
 
-      # define norm to use
-      norm_l = int(label_mode[-1])
+        # define norm to use
+        norm_l = int(label_mode[-1])
 
-      # enqueue pores with origins
-      queue = []
-      for pore in np.argwhere(self._labels >= 0.5):
-        self._window_labels[pore[0], pore[1], pore[2]] = self._labels[pore[
-            0], pore[1], pore[2]]
-        queue.append((pore, pore))
+        # enqueue pores with origins
+        queue = []
+        for pore in np.argwhere(self._labels >= 0.5):
+          self._window_labels[pore[0], pore[1], pore[2]] = self._labels[pore[
+              0], pore[1], pore[2]]
+          queue.append((pore, pore))
 
-      # bfs to draw l'norm_l' ball around pores
-      while queue:
-        # pop front
-        coords, anchor = queue[0]
-        queue = queue[1:]
+        # bfs to draw l'norm_l' ball around pores
+        while queue:
+          # pop front
+          coords, anchor = queue[0]
+          queue = queue[1:]
 
-        # propagate pore anchor label
-        k, i, j = anchor
-        val = self._window_labels[k, i, j]
+          # propagate pore anchor label
+          k, i, j = anchor
+          val = self._window_labels[k, i, j]
 
-        # enqueue valid neighbors
-        for d in [(0, 1, 0), (0, 0, 1), (0, -1, 0), (0, 0, -1)]:
-          ngh = coords + d
-          _, i, j = ngh
-          if 0 <= i < self._window_labels[k].shape[0] and \
-              0 <= j < self._window_labels[k].shape[1] and \
-              self._window_labels[k, i, j] == 0 and \
-              np.linalg.norm(ngh - anchor, norm_l) <= label_size:
-            self._window_labels[k, i, j] = val
-            queue.append((ngh, anchor))
+          # enqueue valid neighbors
+          for d in [(0, 1, 0), (0, 0, 1), (0, -1, 0), (0, 0, -1)]:
+            ngh = coords + d
+            _, i, j = ngh
+            if 0 <= i < self._window_labels[k].shape[0] and \
+                0 <= j < self._window_labels[k].shape[1] and \
+                self._window_labels[k, i, j] == 0 and \
+                np.linalg.norm(ngh - anchor, norm_l) <= label_size:
+              self._window_labels[k, i, j] = val
+              queue.append((ngh, anchor))
 
   def next_batch(self, batch_size, shuffle=None, incomplete=None):
     '''
