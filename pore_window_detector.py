@@ -48,8 +48,8 @@ class PoreDetector:
     return self.loss
 
   def build_train(self, learning_rate):
-    optimizer = tf.train.AdamOptimizer(learning_rate)
     global_step = tf.Variable(1, name='global_step', trainable=False)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     self.train = optimizer.minimize(self.loss, global_step=global_step)
 
     return self.train

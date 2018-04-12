@@ -141,7 +141,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--polyu_dir', required=True, type=str, help='Path to PolyU-HRF dataset')
   parser.add_argument(
-      '--learning_rate', type=float, default=1e-4, help='Learning rate.')
+      '--learning_rate', type=float, default=1e-1, help='Learning rate.')
   parser.add_argument(
       '--log_dir', type=str, default='log', help='Logging directory.')
   parser.add_argument(
@@ -155,7 +155,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--label_size', type=int, default=3, help='Pore window size.')
   parser.add_argument(
-      '--label_mode', type=str, default='hard_l2', help='Pore window size.')
+      '--label_mode', type=str, default='hard_bb', help='Pore window size.')
   FLAGS, unparsed = parser.parse_known_args()
 
   main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.label_size,
