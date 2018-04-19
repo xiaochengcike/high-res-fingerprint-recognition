@@ -9,6 +9,8 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import io
+import os
+import scipy.misc
 
 
 def to_windows(img, window_size):
@@ -40,7 +42,6 @@ def fill_window_feed_dict(dataset, windows_pl, labels_pl, batch_size):
 def create_dirs(log_dir_path, batch_size, learning_rate, label_mode,
                 label_size):
   import datetime
-  import os
   timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
   log_dir = os.path.join(
       log_dir_path, 'm-{}_sz-{}_bs-{}_lr-{:.0e}_t-{}'.format(
@@ -217,3 +218,35 @@ def restore_model(sess, model_dir):
     print('Restored.')
   else:
     raise IOError('No model found in {}.'.format(model_dir))
+
+
+def _load_image(image_path):
+  '''
+  Loads the image in 'image_path' as a single channel np float32 array in range [0, 1].
+
+  Args:
+    image_path: Path to the image being loaded.
+
+  Returns:
+    The loaded image as a single channel np float32 array in range [0, 1].
+  '''
+  return np.asarray(scipy.misc.imread(image_path, mode='F'),
+                    np.float32) / 255.0
+
+
+def load_images(folder_path):
+  '''
+  Loads all images in formats 'jpg', 'png' and 'bmp' in folder 'folder_path'.
+
+  Args:
+    folder_path: Path to folder for which images are going to be loaded.
+
+  Returns:
+    images: List of all loaded images.
+  '''
+  images = []
+  for image_path in sorted(os.listdir(folder_path)):
+    if image_path.endswith(('.jpg', '.png', '.bmp')):
+      images.append(_load_image(os.path.join(folder_path, image_path)))
+
+  return images

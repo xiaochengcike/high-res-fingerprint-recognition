@@ -5,21 +5,8 @@ from six.moves import range
 
 import os
 import numpy as np
-import scipy.misc
 
-
-def _load_image(image_path):
-  '''
-  Loads the image in 'image_path' as a single channel np float32 array in range [0, 1].
-
-  Args:
-    image_path: Path to the image being loaded.
-
-  Returns:
-    The loaded image as a single channel np float32 array in range [0, 1].
-  '''
-  return np.asarray(scipy.misc.imread(image_path, mode='F'),
-                    np.float32) / 255.0
+import util
 
 
 class Dataset:
@@ -280,11 +267,11 @@ class PolyUDetectionDataset:
                labels_folder_path,
                split,
                window_size=None,
-               label_mode='hard_l2',
+               label_mode='hard_bb',
                label_size=3,
                should_shuffle=True,
                one_hot=False):
-    self._images = self._load_images(images_folder_path)
+    self._images = util.load_images(images_folder_path)
     self._labels = self._load_labels(labels_folder_path)
 
     # splits loaded according to given 'split'
@@ -327,23 +314,6 @@ class PolyUDetectionDataset:
     else:
       self.test = None
 
-  def _load_images(self, folder_path):
-    '''
-    Loads all images in formats 'jpg', 'png' and 'bmp' in folder 'folder_path'.
-
-    Args:
-      folder_path: Path to folder for which images are going to be loaded.
-
-    Returns:
-      images: List of all loaded images.
-    '''
-    images = []
-    for image_path in sorted(os.listdir(folder_path)):
-      if image_path.endswith(('.jpg', '.png', '.bmp')):
-        images.append(_load_image(os.path.join(folder_path, image_path)))
-
-    return images
-
   def _load_labels(self, folder_path):
     '''
     Loads corresponding pore labels in '.txt' files for the loaded images.
@@ -382,49 +352,3 @@ class PolyUDetectionDataset:
         label[row - 1, col - 1] = 1
 
     return label
-
-
-class PolyURecognitionDataset:
-  def __init__(self, images_folder_path, split, should_shuffle=True):
-    images, labels = self._load_images_with_labels(images_folder_path)
-
-    # split dataset according to 'split'
-    if split[0] > 0:
-      self.train = Dataset(
-          images[:split[0]],
-          labels[:split[0]],
-          shuffle_behavior=should_shuffle,
-          incomplete_batches=False)
-    else:
-      self.train = None
-
-    if split[1] > 0:
-      self.val = Dataset(
-          images[split[0]:split[0] + split[1]],
-          labels[split[0]:split[0] + split[1]],
-          shuffle_behavior=False,
-          incomplete_batches=True)
-    else:
-      self.val = None
-
-    if split[2] > 0:
-      self.test = Dataset(
-          images[split[0] + split[1]:split[0] + split[1] + split[2]],
-          labels[split[0] + split[1]:split[0] + split[1] + split[2]],
-          shuffle_behavior=False,
-          incomplete_batches=True)
-    else:
-      self.test = None
-
-  def _load_images_with_labels(self, folder_path):
-    images = []
-    labels = []
-    for image_path in sorted(os.listdir(folder_path)):
-      if image_path.endswith(('.jpg', '.png', '.bmp')):
-        images.append(_load_image(os.path.join(folder_path, image_path)))
-        labels.append(self._retrieve_label_from_image_path(image_path))
-
-    return images, labels
-
-  def _retrieve_label_from_image_path(self, image_path):
-    return int(image_path.split('_')[0])
