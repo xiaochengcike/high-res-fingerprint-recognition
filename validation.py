@@ -131,52 +131,45 @@ def by_images(sess, pred_op, batch_size, windows_pl, dataset):
 
   # validate over thresholds
   inter_thrs = np.arange(0.7, 0, -0.1)
-  dist_thrs = np.arange(5, 100)
 
   best_f_score = 0
   best_tdr = None
   best_fdr = None
   best_inter_thr = None
-  best_dist_thr = None
 
-  for dist_thr in dist_thrs:
-    # initialize detections without filtering
-    dets = coords[0:]
-    det_probs = probs[0:]
+  for inter_thr in inter_thrs:
+    # filter detections with nms
+    dets = []
+    for i in range(dataset.num_images):
+      det, _ = util.nms(coords[i], probs[i], 11, inter_thr)
+      dets.append(det)
 
-    for inter_thr in inter_thrs:
-      # further filter detections with nms
-      for i in range(dataset.num_images):
-        dets[i], det_probs[i] = util.nms(dets[i], det_probs[i], dist_thr,
-                                         inter_thr)
+    # find correspondences between detections and pores
+    total_pores = 0
+    total_dets = 0
+    true_dets = 0
+    for i in range(dataset.num_images):
+      # update totals
+      total_pores += len(pores[i])
+      total_dets += len(dets[i])
 
-      # find correspondences between detections and pores
-      total_pores = 0
-      total_dets = 0
-      true_dets = 0
-      for i in range(dataset.num_images):
-        # update totals
-        total_pores += len(pores[i])
-        total_dets += len(dets[i])
+      # coincidences in pore-detection and detection-pore correspondences are true detections
+      pore_corrs, det_corrs = util.matmul_corr_finding(pores[i], dets[i])
+      for pore_ind, pore_corr in enumerate(pore_corrs):
+        if det_corrs[pore_corr] == pore_ind:
+          true_dets += 1
 
-        # coincidences in pore-detection and detection-pore correspondences are true detections
-        pore_corrs, det_corrs = util.matmul_corr_finding(pores[i], dets[i])
-        for pore_ind, pore_corr in enumerate(pore_corrs):
-          if det_corrs[pore_corr] == pore_ind:
-            true_dets += 1
+    # compute tdr, fdr and f score
+    eps = 1e-5
+    tdr = true_dets / (total_pores + eps)
+    fdr = (total_dets - true_dets) / (total_dets + eps)
+    f_score = 2 * (tdr * (1 - fdr)) / (tdr + (1 - fdr))
 
-      # compute tdr, fdr and f score
-      eps = 1e-5
-      tdr = true_dets / (total_pores + eps)
-      fdr = (total_dets - true_dets) / (total_dets + eps)
-      f_score = 2 * (tdr * (1 - fdr)) / (tdr + (1 - fdr))
+    # update best parameters
+    if f_score > best_f_score:
+      best_f_score = f_score
+      best_tdr = tdr
+      best_fdr = fdr
+      best_inter_thr = inter_thr
 
-      # update best parameters
-      if f_score > best_f_score:
-        best_f_score = f_score
-        best_tdr = tdr
-        best_fdr = fdr
-        best_inter_thr = inter_thr
-        best_dist_thr = dist_thr
-
-  return best_f_score, best_tdr, best_fdr, best_inter_thr, best_dist_thr
+  return best_f_score, best_tdr, best_fdr, best_inter_thr
