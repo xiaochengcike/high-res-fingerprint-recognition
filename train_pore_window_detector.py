@@ -122,7 +122,7 @@ def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.PolyUDetectionDataset(
+  dataset = polyu.DetectionDataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),

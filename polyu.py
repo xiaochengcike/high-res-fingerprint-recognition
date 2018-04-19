@@ -261,7 +261,7 @@ class Dataset:
     return windows, labels
 
 
-class PolyUDetectionDataset:
+class DetectionDataset:
   def __init__(self,
                images_folder_path,
                labels_folder_path,
