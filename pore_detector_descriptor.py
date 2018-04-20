@@ -114,6 +114,9 @@ class Net:
     return self.desc_train
 
   def build_description_validation(self, labels, thresholds):
+    # flatten labels
+    labels = tf.reshape(labels, (-1, ))
+
     # recognition labels matrix with (i, j) = label[i] == label[j]
     labels_matrix = tf.tile(
         tf.expand_dims(labels, -1),
