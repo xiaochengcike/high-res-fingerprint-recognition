@@ -218,33 +218,15 @@ def restore_model(sess, model_dir):
     raise IOError('No model found in {}.'.format(model_dir))
 
 
-def _load_image(image_path):
-  '''
-  Loads the image in 'image_path' as a single channel np float32 array in range [0, 1].
-
-  Args:
-    image_path: Path to the image being loaded.
-
-  Returns:
-    The loaded image as a single channel np float32 array in range [0, 1].
-  '''
+def load_image(image_path):
   return np.asarray(scipy.misc.imread(image_path, mode='F'),
                     np.float32) / 255.0
 
 
 def load_images(folder_path):
-  '''
-  Loads all images in formats 'jpg', 'png' and 'bmp' in folder 'folder_path'.
-
-  Args:
-    folder_path: Path to folder for which images are going to be loaded.
-
-  Returns:
-    images: List of all loaded images.
-  '''
   images = []
   for image_path in sorted(os.listdir(folder_path)):
     if image_path.endswith(('.jpg', '.png', '.bmp')):
-      images.append(_load_image(os.path.join(folder_path, image_path)))
+      images.append(load_image(os.path.join(folder_path, image_path)))
 
   return images
