@@ -24,6 +24,7 @@ def train(det_dataset, desc_dataset, log_dir):
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
     windows_pl, labels_pl = util.window_placeholder_inputs()
+    thresholds_pl = tf.placeholder(tf.float32, [None])
 
     # build net graph
     net = pore_detector_descriptor.Net(windows_pl, FLAGS.window_size)
@@ -39,7 +40,7 @@ def train(det_dataset, desc_dataset, log_dir):
     # builds validation graph
     val_net = pore_detector_descriptor.Net(
         windows_pl, FLAGS.window_size, training=False, reuse=True)
-    val_net.build_description_validation(labels_pl, thresholds)
+    val_net.build_description_validation(labels_pl, thresholds_pl)
 
     # add summary to plot losses, eer, f score, tdr and fdr
     f_score_pl = tf.placeholder(tf.float32, shape=())
@@ -226,6 +227,11 @@ if __name__ == '__main__':
       '--steps', type=int, default=100000, help='Maximum training steps.')
   parser.add_argument(
       '--window_size', type=int, default=17, help='Pore window size.')
+  parser.add_argument(
+      '--thr_res',
+      type=float,
+      default=0.01,
+      help='Threshold resolution of ROC curve')
   FLAGS, unparsed = parser.parse_known_args()
 
   main()
