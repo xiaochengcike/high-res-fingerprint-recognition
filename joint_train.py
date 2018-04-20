@@ -75,7 +75,7 @@ def train(det_dataset, desc_dataset, log_dir):
       sess.run(tf.global_variables_initializer())
 
       # joint train loop
-      for step in range(1, max_steps + 1):
+      for step in range(1, FLAGS.steps + 1):
         # detection train step
         feed_dict = util.fill_detection_feed_dict(
             det_dataset.train, windows_pl, labels_pl, FLAGS.det_batch_sz)

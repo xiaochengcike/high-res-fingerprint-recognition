@@ -40,9 +40,10 @@ class Net:
         activation=None,
         name='det_conv',
         use_bias=False,
+        padding='valid',
         reuse=reuse)
     det_layer = tf.layers.batch_normalization(
-        layer, training=training, name='det_batch_norm', reuse=reuse)
+        det_layer, training=training, name='det_batch_norm', reuse=reuse)
 
     # detection logits
     self.logits = tf.identity(det_layer, name='logits')
@@ -123,9 +124,9 @@ class Net:
     rec_labels = tf.cast(rec_labels, tf.int32)
 
     # distances matrix
-    r_desc = tf.reduce_sum(self.desc * self.desc, axis=1)
+    r_desc = tf.reduce_sum(self.descs * self.descs, axis=1)
     distances = tf.expand_dims(r_desc, -1) - \
-        2 * tf.matmul(self.desc, self.desc, transpose_b=True) + \
+        2 * tf.matmul(self.descs, self.descs, transpose_b=True) + \
         r_desc
 
     # mask for extraction of strict upper triangular band of matrices
