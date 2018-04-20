@@ -94,6 +94,9 @@ class Net:
     return self.det_train
 
   def build_description_loss(self, labels):
+    # make labels' shape compatible with triplet loss
+    labels = tf.reshape(labels, (-1, ))
+
     self.desc_loss = tf.contrib.losses.metric_learning.triplet_semihard_loss(
         labels, self.descs)
 
