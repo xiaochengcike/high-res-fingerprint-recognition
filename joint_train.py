@@ -147,7 +147,7 @@ def train(det_dataset, desc_dataset, log_dir):
 
           # write f score, tdr and fdr to summary
           score_summaries = sess.run(
-              score_summaries_op,
+              score_summaries_ops,
               feed_dict={
                   f_score_pl: f_score,
                   tdr_pl: tdr,
