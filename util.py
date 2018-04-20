@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import io
 import os
 import scipy.misc
+import cv2
 
 
 def to_windows(img, window_size):
@@ -37,6 +38,66 @@ def fill_detection_feed_dict(dataset, windows_pl, labels_pl, batch_size):
       labels_feed.reshape([-1, 1])
   }
   return feed_dict
+
+
+def fill_description_feed_dict(dataset, images_pl, labels_pl, n_subjects,
+                               n_transfs, window_size):
+  images, labels = dataset.next_batch(n_subjects)
+
+  # generate images feed by sampling windows
+  images_feed = []
+  for image in images:
+    images_feed.extend(
+        _pick_and_transform_window(image, n_transfs, window_size))
+
+  # generate labels feed by repeating labels
+  labels_feed = np.repeat(labels, n_transfs)
+
+  feed_dict = {
+      images_pl: np.expand_dims(images_feed, axis=-1),
+      labels_pl: np.reshape(labels_feed, (-1, 1))
+  }
+
+  return feed_dict
+
+
+def _pick_and_transform_window(image, n_windows, size, row=None, col=None):
+  # compute margin for safe window retrieval
+  margin = np.ceil(size / 2 * np.sqrt(2)) + 4
+
+  if row is None or col is None:
+    # randomly pick base window (with margins for small rotations)
+    row = np.random.randint(margin, image.shape[0] - margin)
+    col = np.random.randint(margin, image.shape[1] - margin)
+  else:
+    # assert row and col preserve margins for rotations
+    assert margin <= row < image.shape[0] - margin
+    assert margin <= col < image.shape[1] - margin
+
+  window = image[row:row + size, col:col + size]
+
+  # transform windows
+  windows = [window]
+  for _ in range(n_windows - 1):
+    # small translation
+    drow = row - np.random.randint(3)
+    dcol = col - np.random.randint(3)
+
+    # rotation
+    angle = np.random.random() * 360.0
+    rotation_mat = cv2.getRotationMatrix2D((dcol + size // 2,
+                                            drow + size // 2), angle, 1)
+    rotated_image = cv2.warpAffine(image, rotation_mat, image.shape[1::-1])
+    transfd_window = rotated_image[drow:drow + size, dcol:dcol + size]
+
+    # brightness and contrast
+    transfd_window = np.random.normal(
+        loc=1.0, scale=0.05) * transfd_window + np.random.normal(
+            loc=0.0, scale=0.1)
+
+    windows.append(transfd_window)
+
+  return windows
 
 
 def create_dirs(log_dir_path, batch_size, learning_rate):

@@ -84,7 +84,9 @@ def train(det_dataset, desc_dataset, log_dir):
 
         # description train step
         feed_dict = util.fill_description_feed_dict(
-            desc_dataset.train, windows_pl, labels_pl, FLAGS.desc_batch_sz)
+            desc_dataset.train, windows_pl, labels_pl,
+            FLAGS.desc_batch_sz // FLAGS.classes_by_batch,
+            FLAGS.classes_by_batch, FLAGS.window_size)
         desc_loss_value, _ = sess.run(
             [net.desc_loss, net.desc_train], feed_dict=feed_dict)
 
@@ -224,7 +226,19 @@ if __name__ == '__main__':
   parser.add_argument(
       '--desc_batch_sz', type=int, default=256, help='Description batch size.')
   parser.add_argument(
+      '--classes_by_batch',
+      type=int,
+      default=16,
+      help=
+      'Number of differente classes by batch. Must be less than total number of subjects in dataset'
+  )
+  parser.add_argument(
       '--steps', type=int, default=100000, help='Maximum training steps.')
+  parser.add_argument(
+      '--val_steps',
+      type=int,
+      default=200,
+      help='Number of sampled batches when validating')
   parser.add_argument(
       '--window_size', type=int, default=17, help='Pore window size.')
   parser.add_argument(
