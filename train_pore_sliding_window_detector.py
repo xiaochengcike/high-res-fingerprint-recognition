@@ -61,8 +61,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
       sess.run(init)
 
       for step in range(1, max_steps + 1):
-        feed_dict = util.fill_window_feed_dict(dataset.train, windows_pl,
-                                               labels_pl, batch_size)
+        feed_dict = util.fill_detection_feed_dict(dataset.train, windows_pl,
+                                                  labels_pl, batch_size)
 
         _, loss_value = sess.run(
             [pore_det.train, pore_det.loss], feed_dict=feed_dict)

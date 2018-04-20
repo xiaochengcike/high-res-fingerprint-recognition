@@ -28,7 +28,7 @@ def window_placeholder_inputs():
   return windows, labels
 
 
-def fill_window_feed_dict(dataset, windows_pl, labels_pl, batch_size):
+def fill_detection_feed_dict(dataset, windows_pl, labels_pl, batch_size):
   windows_feed, labels_feed = dataset.next_batch(batch_size)
   feed_dict = {
       windows_pl:
