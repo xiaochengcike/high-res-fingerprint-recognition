@@ -37,7 +37,7 @@ def train(det_dataset, desc_dataset, log_dir):
     net.build_description_train(FLAGS.desc_lr)
 
     # builds validation graph
-    val_net = pore_detector_descriptor.net(
+    val_net = pore_detector_descriptor.Net(
         windows_pl, FLAGS.window_size, training=False, reuse=True)
     val_net.build_description_validation(labels_pl, thresholds)
 

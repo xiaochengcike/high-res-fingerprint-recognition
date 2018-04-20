@@ -107,7 +107,8 @@ class Net:
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-      self.desc_train = optimizer.minimize(self.loss, global_step=global_step)
+      self.desc_train = optimizer.minimize(
+          self.desc_loss, global_step=global_step)
 
     return self.desc_train
 
