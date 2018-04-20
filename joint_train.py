@@ -126,7 +126,7 @@ def train(det_dataset, desc_dataset, log_dir):
               FLAGS.desc_batch_sz, desc_dataset.val.n_labels -
               (FLAGS.desc_batch_sz % desc_dataset.val.n_labels),
               FLAGS.val_steps)
-          print('Description:', '\tEER = {}'.format(eer))
+          print('Description:', '\tEER = {}'.format(eer), sep='\n')
 
           # early stopping
           if f_score > best_f_score and eer < best_eer:
@@ -136,7 +136,7 @@ def train(det_dataset, desc_dataset, log_dir):
 
             saver.save(
                 sess,
-                os.path.join(train_dir, 'model-{}.ckpt'.format(thr)),
+                os.path.join(train_dir, 'model-{}.ckpt'.format(det_thr)),
                 global_step=step)
             faults = 0
           else:
