@@ -95,7 +95,7 @@ class Net:
 
   def build_description_loss(self, labels):
     self.desc_loss = tf.contrib.losses.metric_learning.triplet_semihard_loss(
-        labels, self.descs, name='description_loss')
+        labels, self.descs)
 
     return self.desc_loss
 
