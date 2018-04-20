@@ -16,8 +16,8 @@ def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
 
   steps_per_epoch = (dataset.num_samples + batch_size - 1) // batch_size
   for _ in range(steps_per_epoch):
-    feed_dict = util.fill_window_feed_dict(dataset, windows_pl, labels_pl,
-                                           batch_size)
+    feed_dict = util.fill_detection_feed_dict(dataset, windows_pl, labels_pl,
+                                              batch_size)
 
     # evaluate batch
     batch_preds = sess.run(preds, feed_dict=feed_dict)
@@ -174,3 +174,59 @@ def by_images(sess, pred_op, batch_size, windows_pl, dataset):
       best_inter_thr = inter_thr
 
   return best_f_score, best_tdr, best_fdr, best_inter_thr
+
+
+def report_statistics_by_thresholds(
+    images_pl, labels_pl, thresholds_pl, dataset, thresholds, statistics_op,
+    session, window_size, batch_size, classes_by_batch, total_steps):
+  # assert that sampling batches is possible
+  assert dataset.n_labels >= classes_by_batch
+
+  # initialize statistics
+  true_pos = np.zeros_like(thresholds, np.int32)
+  true_neg = np.zeros_like(thresholds, np.int32)
+  false_pos = np.zeros_like(thresholds, np.int32)
+  false_neg = np.zeros_like(thresholds, np.int32)
+
+  # validate in entire dataset, as specified by user
+  for _ in range(total_steps):
+    # sample mini-batch
+    feed_dict = util.fill_description_feed_dict(
+        dataset, images_pl, labels_pl, classes_by_batch,
+        batch_size // classes_by_batch, window_size)
+    feed_dict[thresholds_pl] = thresholds
+
+    # evaluate on mini-batch
+    batch_true_pos, batch_true_neg, batch_false_pos, batch_false_neg = session.run(
+        statistics_op, feed_dict=feed_dict)
+
+    # update running statistics
+    true_pos += batch_true_pos
+    true_neg += batch_true_neg
+    false_pos += batch_false_pos
+    false_neg += batch_false_neg
+
+  return true_pos, true_neg, false_pos, false_neg
+
+
+def report_equal_error_rate(images_pl, labels_pl, thresholds_pl, dataset,
+                            threshold_resolution, statistics_op, session,
+                            window_size, batch_size, classes_by_batch,
+                            total_steps):
+  true_pos, true_neg, false_pos, false_neg = report_statistics_by_thresholds(
+      images_pl, labels_pl, thresholds_pl, dataset,
+      np.arange(0, 2 + threshold_resolution,
+                threshold_resolution), statistics_op, session, window_size,
+      batch_size, classes_by_batch, total_steps)
+
+  # compute recall and specificity
+  eps = 1e-12
+  recall = true_pos / (true_pos + false_neg + eps)
+  specificity = false_pos / (true_neg + false_pos + eps)
+
+  # compute equal error rate
+  for i in range(0, len(recall)):
+    if recall[i] >= 1.0 - specificity[i]:
+      return 1 - (recall[i] + 1.0 - specificity[i]) / 2
+
+  return 0
