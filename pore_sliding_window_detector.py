@@ -29,39 +29,31 @@ class PoreDetector:
       layer = tf.layers.batch_normalization(
           layer, reuse=reuse, training=training, name='batch_norm{}'.format(i))
 
-    # flatten last conv layer
-    layer = tf.reshape(layer, [
-        -1, 2**((layers + 1) // 2 + 3) *
-        (window_size - layers * (kernel_size[0] - 1)) * (window_size - layers *
-                                                         (kernel_size[1] - 1))
-    ])
-
-    # fc + relu layer
-    layer = tf.layers.dense(
+    # final conv layer
+    layer = tf.layers.conv2d(
         layer,
-        128,
-        activation=tf.nn.relu,
-        name='fc1',
-        reuse=reuse,
-        use_bias=False)
+        kernel_size=kernel_size,
+        filters=1,
+        activation=None,
+        name='conv{}'.format(layers + 1),
+        use_bias=False,
+        reuse=reuse)
     layer = tf.layers.batch_normalization(
         layer,
-        reuse=reuse,
         training=training,
-        name='batch_norm{}'.format(layers + 1))
-
-    # final fc layer
-    layer = tf.layers.dense(layer, 1, name='fc2', use_bias=False, reuse=reuse)
-    self.logits = tf.layers.batch_normalization(
-        layer,
-        training=training,
-        name='batch_norm{}'.format(layers + 2),
+        name='batch_norm{}'.format(layers + 1),
         reuse=reuse)
+
+    self.logits = tf.identity(layer, name='logits')
 
     # build prediction op
     self.preds = tf.nn.sigmoid(self.logits)
 
   def build_loss(self, labels):
+    # reshape labels to be compatible with logits
+    labels = tf.reshape(labels, tf.shape(self.logits))
+
+    # cross entropy loss
     xentropy = tf.nn.sigmoid_cross_entropy_with_logits(
         labels=labels, logits=self.logits, name='xentropy')
     self.loss = tf.reduce_mean(xentropy, name='xentropy_mean')

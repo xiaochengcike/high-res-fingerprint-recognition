@@ -8,7 +8,7 @@ import os
 import argparse
 import numpy as np
 
-import pore_window_detector
+import pore_sliding_window_detector
 import polyu
 import util
 import validation
@@ -21,13 +21,13 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
     windows_pl, labels_pl = util.window_placeholder_inputs()
 
     # build train related ops
-    pore_det = pore_window_detector.PoreDetector(windows_pl,
-                                                 dataset.train.window_size)
+    pore_det = pore_sliding_window_detector.PoreDetector(
+        windows_pl, dataset.train.window_size)
     pore_det.build_loss(labels_pl)
     pore_det.build_train(learning_rate)
 
     # builds validation inference graph
-    val_pores = pore_window_detector.PoreDetector(
+    val_pores = pore_sliding_window_detector.PoreDetector(
         windows_pl, dataset.train.window_size, training=False, reuse=True)
 
     # add summary to plot loss, f score, tdr and fdr
