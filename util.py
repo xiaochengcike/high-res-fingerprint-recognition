@@ -52,7 +52,7 @@ def create_dirs(log_dir_path, batch_size, learning_rate, label_mode,
   tf.gfile.MakeDirs(log_dir)
   tf.gfile.MakeDirs(plot_dir)
 
-  return log_dir, train_dir, plot_dir
+  return log_dir
 
 
 def plot(tdr, fdr, path):

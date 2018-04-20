@@ -14,8 +14,11 @@ import util
 import validation
 
 
-def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
-          train_dir, plot_dir):
+def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
+  # other directories paths
+  train_dir = os.path.join(log_dir, 'train')
+  plot_dir = os.path.join(log_dir, 'plot')
+
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
     windows_pl, labels_pl = util.window_placeholder_inputs()
@@ -118,8 +121,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
 def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
          max_steps, learning_rate, batch_size, tolerance):
   # create folders to save train resources
-  log_dir, train_dir, plot_dir = util.create_dirs(
-      log_dir_path, batch_size, learning_rate, label_mode, label_size)
+  log_dir = util.create_dirs(log_dir_path, batch_size, learning_rate,
+                             label_mode, label_size)
 
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')
@@ -134,8 +137,7 @@ def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
   print('Loaded.')
 
   # train
-  train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
-        train_dir, plot_dir)
+  train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir)
 
 
 if __name__ == '__main__':
