@@ -121,8 +121,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
 def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
          max_steps, learning_rate, batch_size, tolerance):
   # create folders to save train resources
-  log_dir = util.create_dirs(log_dir_path, batch_size, learning_rate,
-                             label_mode, label_size)
+  log_dir = util.create_dirs(log_dir_path, batch_size, learning_rate)
 
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')

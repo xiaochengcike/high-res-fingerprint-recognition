@@ -39,13 +39,11 @@ def fill_window_feed_dict(dataset, windows_pl, labels_pl, batch_size):
   return feed_dict
 
 
-def create_dirs(log_dir_path, batch_size, learning_rate, label_mode,
-                label_size):
+def create_dirs(log_dir_path, batch_size, learning_rate):
   import datetime
   timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-  log_dir = os.path.join(
-      log_dir_path, 'm-{}_sz-{}_bs-{}_lr-{:.0e}_t-{}'.format(
-          label_mode, label_size, batch_size, learning_rate, timestamp))
+  log_dir = os.path.join(log_dir_path, 'bs-{}_lr-{:.0e}_t-{}'.format(
+      batch_size, learning_rate, timestamp))
   plot_dir = os.path.join(log_dir, 'plot')
   train_dir = os.path.join(log_dir, 'train')
   tf.gfile.MakeDirs(train_dir)
