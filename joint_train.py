@@ -120,7 +120,7 @@ def train(det_dataset, desc_dataset, log_dir):
               sep='\n')
 
           # description validation
-          eer, desc_thr = validation.report_recognition_eer(
+          eer = validation.report_recognition_eer(
               windows_pl, labels_pl, thresholds_pl, desc_dataset.val,
               FLAGS.thr_res, val_net.desc_val, sess, FLAGS.window_size,
               FLAGS.desc_batch_sz,
