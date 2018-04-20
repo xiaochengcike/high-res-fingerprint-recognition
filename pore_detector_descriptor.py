@@ -64,7 +64,7 @@ class Net:
 
     # descriptors
     descs_layer = tf.reshape(descs_layer, (-1, 128))
-    self.descs = tf.nn.normalize_l2(descs_layer, axis=1, name='descriptors')
+    self.descs = tf.nn.l2_normalize(descs_layer, axis=1, name='descriptors')
 
   def build_detection_loss(self, labels):
     # reshape labels to be compatible with logits
