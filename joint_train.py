@@ -123,7 +123,7 @@ def train(det_dataset, desc_dataset, log_dir):
           eer = validation.report_recognition_eer(
               windows_pl, labels_pl, thresholds_pl, desc_dataset.val,
               FLAGS.thr_res, val_net.desc_val, sess, FLAGS.window_size,
-              FLAGS.desc_batch_sz,
+              FLAGS.desc_batch_sz, desc_dataset.val.n_labels -
               (FLAGS.desc_batch_sz % desc_dataset.val.n_labels),
               FLAGS.val_steps)
           print('Description:', '\tEER = {}'.format(eer))
