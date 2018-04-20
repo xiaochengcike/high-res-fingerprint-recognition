@@ -209,10 +209,10 @@ def report_statistics_by_thresholds(
   return true_pos, true_neg, false_pos, false_neg
 
 
-def report_equal_error_rate(images_pl, labels_pl, thresholds_pl, dataset,
-                            threshold_resolution, statistics_op, session,
-                            window_size, batch_size, classes_by_batch,
-                            total_steps):
+def report_recognition_eer(images_pl, labels_pl, thresholds_pl, dataset,
+                           threshold_resolution, statistics_op, session,
+                           window_size, batch_size, classes_by_batch,
+                           total_steps):
   true_pos, true_neg, false_pos, false_neg = report_statistics_by_thresholds(
       images_pl, labels_pl, thresholds_pl, dataset,
       np.arange(0, 2 + threshold_resolution,
