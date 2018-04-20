@@ -59,7 +59,7 @@ class Net:
         use_bias=False,
         name='desc_conv',
         reuse=reuse)
-    descs_layer = tf.layers.batch_norm(
+    descs_layer = tf.layers.batch_normalization(
         descs_layer, training=training, name='descs_batch_norm', reuse=reuse)
 
     # descriptors
