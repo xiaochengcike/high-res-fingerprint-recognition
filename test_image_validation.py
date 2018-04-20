@@ -29,8 +29,8 @@ def main(model_dir, polyu_path, window_size, batch_size):
     windows_pl, labels_pl = util.window_placeholder_inputs()
 
     # builds inference graph
-    pore_det = pore_window_detector.PoreDetector(windows_pl,
-                                                 dataset.train.window_size)
+    pore_det = pore_window_detector.PoreDetector(
+        windows_pl, dataset.train.window_size, training=False)
 
     # add summary to plot f score, tdr and fdr
     f_score_pl = tf.placeholder(tf.float32, shape=())

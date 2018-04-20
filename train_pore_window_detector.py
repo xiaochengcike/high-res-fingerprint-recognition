@@ -20,13 +20,15 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
     # gets placeholders for windows and labels
     windows_pl, labels_pl = util.window_placeholder_inputs()
 
-    # builds inference graph
+    # build train related ops
     pore_det = pore_window_detector.PoreDetector(windows_pl,
                                                  dataset.train.window_size)
-
-    # build train related ops
     pore_det.build_loss(labels_pl)
     pore_det.build_train(learning_rate)
+
+    # builds validation inference graph
+    val_pores = pore_window_detector.PoreDetector(
+        windows_pl, dataset.train.window_size, training=False, reuse=True)
 
     # add summary to plot loss, f score, tdr and fdr
     f_score_pl = tf.placeholder(tf.float32, shape=())
@@ -72,7 +74,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir,
         if step % 1000 == 0:
           print('Evaluation:')
           tdrs, fdrs, f_score, fdr, tdr, thr = validation.by_windows(
-              sess, pore_det.preds, batch_size, windows_pl, labels_pl,
+              sess, val_pores.preds, batch_size, windows_pl, labels_pl,
               dataset.val)
           print(
               '\tTDR = {}'.format(tdr),
