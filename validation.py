@@ -7,7 +7,8 @@ import numpy as np
 import util
 
 
-def by_windows(sess, preds, batch_size, windows_pl, labels_pl, dataset):
+def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
+                         dataset):
   # initialize dataset statistics
   true_preds = []
   false_preds = []
