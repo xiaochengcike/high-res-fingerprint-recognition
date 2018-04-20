@@ -114,7 +114,7 @@ def create_dirs(log_dir_path, batch_size, learning_rate):
   return log_dir
 
 
-def plot(tdr, fdr, path):
+def plot_precision_recall(tdr, fdr, path):
   plt.plot(tdr, 1 - fdr, 'g-')
   plt.xlabel('recall')
   plt.ylabel('precision')
