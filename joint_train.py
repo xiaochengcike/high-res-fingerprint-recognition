@@ -196,8 +196,7 @@ def load_detection_dataset(polyu_path):
 
 def main():
   # create folders to save train resources
-  log_dir = util.create_dirs(FLAGS.log_dir_path, FLAGS.det_batch_sz,
-                             FLAGS.det_lr)
+  log_dir = util.create_dirs(FLAGS.log_dir, FLAGS.det_batch_sz, FLAGS.det_lr)
 
   # load datasets
   det_dataset = load_detection_dataset(FLAGS.polyu_dir)
