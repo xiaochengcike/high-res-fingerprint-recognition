@@ -26,7 +26,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
 
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
-    windows_pl, labels_pl = util.window_placeholder_inputs()
+    windows_pl, labels_pl = util.placeholder_inputs()
 
     # builds inference graph
     pore_det = pore_window_detector.PoreDetector(

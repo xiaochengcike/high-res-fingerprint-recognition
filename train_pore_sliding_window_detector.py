@@ -21,7 +21,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
 
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
-    windows_pl, labels_pl = util.window_placeholder_inputs()
+    windows_pl, labels_pl = util.placeholder_inputs()
 
     # build train related ops
     pore_det = pore_sliding_window_detector.PoreDetector(

@@ -23,10 +23,10 @@ def to_windows(img, window_size):
   return windows
 
 
-def window_placeholder_inputs():
-  windows = tf.placeholder(tf.float32, [None, None, None, 1])
+def placeholder_inputs():
+  images = tf.placeholder(tf.float32, [None, None, None, 1])
   labels = tf.placeholder(tf.float32, [None, 1])
-  return windows, labels
+  return images, labels
 
 
 def fill_detection_feed_dict(dataset, windows_pl, labels_pl, batch_size):
