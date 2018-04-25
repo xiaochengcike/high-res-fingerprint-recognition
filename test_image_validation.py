@@ -49,8 +49,8 @@ def main(model_dir, polyu_path, window_size, batch_size):
     with tf.Session() as sess:
       util.restore_model(sess, model_dir)
 
-      image_f_score, image_tdr, image_fdr, inter_thr = validation.by_images(
-          sess, pore_det.preds, batch_size, windows_pl, dataset.val)
+      image_f_score, image_tdr, image_fdr, inter_thr = validation.detection_by_images(
+          sess, pore_det.preds, windows_pl, dataset.val)
       print(
           'Whole image evaluation:',
           '\tTDR = {}'.format(image_tdr),

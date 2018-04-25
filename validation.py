@@ -78,7 +78,7 @@ def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
       fdrs, np.float32), best_f_score, best_fdr, best_tdr, best_thr
 
 
-def by_images(sess, pred_op, batch_size, windows_pl, dataset):
+def detection_by_images(sess, pred_op, images_pl, dataset):
   window_size = dataset.window_size
   half_window_size = window_size // 2
   preds = []
@@ -90,21 +90,10 @@ def by_images(sess, pred_op, batch_size, windows_pl, dataset):
     img = img[0]
     label = label[0]
 
-    # convert 'img' to windows
-    windows = np.array(util.to_windows(img, window_size))
-
-    # predict for each window
-    pred = []
-    for i in range((len(windows) + batch_size - 1) // batch_size):
-      # sample batch
-      batch_windows = windows[batch_size * i:batch_size * (i + 1)].reshape(
-          [-1, window_size, window_size, 1])
-
-      # predict for batch
-      batch_preds = sess.run(pred_op, feed_dict={windows_pl: batch_windows})
-
-      # update image pred
-      pred.extend(batch_preds)
+    # predict for each image
+    pred = sess.run(
+        pred_op,
+        feed_dict={images_pl: np.reshape(img, (-1, ) + img.shape + (1, ))})
 
     # put predictions in image format
     pred = np.array(pred).reshape(img.shape[0] - window_size + 1,
