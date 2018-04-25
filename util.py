@@ -272,9 +272,7 @@ def restore_model(sess, model_dir):
   saver = tf.train.Saver()
   ckpt = tf.train.get_checkpoint_state(model_dir)
   if ckpt and ckpt.model_checkpoint_path:
-    print('Restoring model: {}'.format(ckpt.model_checkpoint_path))
     saver.restore(sess, ckpt.model_checkpoint_path)
-    print('Restored.')
   else:
     raise IOError('No model found in {}.'.format(model_dir))
 
