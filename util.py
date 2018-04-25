@@ -289,3 +289,13 @@ def load_images(folder_path):
       images.append(load_image(os.path.join(folder_path, image_path)))
 
   return images
+
+
+def load_images_with_names(images_dir):
+  images = load_images(images_dir)
+  image_names = [
+      path.split('.')[0] for path in sorted(os.listdir(images_dir))
+      if path.endswith(('.jpg', '.bmp', '.png'))
+  ]
+
+  return images, image_names
