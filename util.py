@@ -299,3 +299,9 @@ def load_images_with_names(images_dir):
   ]
 
   return images, image_names
+
+
+def save_dets_txt(dets, filename):
+  with open(filename, 'w') as f:
+    for coord in dets:
+      print(coord[0], coord[1], file=f)
