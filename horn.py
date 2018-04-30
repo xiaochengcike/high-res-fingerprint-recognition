@@ -71,6 +71,7 @@ def align(L, R, weights=None, scale=True):
     w = w[mask]
 
     # compute S pseudoinverse
+    w = np.expand_dims(w, 1)
     lhs = np.expand_dims(u / np.sqrt(w), axis=-1)
     rhs = np.expand_dims(u, axis=1)
     S_pseudoinv = np.sum(np.matmul(lhs, rhs), axis=0)
@@ -89,6 +90,7 @@ def align(L, R, weights=None, scale=True):
     if np.linalg.det(A) < 0:
       A = A_base - tfix
   else:
+    w = np.expand_dims(w, 1)
     lhs = np.expand_dims(u / np.sqrt(w), axis=-1)
     rhs = np.expand_dims(u, axis=1)
     S_inv = np.sum(np.matmul(lhs, rhs), axis=0)
