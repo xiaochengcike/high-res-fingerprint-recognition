@@ -119,7 +119,7 @@ if __name__ == '__main__':
   pts1 = util.load_dets_txt(pts1_path)
   pts2 = util.load_dets_txt(pts2_path)
 
-  pairs = matching.find_correspondences(img1, pts1, img2, pts2)
+  pairs = matching.find_correspondences(img1, pts1, img2, pts2, scale=8.0)
   max_dist = np.max(np.asarray(pairs)[:, 2])
   L = []
   R = []
