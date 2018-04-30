@@ -304,4 +304,31 @@ def load_images_with_names(images_dir):
 def save_dets_txt(dets, filename):
   with open(filename, 'w') as f:
     for coord in dets:
-      print(coord[0], coord[1], file=f)
+      print(coord[0] + 1, coord[1] + 1, file=f)
+
+
+def load_dets_txt(pts_path):
+  pts = []
+  with open(pts_path, 'r') as f:
+    for line in f:
+      row, col = [int(t) for t in line.split()]
+      pts.append((row - 1, col - 1))
+
+  return pts
+
+
+def draw_matches(img1, pts1, img2, pts2, pairs):
+  matches = []
+  for pair in pairs:
+    matches.append(
+        cv2.DMatch(
+            _distance=pair[2], _queryIdx=pair[0], _trainIdx=pair[1],
+            _imgIdx=0))
+
+  pts1 = list(np.asarray(pts1)[:, [1, 0]])
+  pts2 = list(np.asarray(pts2)[:, [1, 0]])
+  matched = cv2.drawMatches(img1,
+                            cv2.KeyPoint.convert(pts1), img2,
+                            cv2.KeyPoint.convert(pts2), matches[:10], None)
+
+  return matched
