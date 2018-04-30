@@ -102,19 +102,6 @@ def align(L, R, weights=None, scale=True):
   return A, b, s
 
 
-def bilinear_interpolation(x, y, f):
-  x1 = int(x)
-  y1 = int(y)
-  x2 = x1 + 1
-  y2 = y1 + 1
-
-  fq = [[f[x1, y1], f[x1, y2]], [f[x2, y1], f[x1, y2]]]
-  lhs = [[x2 - x, x - x1]]
-  rhs = [y2 - y, y - y1]
-
-  return np.dot(np.dot(lhs, fq), rhs)
-
-
 if __name__ == '__main__':
   import sys
   import cv2
@@ -152,7 +139,8 @@ if __name__ == '__main__':
     for ref_col in range(img1.shape[1]):
       t_row, t_col = np.dot(A.T, (np.array([ref_row, ref_col]) - b) / s)
       if 0 <= t_row < img1.shape[0] - 1 and 0 <= t_col < img1.shape[1] - 1:
-        aligned[ref_row, ref_col] = bilinear_interpolation(t_row, t_col, img1)
+        aligned[ref_row, ref_col] = util.bilinear_interpolation(
+            t_row, t_col, img1)
 
   diff = np.stack([img2, img2, aligned], axis=-1)
   cv2.imshow('img', img2)

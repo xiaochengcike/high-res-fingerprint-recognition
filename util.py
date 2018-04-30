@@ -332,3 +332,16 @@ def draw_matches(img1, pts1, img2, pts2, pairs):
                             cv2.KeyPoint.convert(pts2), matches[:10], None)
 
   return matched
+
+
+def bilinear_interpolation(x, y, f):
+  x1 = int(x)
+  y1 = int(y)
+  x2 = x1 + 1
+  y2 = y1 + 1
+
+  fq = [[f[x1, y1], f[x1, y2]], [f[x2, y1], f[x1, y2]]]
+  lhs = [[x2 - x, x - x1]]
+  rhs = [y2 - y, y - y1]
+
+  return np.dot(np.dot(lhs, fq), rhs)
