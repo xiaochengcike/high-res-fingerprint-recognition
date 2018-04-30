@@ -68,7 +68,7 @@ def matching(img1,
              thr=0.8,
              mode='basic',
              fast=True):
-  pairs = find_correspondences(img1, pt1, img2, pts2, scale, thr, mode, fast)
+  pairs = find_correspondences(img1, pts1, img2, pts2, scale, thr, fast)
 
   if mode == 'basic':
     return len(pairs)
