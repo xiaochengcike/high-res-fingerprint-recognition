@@ -25,10 +25,10 @@ def align(L, R, weights=None, scale=True):
 
   Returns:
     A, b: a transformation such that
-        L @ A + b ~ R
-      and the squared residues are as low as
-      possible. See the paper (Horn et al., 1988)
-      for details.
+        s * (L @ A) + b ~ R,
+      making the sum of squares of errors the
+      least possible. See the paper (Horn et al.,
+      1988) for details.
   '''
   L = np.asarray(L)
   R = np.asarray(R)
@@ -96,13 +96,23 @@ def align(L, R, weights=None, scale=True):
     S_inv = np.sum(np.matmul(lhs, rhs), axis=0)
     A = np.dot(M, S_inv)
 
-  # include scale in A
-  A *= s
-
   # find translation 'b'
-  b = R_centroid - np.dot(A, L_centroid)
+  b = R_centroid - s * np.dot(A, L_centroid)
 
-  return A, b
+  return A, b, s
+
+
+def bilinear_interpolation(x, y, f):
+  x1 = int(x)
+  y1 = int(y)
+  x2 = x1 + 1
+  y2 = y1 + 1
+
+  fq = [[f[x1, y1], f[x1, y2]], [f[x2, y1], f[x1, y2]]]
+  lhs = [[x2 - x, x - x1]]
+  rhs = [y2 - y, y - y1]
+
+  return np.dot(np.dot(lhs, fq), rhs)
 
 
 if __name__ == '__main__':
@@ -134,21 +144,21 @@ if __name__ == '__main__':
     w.append((max_dist - pair[2]) / max_dist)
   if not weighted:
     w = None
-  A, b = align(L, R, weights=w)
+  A, b, s = align(L, R, weights=w)
 
   # generate aligned images
-  aligned1 = np.zeros_like(img1, dtype=img1.dtype)
+  aligned = np.zeros_like(img1, dtype=img1.dtype)
   for ref_row in range(img1.shape[0]):
     for ref_col in range(img1.shape[1]):
-      t_row, t_col = np.dot(A, np.array([ref_row, ref_col])) + b
-      if 0 <= t_row + 0.5 < img1.shape[0] and 0 <= t_col + 0.5 < img1.shape[1]:
-        aligned1[int(t_row + 0.5), int(t_col + 0.5)] = img1[ref_row, ref_col]
+      t_row, t_col = np.dot(A.T, (np.array([ref_row, ref_col]) - b) / s)
+      if 0 <= t_row < img1.shape[0] - 1 and 0 <= t_col < img1.shape[1] - 1:
+        aligned[ref_row, ref_col] = bilinear_interpolation(t_row, t_col, img1)
 
-  aligned2 = np.zeros_like(img2, dtype=img2.dtype)
-  aligned2[np.nonzero(aligned1)] = img2[np.nonzero(aligned1)]
-
-  matched = util.draw_matches(img1, pts1, img2, pts2, pairs)
-  cv2.imshow('correspondences', matched)
-  cv2.imshow('aligned1', aligned1)
-  cv2.imshow('aligned2', aligned2)
+  diff = np.stack([img2, img2, aligned], axis=-1)
+  cv2.imshow('img', img2)
+  cv2.imshow('aligned', aligned)
+  cv2.imshow('diff', diff)
   cv2.waitKey(0)
+  cv2.imwrite('aligned.png', aligned)
+  cv2.imwrite('diff.png', diff)
+  cv2.imwrite('img.png', img2)
