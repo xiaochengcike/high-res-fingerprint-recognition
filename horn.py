@@ -6,25 +6,55 @@ from six.moves import range
 import numpy as np
 
 
-def align(L, R):
+def align(L, R, weights=None, scale=True):
+  '''
+  Use Horn's closed form absolute orientation
+  method with orthogonal matrices to align a set
+  of points L to a set of points R. L and R are
+  sets in which each row is a point and the ith
+  point of L corresponds to the ith point of R.
+
+  Args:
+    L: set of points to align, a point per row.
+    R: set of points to align to, a point per row.
+    weights: an array of weights in [0, 1] for
+      each correspondence. If 'None',
+      correspondences are unweighted.
+    scale: whether should also solve the scale. If
+      'False', s = 1.
+
+  Returns:
+    A, b: a transformation such that
+        L @ A + b ~ R
+      and the squared residues are as low as
+      possible. See the paper (Horn et al., 1988)
+      for details.
+  '''
   L = np.asarray(L)
   R = np.asarray(R)
+  if weights is None:
+    weights = 1
+  else:
+    weights = np.expand_dims(weights, axis=-1)
 
   # compute points' centroids
-  L_centroid = np.mean(L, axis=0)
-  R_centroid = np.mean(R, axis=0)
+  L_centroid = np.mean(weights * L, axis=0)
+  R_centroid = np.mean(weights * R, axis=0)
 
   # translate points to make centroids origin
   L_ = L - L_centroid
   R_ = R - R_centroid
 
   # find scale 's'
-  Sr = np.sum(R_ * R_)
-  Sl = np.sum(L_ * L_)
-  s = np.sqrt(Sr / Sl)
+  if scale:
+    Sr = np.sum(np.reshape(weights, -1) * np.sum(R_ * R_, axis=1), axis=0)
+    Sl = np.sum(np.reshape(weights, -1) * np.sum(L_ * L_, axis=1), axis=0)
+    s = np.sqrt(Sr / Sl)
+  else:
+    s = 1
 
   # find rotation 'A'
-  M = np.dot(R_.T, L_)
+  M = np.dot(R_.T, weights * L_)
   MTM = np.dot(M.T, M)
   w, u = np.linalg.eigh(MTM)
   u = u.T
@@ -91,12 +121,18 @@ if __name__ == '__main__':
   pts2 = util.load_dets_txt(pts2_path)
 
   pairs = matching.find_correspondences(img1, pts1, img2, pts2)
+  max_dist = np.max(np.asarray(pairs)[:, 2])
   L = []
   R = []
+  w = []
+  weighted = False
   for pair in pairs:
     L.append(pts1[pair[0]])
     R.append(pts2[pair[1]])
-  A, b = align(L, R)
+    w.append((max_dist - pair[2]) / max_dist)
+  if not weighted:
+    w = None
+  A, b = align(L, R, weights=w)
 
   # generate aligned images
   aligned1 = np.zeros_like(img1, dtype=img1.dtype)
@@ -114,5 +150,3 @@ if __name__ == '__main__':
   cv2.imshow('aligned1', aligned1)
   cv2.imshow('aligned2', aligned2)
   cv2.waitKey(0)
-  cv2.imwrite('aligned1.png', aligned1)
-  cv2.imwrite('aligned2.png', aligned2)
