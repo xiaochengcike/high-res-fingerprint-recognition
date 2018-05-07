@@ -109,8 +109,10 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
             summary_writer.add_summary(score_summary, global_step=step)
 
           # plot recall vs precision
-          buf = util.plot(tdrs, fdrs,
-                          os.path.join(plot_dir, '{}.png'.format(step)))
+          buf = util.plot_precision_recall(tdrs, fdrs,
+                                           os.path.join(
+                                               plot_dir,
+                                               '{}.png'.format(step)))
 
           # write plot to summary
           plot_summary = sess.run(
