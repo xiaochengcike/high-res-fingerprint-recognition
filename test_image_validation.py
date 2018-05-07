@@ -7,7 +7,7 @@ import tensorflow as tf
 import os
 import argparse
 
-import pore_window_detector
+import pore_sliding_window_detector
 import validation
 import polyu
 import util
@@ -17,7 +17,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.PolyUDetectionDataset(
+  dataset = polyu.DetectionDataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
@@ -29,7 +29,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
     windows_pl, labels_pl = util.placeholder_inputs()
 
     # builds inference graph
-    pore_det = pore_window_detector.PoreDetector(
+    pore_det = pore_sliding_window_detector.PoreDetector(
         windows_pl, dataset.train.window_size, training=False)
 
     # add summary to plot f score, tdr and fdr
