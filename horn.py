@@ -119,34 +119,58 @@ if __name__ == '__main__':
   pts1 = util.load_dets_txt(pts1_path)
   pts2 = util.load_dets_txt(pts2_path)
 
-  pairs = matching.find_correspondences(img1, pts1, img2, pts2, scale=8.0)
-  max_dist = np.max(np.asarray(pairs)[:, 2])
-  L = []
-  R = []
-  w = []
+  # iteratively align, until convergence
+  l = 500
+  euclidean_weight = -1
+  mse = np.inf
   weighted = False
-  for pair in pairs:
-    L.append(pts1[pair[0]])
-    R.append(pts2[pair[1]])
-    w.append((max_dist - pair[2]) / max_dist)
-  if not weighted:
-    w = None
-  A, b, s = align(L, R, weights=w)
+  while not np.isclose(mse * euclidean_weight, l):
+    # compute weight of correspondences' euclidean distance
+    euclidean_weight = l / mse
 
-  # generate aligned images
-  aligned = np.zeros_like(img1, dtype=img1.dtype)
-  for ref_row in range(img1.shape[0]):
-    for ref_col in range(img1.shape[1]):
-      t_row, t_col = np.dot(A.T, (np.array([ref_row, ref_col]) - b) / s)
-      if 0 <= t_row < img1.shape[0] - 1 and 0 <= t_col < img1.shape[1] - 1:
-        aligned[ref_row, ref_col] = util.bilinear_interpolation(
-            t_row, t_col, img1)
+    # find correspondences
+    pairs = matching.find_correspondences(
+        img1, pts1, img2, pts2, scale=8.0, euclidean_weight=euclidean_weight)
 
-  diff = np.stack([img2, img2, aligned], axis=-1)
-  cv2.imshow('img', img2)
-  cv2.imshow('aligned', aligned)
-  cv2.imshow('diff', diff)
-  cv2.waitKey(0)
+    # align
+    max_dist = np.max(np.asarray(pairs)[:, 2])
+    L = []
+    R = []
+    w = []
+    for pair in pairs:
+      L.append(pts1[pair[0]])
+      R.append(pts2[pair[1]])
+      w.append((max_dist - pair[2]) / max_dist)
+    if not weighted:
+      w = None
+    A, b, s = align(L, R, weights=w)
+
+    # generate aligned images
+    aligned = np.zeros_like(img1, dtype=img1.dtype)
+    for ref_row in range(img1.shape[0]):
+      for ref_col in range(img1.shape[1]):
+        t_row, t_col = np.dot(A.T, (np.array([ref_row, ref_col]) - b) / s)
+        if 0 <= t_row < img1.shape[0] - 1 and 0 <= t_col < img1.shape[1] - 1:
+          aligned[ref_row, ref_col] = util.bilinear_interpolation(
+              t_row, t_col, img1)
+
+    # display current alignment
+    diff = np.stack([img2, img2, aligned], axis=-1)
+    cv2.imshow('prealignment', img1)
+    cv2.imshow('target', img2)
+    cv2.imshow('aligned', aligned)
+    cv2.imshow('diff', diff)
+    cv2.waitKey(0)
+
+    # compute alignment mse
+    L = np.array(L)
+    R = np.array(R)
+    error = R - (s * np.dot(L, A.T) + b)
+    dists = np.sum(error * error, axis=1)
+    mse = np.mean(dists)
+    print(mse)
+
+  # save final results
   cv2.imwrite('aligned.png', aligned)
   cv2.imwrite('diff.png', diff)
   cv2.imwrite('img.png', img2)
