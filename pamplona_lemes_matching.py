@@ -26,14 +26,20 @@ def extract_descriptors(img, pts, scale):
   return descs
 
 
-def find_correspondences(img1, pts1, img2, pts2, scale=4.0, thr=0.8,
+def find_correspondences(img1,
+                         pts1,
+                         img2,
+                         pts2,
+                         scale=4.0,
+                         thr=0.8,
+                         euclidean_weight=0,
                          fast=True):
   # extract descriptors from both images
   descs1 = extract_descriptors(img1, pts1, scale)
   descs2 = extract_descriptors(img2, pts2, scale)
 
   # match descriptors
-  if fast:
+  if fast and euclidean_weight == 0:
     # match descs2 to descs1
     flann1 = cv2.flann_Index(
         descs1, params=dict(algorithm=0, trees=4), distType=1)
@@ -44,7 +50,32 @@ def find_correspondences(img1, pts1, img2, pts2, scale=4.0, thr=0.8,
         descs2, params=dict(algorithm=0, trees=4), distType=1)
     indices2, dists2 = flann2.knnSearch(descs1, knn=2)
   else:
-    pass
+    # compute descriptors' pairwise distances
+    sqr1 = np.sum(descs1 * descs1, axis=1, keepdims=True)
+    sqr2 = np.sum(descs2 * descs2, axis=1)
+    D = sqr1 - 2 * np.matmul(descs1, descs2.T) + sqr2
+
+    # add points' euclidean distance
+    if euclidean_weight != 0:
+      # assure pts are np array
+      pts1 = np.array(pts1)
+      pts2 = np.array(pts2)
+
+      # compute points' pairwise distances
+      sqr1 = np.sum(pts1 * pts1, axis=1, keepdims=True)
+      sqr2 = np.sum(pts2 * pts2, axis=1)
+      euclidean_D = sqr1 - 2 * np.matmul(pts1, pts2.T) + sqr2
+
+      # add to overral keypoints distance
+      D += euclidean_weight * euclidean_D
+
+    # match descs2 to descs1
+    indices1 = np.argsort(D.T)[:, :2]
+    dists1 = np.sort(D.T)[:, :2]
+
+    # match descs1 to descs2
+    indices2 = np.argsort(D)[:, :2]
+    dists2 = np.sort(D)[:, :2]
 
   # keep bidirectional corresponding points
   pairs = []
