@@ -9,7 +9,7 @@ import argparse
 import os
 
 import util
-import pore_detector_descriptor
+import pore_sliding_window_detector
 
 FLAGS = None
 
@@ -25,7 +25,7 @@ def main():
     images_pl, _ = util.placeholder_inputs()
 
     print('Building graph...')
-    net = pore_detector_descriptor.Net(
+    net = pore_sliding_window_detector.PoreDetector(
         images_pl, FLAGS.window_size, training=False)
     print('Done.')
 
@@ -39,7 +39,7 @@ def main():
         print('Extracting pores in image {}...'.format(image_names[i]))
         # predict probability of pores
         pred = sess.run(
-            net.dets,
+            net.preds,
             feed_dict={images_pl: np.reshape(img, (1, ) + img.shape + (1, ))})
 
         # add borders lost in convolution
@@ -48,12 +48,12 @@ def main():
                              (half_window_size, half_window_size)), 'constant')
 
         # convert into coordinates
-        pick = pred > 0.05
+        pick = pred > 0.9
         coords = np.argwhere(pick)
         probs = pred[pick]
 
         # filter detections with nms
-        dets, _ = util.nms(coords, probs, 9, 0.1)
+        dets, _ = util.nms(coords, probs, 7, 0.1)
 
         # save results
         filename = os.path.join(FLAGS.results_dir,
