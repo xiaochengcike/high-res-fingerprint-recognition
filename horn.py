@@ -102,6 +102,18 @@ def align(L, R, weights=None, scale=True):
   return A, b, s
 
 
+def inside(img, pt):
+  return 0 <= pt[0] < img.shape[0] and 0 <= pt[1] < img.shape[1]
+
+
+def transf(pt, A, s, b):
+  return s * np.dot(pt, A.T) + b
+
+
+def inv_transf(pt, A, s, b):
+  return np.dot(pt - b, A) / s
+
+
 if __name__ == '__main__':
   import sys
   import cv2
@@ -124,13 +136,23 @@ if __name__ == '__main__':
   euclidean_weight = -1
   mse = np.inf
   weighted = False
+
+  A = np.identity(2)
+  s = 1
+  b = np.array([0, 0])
   while not np.isclose(mse * euclidean_weight, l):
     # compute weight of correspondences' euclidean distance
     euclidean_weight = l / mse
 
     # find correspondences
     pairs = matching.find_correspondences(
-        img1, pts1, img2, pts2, scale=8.0, euclidean_weight=euclidean_weight)
+        img1,
+        pts1,
+        img2,
+        pts2,
+        scale=8.0,
+        euclidean_weight=euclidean_weight,
+        transf=lambda x: transf(x, A, s, b))
 
     # align
     max_dist = np.max(np.asarray(pairs)[:, 2])
@@ -168,7 +190,14 @@ if __name__ == '__main__':
     error = R - (s * np.dot(L, A.T) + b)
     dists = np.sum(error * error, axis=1)
     mse = np.mean(dists)
-    print(mse)
+    print('mse = {}'.format(mse))
+
+    # filter points outside image
+    pts1 = filter(lambda pt: inside(img2, transf(pt, A, s, b)), pts1)
+    pts1 = list(pts1)
+
+    pts2 = filter(lambda pt: inside(img1, inv_transf(pt, A, s, b)), pts2)
+    pts2 = list(pts2)
 
   # save final results
   cv2.imwrite('aligned.png', aligned)

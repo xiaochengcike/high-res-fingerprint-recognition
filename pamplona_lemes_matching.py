@@ -33,6 +33,7 @@ def find_correspondences(img1,
                          scale=4.0,
                          thr=0.8,
                          euclidean_weight=0,
+                         transf=None,
                          fast=True):
   # extract descriptors from both images
   descs1 = extract_descriptors(img1, pts1, scale)
@@ -56,9 +57,9 @@ def find_correspondences(img1,
     D = sqr1 - 2 * np.matmul(descs1, descs2.T) + sqr2
 
     # add points' euclidean distance
-    if euclidean_weight != 0:
+    if euclidean_weight != 0 and transf is not None:
       # assure pts are np array
-      pts1 = np.array(pts1)
+      pts1 = transf(np.array(pts1))
       pts2 = np.array(pts2)
 
       # compute points' pairwise distances
