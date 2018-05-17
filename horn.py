@@ -80,8 +80,8 @@ def align(L, R, weights=None, scale=True):
     u, _, v = np.linalg.svd(MTM)
 
     # compute tomasi's fix
-    lhs = np.expand_dims(u.T[-1], 0)
-    rhs = np.expand_dims(v.T[-1], 0).T
+    lhs = np.expand_dims(u[-1], axis=-1)
+    rhs = np.expand_dims(v[-1], axis=0)
     tfix = np.dot(lhs, rhs)
 
     # find whether should sum or subtract
