@@ -116,7 +116,13 @@ def _horn(L, R, weights=None, scale=True):
   return A, b, s
 
 
-def iterative(img1, pts1, img2, pts2, euclidean_lambda=500, weighted=False):
+def iterative(img1,
+              pts1,
+              img2,
+              pts2,
+              euclidean_lambda=500,
+              weighted=False,
+              max_iter=10):
   '''
   Iteratively align image 'img1' to 'img2', using
   Horn's absolute orientation method to minimize
@@ -144,6 +150,7 @@ def iterative(img1, pts1, img2, pts2, euclidean_lambda=500, weighted=False):
       correspondence confidence - computed as
       the reciprocal of its distance - in
       Horn's method.
+    max_iter: Maximum number of iterations.
 
   Returns:
     A, b, s: the found alignment. For further
@@ -157,7 +164,11 @@ def iterative(img1, pts1, img2, pts2, euclidean_lambda=500, weighted=False):
   b = np.array([0, 0])
 
   # iteratively align
-  while not np.isclose(mse * euclidean_weight, euclidean_lambda):
+  for _ in range(max_iter):
+    # convergence criterion
+    if np.isclose(mse * euclidean_weight, euclidean_lambda):
+      break
+
     # compute weight of correspondences' euclidean distance
     euclidean_weight = euclidean_lambda / mse
 
