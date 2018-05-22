@@ -182,6 +182,10 @@ def iterative(img1,
         euclidean_weight=euclidean_weight,
         transf=lambda x: _transf(x, A, s, b))
 
+    # end alignment if no further correspondences are found
+    if len(pairs) == 0:
+      break
+
     # make correspondence aligned array
     if weighted:
       max_dist = np.max(np.asarray(pairs)[:, 2])
