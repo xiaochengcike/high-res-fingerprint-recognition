@@ -183,7 +183,7 @@ def iterative(img1,
         transf=lambda x: _transf(x, A, s, b))
 
     # end alignment if no further correspondences are found
-    if len(pairs) == 0:
+    if len(pairs) <= 1:
       break
 
     # make correspondence aligned array
