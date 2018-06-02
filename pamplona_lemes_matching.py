@@ -84,10 +84,11 @@ def find_correspondences(img1,
   len_descs2 = len(descs2)
   for i in range(len_descs2):
     j = indices1[i, 0]
-    if -1 < j < len_descs1 and indices2[j, 0] == i and \
-      -1 < indices1[i, 1] < len_descs1 and -1 < indices2[j, 1] < len_descs2 \
-        and dists1[i, 0] / dists1[i, 1] < thr and dists2[j, 0] / dists2[j, 1] < thr:
-      pairs.append((j, i, dists1[i, 0]))
+    if -1 < j < len_descs1 and indices2[j, 0] == i:
+      if -1 < indices1[i, 1] < len_descs1 and -1 < indices2[j, 1] < len_descs2:
+        if dists1[i, 0] < dists1[i, 1] * thr:
+          if dists2[j, 0] < dists2[j, 1] * thr:
+            pairs.append((j, i, dists1[i, 0]))
 
   return pairs
 
