@@ -10,7 +10,7 @@ import numpy as np
 
 import pore_sliding_window_detector
 import polyu
-import util
+import utils
 import validation
 
 
@@ -21,7 +21,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
 
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
-    windows_pl, labels_pl = util.placeholder_inputs()
+    windows_pl, labels_pl = utils.placeholder_inputs()
 
     # build train related ops
     pore_det = pore_sliding_window_detector.PoreDetector(
@@ -61,8 +61,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
       sess.run(init)
 
       for step in range(1, max_steps + 1):
-        feed_dict = util.fill_detection_feed_dict(dataset.train, windows_pl,
-                                                  labels_pl, batch_size)
+        feed_dict = utils.fill_detection_feed_dict(dataset.train, windows_pl,
+                                                   labels_pl, batch_size)
 
         _, loss_value = sess.run(
             [pore_det.train, pore_det.loss], feed_dict=feed_dict)
@@ -109,10 +109,10 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
             summary_writer.add_summary(score_summary, global_step=step)
 
           # plot recall vs precision
-          buf = util.plot_precision_recall(tdrs, fdrs,
-                                           os.path.join(
-                                               plot_dir,
-                                               '{}.png'.format(step)))
+          buf = utils.plot_precision_recall(tdrs, fdrs,
+                                            os.path.join(
+                                                plot_dir,
+                                                '{}.png'.format(step)))
 
           # write plot to summary
           plot_summary = sess.run(
@@ -123,7 +123,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
 def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
          max_steps, learning_rate, batch_size, tolerance):
   # create folders to save train resources
-  log_dir = util.create_dirs(log_dir_path, batch_size, learning_rate)
+  log_dir = utils.create_dirs(log_dir_path, batch_size, learning_rate)
 
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')

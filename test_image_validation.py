@@ -10,7 +10,7 @@ import argparse
 import pore_sliding_window_detector
 import validation
 import polyu
-import util
+import utils
 
 
 def main(model_dir, polyu_path, window_size, batch_size):
@@ -26,7 +26,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
 
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
-    windows_pl, labels_pl = util.placeholder_inputs()
+    windows_pl, labels_pl = utils.placeholder_inputs()
 
     # builds inference graph
     pore_det = pore_sliding_window_detector.PoreDetector(
@@ -47,7 +47,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
     plot_summary_op = tf.summary.image('plot', expanded_plot_png)
 
     with tf.Session() as sess:
-      util.restore_model(sess, model_dir)
+      utils.restore_model(sess, model_dir)
 
       image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = validation.detection_by_images(
           sess, pore_det.preds, windows_pl, dataset.val)

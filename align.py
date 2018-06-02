@@ -227,7 +227,7 @@ def iterative(img1,
 if __name__ == '__main__':
   import sys
   import cv2
-  import util
+  import utils
 
   if len(sys.argv) < 5:
     raise Exception(
@@ -241,8 +241,8 @@ if __name__ == '__main__':
   img2 = cv2.imread(img2_path, 0)
 
   # load detection points
-  pts1 = util.load_dets_txt(pts1_path)
-  pts2 = util.load_dets_txt(pts2_path)
+  pts1 = utils.load_dets_txt(pts1_path)
+  pts2 = utils.load_dets_txt(pts2_path)
 
   A, b, s = iterative(img1, pts1, img2, pts2)
 
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     for ref_col in range(img1.shape[1]):
       t_row, t_col = np.dot(A.T, (np.array([ref_row, ref_col]) - b) / s)
       if 0 <= t_row < img1.shape[0] - 1 and 0 <= t_col < img1.shape[1] - 1:
-        aligned[ref_row, ref_col] = util.bilinear_interpolation(
+        aligned[ref_row, ref_col] = utils.bilinear_interpolation(
             t_row, t_col, img1)
 
   # display current alignment

@@ -10,7 +10,7 @@ import argparse
 import pore_detector_descriptor
 import validation
 import polyu
-import util
+import utils
 
 
 def load_detection_dataset(polyu_path):
@@ -31,7 +31,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
 
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
-    windows_pl, labels_pl = util.placeholder_inputs()
+    windows_pl, labels_pl = utils.placeholder_inputs()
 
     # builds inference graph
     print('Building graph...')
@@ -41,7 +41,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
 
     with tf.Session() as sess:
       print('Restoring model in {}...'.format(FLAGS.model_dir))
-      util.restore_model(sess, model_dir)
+      utils.restore_model(sess, model_dir)
       print('Done.')
 
       image_f_score, image_tdr, image_fdr, inter_thr = validation.detection_by_images(

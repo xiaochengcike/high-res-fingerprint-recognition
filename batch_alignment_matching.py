@@ -8,7 +8,7 @@ import os
 import cv2
 import itertools
 
-import util
+import utils
 from alignment_matching import match
 
 if __name__ == '__main__':
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
         # load pts
         pts_path = os.path.join(FLAGS.pts_dir_path, '{}.txt'.format(instance))
-        pts.append(util.load_dets_txt(pts_path))
+        pts.append(utils.load_dets_txt(pts_path))
 
         # make id2index correspondence
         id2index_dict[(subject_id, session_id, register_id)] = index

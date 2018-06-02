@@ -6,7 +6,7 @@ from six.moves import range
 import os
 import numpy as np
 
-import util
+import utils
 
 
 class _DetectionDataset:
@@ -271,7 +271,7 @@ class DetectionDataset:
                label_size=3,
                should_shuffle=True,
                one_hot=False):
-    self._images = util.load_images(images_folder_path)
+    self._images = utils.load_images(images_folder_path)
     self._labels = self._load_labels(labels_folder_path)
 
     # splits loaded according to given 'split'
@@ -528,7 +528,7 @@ class RecognitionDataset:
     labels = []
     for image_path in sorted(os.listdir(folder_path)):
       if image_path.endswith(('.jpg', '.png', '.bmp')):
-        images.append(util.load_image(os.path.join(folder_path, image_path)))
+        images.append(utils.load_image(os.path.join(folder_path, image_path)))
         labels.append(self._retrieve_label_from_image_path(image_path))
 
     return images, labels

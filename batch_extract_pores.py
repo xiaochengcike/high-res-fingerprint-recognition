@@ -8,7 +8,7 @@ import numpy as np
 import argparse
 import os
 
-import util
+import utils
 import pore_sliding_window_detector
 
 FLAGS = None
@@ -16,13 +16,13 @@ FLAGS = None
 
 def main():
   print('Loading images...')
-  images, image_names = util.load_images_with_names(FLAGS.imgs_dir)
+  images, image_names = utils.load_images_with_names(FLAGS.imgs_dir)
   print('Done.')
 
   half_window_size = FLAGS.window_size // 2
 
   with tf.Graph().as_default():
-    images_pl, _ = util.placeholder_inputs()
+    images_pl, _ = utils.placeholder_inputs()
 
     print('Building graph...')
     net = pore_sliding_window_detector.PoreDetector(
@@ -31,7 +31,7 @@ def main():
 
     with tf.Session() as sess:
       print('Restoring model in {}...'.format(FLAGS.model_dir))
-      util.restore_model(sess, FLAGS.model_dir)
+      utils.restore_model(sess, FLAGS.model_dir)
       print('Done.')
 
       # extract pores for each image
@@ -53,12 +53,12 @@ def main():
         probs = pred[pick]
 
         # filter detections with nms
-        dets, _ = util.nms(coords, probs, 7, 0.1)
+        dets, _ = utils.nms(coords, probs, 7, 0.1)
 
         # save results
         filename = os.path.join(FLAGS.results_dir,
                                 '{}.txt'.format(image_names[i]))
-        util.save_dets_txt(dets, filename)
+        utils.save_dets_txt(dets, filename)
 
 
 if __name__ == '__main__':

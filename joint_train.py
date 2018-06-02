@@ -10,7 +10,7 @@ import numpy as np
 
 import pore_detector_descriptor
 import polyu
-import util
+import utils
 import validation
 
 FLAGS = None
@@ -23,7 +23,7 @@ def train(det_dataset, desc_dataset, log_dir):
 
   with tf.Graph().as_default():
     # gets placeholders for windows and labels
-    windows_pl, labels_pl = util.placeholder_inputs()
+    windows_pl, labels_pl = utils.placeholder_inputs()
     thresholds_pl = tf.placeholder(tf.float32, [None])
 
     # build net graph
@@ -77,13 +77,13 @@ def train(det_dataset, desc_dataset, log_dir):
       # joint train loop
       for step in range(1, FLAGS.steps + 1):
         # detection train step
-        feed_dict = util.fill_detection_feed_dict(
+        feed_dict = utils.fill_detection_feed_dict(
             det_dataset.train, windows_pl, labels_pl, FLAGS.det_batch_sz)
         det_loss_value, _ = sess.run(
             [net.det_loss, net.det_train], feed_dict=feed_dict)
 
         # description train step
-        feed_dict = util.fill_description_feed_dict(
+        feed_dict = utils.fill_description_feed_dict(
             desc_dataset.train, windows_pl, labels_pl,
             FLAGS.desc_batch_sz // FLAGS.classes_by_batch,
             FLAGS.classes_by_batch, FLAGS.window_size)
@@ -158,10 +158,10 @@ def train(det_dataset, desc_dataset, log_dir):
             summary_writer.add_summary(score_summary, global_step=step)
 
           # plot recall vs precision
-          buf = util.plot_precision_recall(tdrs, fdrs,
-                                           os.path.join(
-                                               plot_dir,
-                                               '{}.png'.format(step)))
+          buf = utils.plot_precision_recall(tdrs, fdrs,
+                                            os.path.join(
+                                                plot_dir,
+                                                '{}.png'.format(step)))
 
           # plot roc?
 
@@ -199,7 +199,7 @@ def load_detection_dataset(polyu_path):
 
 def main():
   # create folders to save train resources
-  log_dir = util.create_dirs(FLAGS.log_dir, FLAGS.det_batch_sz, FLAGS.det_lr)
+  log_dir = utils.create_dirs(FLAGS.log_dir, FLAGS.det_batch_sz, FLAGS.det_lr)
 
   # load datasets
   det_dataset = load_detection_dataset(FLAGS.polyu_dir)

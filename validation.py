@@ -4,7 +4,7 @@ from __future__ import print_function
 from six.moves import range
 
 import numpy as np
-import util
+import utils
 
 
 def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
@@ -16,8 +16,8 @@ def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
 
   steps_per_epoch = (dataset.num_samples + batch_size - 1) // batch_size
   for _ in range(steps_per_epoch):
-    feed_dict = util.fill_detection_feed_dict(dataset, windows_pl, labels_pl,
-                                              batch_size)
+    feed_dict = utils.fill_detection_feed_dict(dataset, windows_pl, labels_pl,
+                                               batch_size)
 
     # evaluate batch
     batch_preds = sess.run(preds, feed_dict=feed_dict)
@@ -133,7 +133,7 @@ def detection_by_images(sess, pred_op, images_pl, dataset):
       # filter detections with nms
       dets = []
       for i in range(dataset.num_images):
-        det, _ = util.nms(coords[i], probs[i], 7, inter_thr)
+        det, _ = utils.nms(coords[i], probs[i], 7, inter_thr)
         dets.append(det)
 
       # find correspondences between detections and pores
@@ -146,7 +146,7 @@ def detection_by_images(sess, pred_op, images_pl, dataset):
         total_dets += len(dets[i])
 
         # coincidences in pore-detection and detection-pore correspondences are true detections
-        pore_corrs, det_corrs = util.matmul_corr_finding(pores[i], dets[i])
+        pore_corrs, det_corrs = utils.matmul_corr_finding(pores[i], dets[i])
         for pore_ind, pore_corr in enumerate(pore_corrs):
           if det_corrs[pore_corr] == pore_ind:
             true_dets += 1
@@ -183,7 +183,7 @@ def report_statistics_by_thresholds(
   # validate in entire dataset, as specified by user
   for _ in range(total_steps):
     # sample mini-batch
-    feed_dict = util.fill_description_feed_dict(
+    feed_dict = utils.fill_description_feed_dict(
         dataset, images_pl, labels_pl, classes_by_batch,
         batch_size // classes_by_batch, window_size)
     feed_dict[thresholds_pl] = thresholds

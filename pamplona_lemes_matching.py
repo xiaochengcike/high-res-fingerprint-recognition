@@ -6,7 +6,7 @@ from six.moves import range
 import numpy as np
 import cv2
 
-import util
+import utils
 
 
 def extract_descriptors(img, pts, scale):
@@ -112,8 +112,8 @@ def main(img1_path, pts1_path, img2_path, pts2_path):
   img2 = cv2.imread(img2_path, 0)
 
   # load detection points
-  pts1 = util.load_dets_txt(pts1_path)
-  pts2 = util.load_dets_txt(pts2_path)
+  pts1 = utils.load_dets_txt(pts1_path)
+  pts2 = utils.load_dets_txt(pts2_path)
 
   print(matching(img1, pts1, img2, pts2))
 
