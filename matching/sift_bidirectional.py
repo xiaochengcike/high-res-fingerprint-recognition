@@ -76,14 +76,7 @@ def find_correspondences(img1,
   return pairs
 
 
-def matching(img1,
-             pts1,
-             img2,
-             pts2,
-             scale=4.0,
-             thr=0.8,
-             mode='basic',
-             fast=True):
+def match(img1, pts1, img2, pts2, scale=4.0, thr=0.8, mode='basic', fast=True):
   pairs = find_correspondences(img1, pts1, img2, pts2, scale, thr, fast)
 
   if mode == 'basic':
@@ -99,7 +92,7 @@ def main(img1_path, pts1_path, img2_path, pts2_path):
   pts1 = utils.load_dets_txt(pts1_path)
   pts2 = utils.load_dets_txt(pts2_path)
 
-  print(matching(img1, pts1, img2, pts2))
+  print(match(img1, pts1, img2, pts2))
 
 
 if __name__ == '__main__':

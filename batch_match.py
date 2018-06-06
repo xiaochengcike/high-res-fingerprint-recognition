@@ -8,7 +8,6 @@ import os
 import cv2
 
 import utils
-from alignment_matching import match
 
 if __name__ == '__main__':
   # parse args
@@ -28,7 +27,18 @@ if __name__ == '__main__':
       type=str,
       default='alignment_matching.txt',
       help='Path to results file.')
+  parser.add_argument(
+      '--mode',
+      type=str,
+      default='sift',
+      help='Mode to match images. Can be "alignment" or "sift".')
   FLAGS, _ = parser.parse_known_args()
+
+  # find out which matching mode was specified
+  if FLAGS.mode == 'sift':
+    from matching.sift_bidirectional import match
+  else:
+    from matching.alignment import match
 
   # make dir path be full DBI Training path
   imgs_dir_path = os.path.join(FLAGS.imgs_dir_path, 'DBI', 'Training')

@@ -5,7 +5,7 @@ from six.moves import range
 
 import numpy as np
 
-import sift_bidirectional_matching as matching
+import matching.sift_bidirectional as matching
 
 
 def _inside(img, pt):
