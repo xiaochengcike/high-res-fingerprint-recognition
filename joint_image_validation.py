@@ -7,15 +7,15 @@ import tensorflow as tf
 import os
 import argparse
 
-import pore_detector_descriptor
-import validation
+import descriptor_detector
+import validate
 import polyu
 import utils
 
 
 def load_detection_dataset(polyu_path):
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.DetectionDataset(
+  dataset = polyu.detection.dataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
@@ -35,7 +35,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
 
     # builds inference graph
     print('Building graph...')
-    net = pore_detector_descriptor.Net(
+    net = descriptor_detector.Net(
         windows_pl, dataset.train.window_size, training=False)
     print('Done.')
 
@@ -44,7 +44,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
       utils.restore_model(sess, model_dir)
       print('Done.')
 
-      image_f_score, image_tdr, image_fdr, inter_thr = validation.detection_by_images(
+      image_f_score, image_tdr, image_fdr, inter_thr = validate.detection_by_images(
           sess, net.dets, windows_pl, dataset.val)
       print(
           'Whole image evaluation:',

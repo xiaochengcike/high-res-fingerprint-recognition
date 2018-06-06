@@ -7,8 +7,8 @@ import tensorflow as tf
 import os
 import argparse
 
-import pore_sliding_window_detector
-import validation
+import detector
+import validate
 import polyu
 import utils
 
@@ -17,7 +17,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.DetectionDataset(
+  dataset = polyu.detection.dataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
@@ -29,8 +29,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
     windows_pl, labels_pl = utils.placeholder_inputs()
 
     # builds inference graph
-    pore_det = pore_sliding_window_detector.PoreDetector(
-        windows_pl, dataset.train.window_size, training=False)
+    net = detector.Net(windows_pl, dataset.train.window_size, training=False)
 
     # add summary to plot f score, tdr and fdr
     f_score_pl = tf.placeholder(tf.float32, shape=())
@@ -49,8 +48,8 @@ def main(model_dir, polyu_path, window_size, batch_size):
     with tf.Session() as sess:
       utils.restore_model(sess, model_dir)
 
-      image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = validation.detection_by_images(
-          sess, pore_det.preds, windows_pl, dataset.val)
+      image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = validate.detection_by_images(
+          sess, net.preds, windows_pl, dataset.val)
       print(
           'Whole image evaluation:',
           '\tTDR = {}'.format(image_tdr),

@@ -9,7 +9,7 @@ import argparse
 import os
 
 import utils
-import pore_sliding_window_detector
+import detector
 
 FLAGS = None
 
@@ -25,8 +25,7 @@ def main():
     images_pl, _ = utils.placeholder_inputs()
 
     print('Building graph...')
-    net = pore_sliding_window_detector.PoreDetector(
-        images_pl, FLAGS.window_size, training=False)
+    net = detector.Net(images_pl, FLAGS.window_size, training=False)
     print('Done.')
 
     with tf.Session() as sess:
