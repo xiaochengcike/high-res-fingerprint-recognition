@@ -6,7 +6,6 @@ from six.moves import range
 import argparse
 import os
 import cv2
-import itertools
 
 import utils
 from alignment_matching import match
