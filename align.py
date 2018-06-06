@@ -5,7 +5,7 @@ from six.moves import range
 
 import numpy as np
 
-import pamplona_lemes_matching as matching
+import sift_bidirectional_matching as matching
 
 
 def _inside(img, pt):
