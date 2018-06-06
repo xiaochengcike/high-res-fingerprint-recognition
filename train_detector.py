@@ -8,10 +8,10 @@ import os
 import argparse
 import numpy as np
 
-import pore_sliding_window_detector
+import detector
 import polyu
 import utils
-import validation
+import validate
 
 
 def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
@@ -24,13 +24,12 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
     windows_pl, labels_pl = utils.placeholder_inputs()
 
     # build train related ops
-    pore_det = pore_sliding_window_detector.PoreDetector(
-        windows_pl, dataset.train.window_size)
-    pore_det.build_loss(labels_pl)
-    pore_det.build_train(learning_rate)
+    net = detector.Net(windows_pl, dataset.train.window_size)
+    net.build_loss(labels_pl)
+    net.build_train(learning_rate)
 
     # builds validation inference graph
-    val_pores = pore_sliding_window_detector.PoreDetector(
+    val_net = detector.Net(
         windows_pl, dataset.train.window_size, training=False, reuse=True)
 
     # add summary to plot loss, f score, tdr and fdr
@@ -40,7 +39,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
     f_score_summary_op = tf.summary.scalar('f_score', f_score_pl)
     tdr_summary_op = tf.summary.scalar('tdr', tdr_pl)
     fdr_summary_op = tf.summary.scalar('fdr', fdr_pl)
-    loss_summary_op = tf.summary.scalar('loss', pore_det.loss)
+    loss_summary_op = tf.summary.scalar('loss', net.loss)
 
     # resources to tensorboard plots
     plot_buf_pl = tf.placeholder(tf.string)
@@ -64,8 +63,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
         feed_dict = utils.fill_detection_feed_dict(dataset.train, windows_pl,
                                                    labels_pl, batch_size)
 
-        _, loss_value = sess.run(
-            [pore_det.train, pore_det.loss], feed_dict=feed_dict)
+        _, loss_value = sess.run([net.train, net.loss], feed_dict=feed_dict)
 
         # write loss summary every 100 steps
         if step % 100 == 0:
@@ -76,8 +74,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
         # evaluate the model periodically
         if step % 1000 == 0:
           print('Evaluation:')
-          tdrs, fdrs, f_score, fdr, tdr, thr = validation.detection_by_windows(
-              sess, val_pores.preds, batch_size, windows_pl, labels_pl,
+          tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection_by_windows(
+              sess, val_net.preds, batch_size, windows_pl, labels_pl,
               dataset.val)
           print(
               '\tTDR = {}'.format(tdr),
@@ -128,7 +126,7 @@ def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.DetectionDataset(
+  dataset = polyu.detection.Dataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
@@ -161,7 +159,7 @@ if __name__ == '__main__':
       '--label_size', type=int, default=3, help='Pore window size.')
   parser.add_argument(
       '--label_mode', type=str, default='hard_bb', help='Pore window size.')
-  FLAGS, unparsed = parser.parse_known_args()
+  FLAGS, _ = parser.parse_known_args()
 
   main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.label_size,
        FLAGS.label_mode, FLAGS.steps, FLAGS.learning_rate, FLAGS.batch_size,

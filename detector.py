@@ -6,7 +6,7 @@ from six.moves import range
 import tensorflow as tf
 
 
-class PoreDetector:
+class Net:
   def __init__(self, images, window_size, layers=7, training=True,
                reuse=False):
     # kernel size is fixed across entire net

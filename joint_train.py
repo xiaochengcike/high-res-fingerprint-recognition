@@ -8,10 +8,10 @@ import os
 import argparse
 import numpy as np
 
-import pore_detector_descriptor
+import descriptor_detector
 import polyu
 import utils
-import validation
+import validate
 
 FLAGS = None
 
@@ -27,7 +27,7 @@ def train(det_dataset, desc_dataset, log_dir):
     thresholds_pl = tf.placeholder(tf.float32, [None])
 
     # build net graph
-    net = pore_detector_descriptor.Net(windows_pl, FLAGS.window_size)
+    net = descriptor_detector.Net(windows_pl, FLAGS.window_size)
 
     # build detection training related ops
     net.build_detection_loss(labels_pl)
@@ -38,7 +38,7 @@ def train(det_dataset, desc_dataset, log_dir):
     net.build_description_train(FLAGS.desc_lr)
 
     # builds validation graph
-    val_net = pore_detector_descriptor.Net(
+    val_net = descriptor_detector.Net(
         windows_pl, FLAGS.window_size, training=False, reuse=True)
     val_net.build_description_validation(labels_pl, thresholds_pl)
 
@@ -109,7 +109,7 @@ def train(det_dataset, desc_dataset, log_dir):
         if step % 1000 == 0:
           # detection validation
           print('Validation:')
-          tdrs, fdrs, f_score, fdr, tdr, det_thr = validation.detection_by_windows(
+          tdrs, fdrs, f_score, fdr, tdr, det_thr = validate.detection_by_windows(
               sess, val_net.dets, FLAGS.det_batch_sz, windows_pl, labels_pl,
               det_dataset.val)
           print(
@@ -120,7 +120,7 @@ def train(det_dataset, desc_dataset, log_dir):
               sep='\n')
 
           # description validation
-          eer = validation.report_recognition_eer(
+          eer = validate.report_recognition_eer(
               windows_pl, labels_pl, thresholds_pl, desc_dataset.val,
               FLAGS.thr_res, val_net.desc_val, sess, FLAGS.window_size,
               FLAGS.desc_batch_sz, desc_dataset.val.n_labels -
@@ -178,7 +178,7 @@ def train(det_dataset, desc_dataset, log_dir):
 def load_description_dataset(polyu_dir_path):
   print('Loading PolyU-HRF DBI-Training dataset...')
   polyu_path = os.path.join(polyu_dir_path, 'DBI', 'Training')
-  dataset = polyu.RecognitionDataset(polyu_path)
+  dataset = polyu.recognition.Dataset(polyu_path)
   print('Loaded.')
 
   return dataset
@@ -187,7 +187,7 @@ def load_description_dataset(polyu_dir_path):
 def load_detection_dataset(polyu_path):
   print('Loading PolyU-HRF PoreGroundTruth dataset...')
   polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.DetectionDataset(
+  dataset = polyu.detection.Dataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
@@ -246,6 +246,6 @@ if __name__ == '__main__':
       type=float,
       default=0.01,
       help='Threshold resolution of ROC curve')
-  FLAGS, unparsed = parser.parse_known_args()
+  FLAGS, _ = parser.parse_known_args()
 
   main()
