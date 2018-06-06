@@ -7,7 +7,6 @@ import numpy as np
 import cv2
 
 import align
-from pamplona_lemes_matching import extract_descriptors
 import utils
 
 
@@ -49,10 +48,12 @@ def match(img1, pts1, img2, pts2, min_overlap=20):
     return 0
 
   # extract corresponding descriptors
-  descs1 = extract_descriptors(img1, pts1, scale=8.0)
-  descs1_in_img2 = extract_descriptors(img2, pts1_in_img2, scale=8.0)
-  descs2 = extract_descriptors(img2, pts2, scale=8.0)
-  descs2_in_img1 = extract_descriptors(img1, pts2_in_img1, scale=8.0)
+  descs1 = utils.extract_sift_descriptors(img1, pts1, scale=8.0)
+  descs1_in_img2 = utils.extract_sift_descriptors(
+      img2, pts1_in_img2, scale=8.0)
+  descs2 = utils.extract_sift_descriptors(img2, pts2, scale=8.0)
+  descs2_in_img1 = utils.extract_sift_descriptors(
+      img1, pts2_in_img1, scale=8.0)
 
   # compute distances
   dists1 = np.mean((descs1 - descs1_in_img2)**2)

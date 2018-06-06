@@ -9,23 +9,6 @@ import cv2
 import utils
 
 
-def extract_descriptors(img, pts, scale):
-  # improve image quality with median blur and clahe
-  img = cv2.medianBlur(img, ksize=3)
-  clahe = cv2.createCLAHE(clipLimit=3)
-  img = clahe.apply(img)
-
-  # convert points to cv2.keypoints
-  pts = list(np.asarray(pts)[:, [1, 0]])
-  kpts = cv2.KeyPoint.convert(pts, size=scale)
-
-  # extract sift descriptors
-  sift = cv2.xfeatures2d.SIFT_create()
-  _, descs = sift.compute(img, kpts)
-
-  return descs
-
-
 def find_correspondences(img1,
                          pts1,
                          img2,
@@ -36,8 +19,8 @@ def find_correspondences(img1,
                          transf=None,
                          fast=True):
   # extract descriptors from both images
-  descs1 = extract_descriptors(img1, pts1, scale)
-  descs2 = extract_descriptors(img2, pts2, scale)
+  descs1 = utils.extract_sift_descriptors(img1, pts1, scale)
+  descs2 = utils.extract_sift_descriptors(img2, pts2, scale)
 
   # match descriptors
   if fast and euclidean_weight == 0:

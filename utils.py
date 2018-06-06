@@ -345,3 +345,20 @@ def bilinear_interpolation(x, y, f):
   rhs = [y2 - y, y - y1]
 
   return np.dot(np.dot(lhs, fq), rhs)
+
+
+def extract_sift_descriptors(img, pts, scale):
+  # improve image quality with median blur and clahe
+  img = cv2.medianBlur(img, ksize=3)
+  clahe = cv2.createCLAHE(clipLimit=3)
+  img = clahe.apply(img)
+
+  # convert points to cv2.keypoints
+  pts = list(np.asarray(pts)[:, [1, 0]])
+  kpts = cv2.KeyPoint.convert(pts, size=scale)
+
+  # extract sift descriptors
+  sift = cv2.xfeatures2d.SIFT_create()
+  _, descs = sift.compute(img, kpts)
+
+  return descs
