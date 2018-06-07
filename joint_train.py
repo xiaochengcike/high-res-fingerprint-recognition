@@ -22,12 +22,12 @@ def train(det_dataset, desc_dataset, log_dir):
   plot_dir = os.path.join(log_dir, 'plot')
 
   with tf.Graph().as_default():
-    # gets placeholders for windows and labels
-    windows_pl, labels_pl = utils.placeholder_inputs()
+    # gets placeholders for patches and labels
+    patches_pl, labels_pl = utils.placeholder_inputs()
     thresholds_pl = tf.placeholder(tf.float32, [None])
 
     # build net graph
-    net = descriptor_detector.Net(windows_pl, FLAGS.window_size)
+    net = descriptor_detector.Net(patches_pl, FLAGS.window_size)
 
     # build detection training related ops
     net.build_detection_loss(labels_pl)
@@ -39,7 +39,7 @@ def train(det_dataset, desc_dataset, log_dir):
 
     # builds validation graph
     val_net = descriptor_detector.Net(
-        windows_pl, FLAGS.window_size, training=False, reuse=True)
+        patches_pl, FLAGS.window_size, training=False, reuse=True)
     val_net.build_description_validation(labels_pl, thresholds_pl)
 
     # add summary to plot losses, eer, f score, tdr and fdr
@@ -78,13 +78,13 @@ def train(det_dataset, desc_dataset, log_dir):
       for step in range(1, FLAGS.steps + 1):
         # detection train step
         feed_dict = utils.fill_detection_feed_dict(
-            det_dataset.train, windows_pl, labels_pl, FLAGS.det_batch_sz)
+            det_dataset.train, patches_pl, labels_pl, FLAGS.det_batch_sz)
         det_loss_value, _ = sess.run(
             [net.det_loss, net.det_train], feed_dict=feed_dict)
 
         # description train step
         feed_dict = utils.fill_description_feed_dict(
-            desc_dataset.train, windows_pl, labels_pl,
+            desc_dataset.train, patches_pl, labels_pl,
             FLAGS.desc_batch_sz // FLAGS.classes_by_batch,
             FLAGS.classes_by_batch, FLAGS.window_size)
         desc_loss_value, _ = sess.run(
@@ -109,8 +109,8 @@ def train(det_dataset, desc_dataset, log_dir):
         if step % 1000 == 0:
           # detection validation
           print('Validation:')
-          tdrs, fdrs, f_score, fdr, tdr, det_thr = validate.detection_by_windows(
-              sess, val_net.dets, FLAGS.det_batch_sz, windows_pl, labels_pl,
+          tdrs, fdrs, f_score, fdr, tdr, det_thr = validate.detection_by_patches(
+              sess, val_net.dets, FLAGS.det_batch_sz, patches_pl, labels_pl,
               det_dataset.val)
           print(
               'Detection:',
@@ -121,7 +121,7 @@ def train(det_dataset, desc_dataset, log_dir):
 
           # description validation
           eer = validate.report_recognition_eer(
-              windows_pl, labels_pl, thresholds_pl, desc_dataset.val,
+              patches_pl, labels_pl, thresholds_pl, desc_dataset.val,
               FLAGS.thr_res, val_net.desc_val, sess, FLAGS.window_size,
               FLAGS.desc_batch_sz, desc_dataset.val.n_labels -
               (FLAGS.desc_batch_sz % desc_dataset.val.n_labels),

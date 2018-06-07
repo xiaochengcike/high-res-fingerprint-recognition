@@ -7,7 +7,7 @@ import numpy as np
 import utils
 
 
-def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
+def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
                          dataset):
   # initialize dataset statistics
   true_preds = []
@@ -16,7 +16,7 @@ def detection_by_windows(sess, preds, batch_size, windows_pl, labels_pl,
 
   steps_per_epoch = (dataset.num_samples + batch_size - 1) // batch_size
   for _ in range(steps_per_epoch):
-    feed_dict = utils.fill_detection_feed_dict(dataset, windows_pl, labels_pl,
+    feed_dict = utils.fill_detection_feed_dict(dataset, patches_pl, labels_pl,
                                                batch_size)
 
     # evaluate batch
