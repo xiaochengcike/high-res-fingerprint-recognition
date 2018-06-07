@@ -7,152 +7,72 @@ import os
 import numpy as np
 
 import utils
+import aligned_images
 
 
 class _Dataset:
-  def __init__(self, images_by_labels, labels, should_shuffle,
-               balanced_batches, incomplete_batches):
-    self.n_labels = len(labels)
+  def __init__(self, images_by_labels, pts_by_labels, patch_size,
+               should_shuffle):
+    self.n_labels = len(images_by_labels)
     self._shuffle = should_shuffle
-    self._balance = balanced_batches
-    self._incomplete = incomplete_batches
     self.images_shape = images_by_labels[0][0].shape
 
-    if self._balance:
-      # images must be separated by labels
-      self._images = images_by_labels
-      self._labels = labels
+    # create aligned images handler for each class
+    self._classes = []
+    for imgs, pts in zip(images_by_labels, pts_by_labels):
+      self._classes.append(aligned_images.Handler(imgs, pts, patch_size))
 
-      # count images
-      self.n_images = 0
-      for images in self._images:
-        self.n_images += len(images)
+    # shuffle for first epoch
+    if self._shuffle:
+      for i in range(self.n_labels):
+        self._class_indices[i] = np.random.permutation(len(self._classes[i]))
 
-      # shuffle for first epoch
-      if self._shuffle:
-        for i in range(self.n_labels):
-          self._images[i] = np.random.permutation(self._images[i])
-
-      # initialize inner class pointers
-      self._epochs_completed = np.zeros_like(labels)
-      self._index_in_epoch = np.zeros_like(labels)
-    else:
-      # images can be flattened
-      self._images = np.reshape(images_by_labels, (-1, self.images_shape[0],
-                                                   self.images_shape[1]))
-      self._labels = np.repeat(labels, len(self._images) // len(labels))
-      self.n_images = len(self._images)
-
-      # shuffle for first epoch
-      if self._shuffle:
-        perm = np.random.permutation(self.n_images)
-        self._images = self._images[perm]
-        self._labels = self._labels[perm]
-
-      # initialize dataset pointers
-      self._epochs_completed = 0
-      self._index_in_epoch = 0
+    # initialize inner class pointers
+    self._epochs_completed = np.zeros(self.n_labels)
+    self._index_in_epoch = np.zeros(self.n_labels)
 
   def next_batch(self, batch_size):
-    if self._balance:
-      # determine class batch sizes for almost equal split over classes
-      class_batch_size = batch_size // self.n_labels
-      remainder_index = batch_size % self.n_labels
+    assert batch_size <= self.n_labels, 'Batch size must be at most number of labels'
 
-      # randomly select over-represented classes
-      perm = np.random.permutation(self.n_labels)
+    # randomly select labels in batch
+    perm = np.random.permutation(self.n_labels)[:batch_size]
 
-      # retrieve batch
-      batch_images = []
-      batch_labels = []
-      for i in range(self.n_labels):
-        # fix for almost equal split over classes
-        complement = 0
-        if i < remainder_index:
-          complement += 1
+    # retrieve batch
+    batch_patches = []
+    batch_labels = []
+    for i in perm:
+      # retrieve examples of class 'i'
+      class_patches, class_labels = self._next_class_batch(i)
 
-        # check if finished sampling batch
-        if class_batch_size + complement == 0:
-          break
-        else:
-          # retrieve batch portion relative to class 'perm[i]'
-          class_images, class_labels = self._next_class_batch(
-              perm[i], class_batch_size + complement)
+      # update batch
+      batch_patches.extend(class_patches)
+      batch_labels.extend(class_labels)
 
-          # update batch
-          batch_images.extend(class_images)
-          batch_labels.extend(class_labels)
+    return batch_patches, batch_labels
 
-      return batch_images, batch_labels
+  def _next_class_batch(self, label):
+    # retrieve patches from class
+    patches = self._classes[label][self._index_in_epoch[label]]
+
+    # update class index
+    if self._index_in_epoch[label] + 1 < len(self._class[label]):
+      self._class_indices[label] += 1
     else:
-      if self._index_in_epoch + batch_size >= self.n_images:
-        # finished epoch
-        self._epochs_completed += 1
-
-        # get remainder of observations in this epoch
-        start = self._index_in_epoch
-        rest_num_images = self.n_images - start
-        images_rest_part = self._images[start:]
-        labels_rest_part = self._labels[start:]
-
-        # shuffle the data
-        if self._shuffle:
-          perm = np.random.permutation(self.n_images)
-          self._images = self._images[perm]
-          self._labels = self._labels[perm]
-
-        # return incomplete batch
-        if self._incomplete:
-          self._index_in_epoch = 0
-          return images_rest_part, labels_rest_part
-
-        # start next epoch
-        self._index_in_epoch = batch_size - rest_num_images
-
-        # retrieve observations in new epoch
-        images_new_part = self._images[0:self._index_in_epoch]
-        labels_new_part = self._labels[0:self._index_in_epoch]
-
-        return np.concatenate(
-            [images_rest_part, images_new_part], axis=0), np.concatenate(
-                [labels_rest_part, labels_new_part], axis=0)
-      else:
-        start = self._index_in_epoch
-        self._index_in_epoch += batch_size
-        return self._images[start:self._index_in_epoch], self._labels[
-            start:self._index_in_epoch]
-
-  def _next_class_batch(self, index, batch_size):
-    if self._index_in_epoch[index] + batch_size >= len(self._images[index]):
       # finished epoch
-      self._epochs_completed[index] += 1
-
-      # get remainder of images in this epoch
-      start = self._index_in_epoch[index]
-      rest_num_images = len(self._images[index]) - start
-      images_rest_part = self._images[index][start:]
+      self._epochs_completed[label] += 1
 
       # shuffle the data
       if self._shuffle:
-        self._images[index] = np.random.permutation(self._images[index])
+        self._class_indices[label] = np.random.permutation(
+            len(self._classes[label]))
 
-      # start next epoch
-      self._index_in_epoch[index] = batch_size - rest_num_images
-
-      # retrieve images in new epoch
-      images_new_part = self._images[index][0:self._index_in_epoch[index]]
-
-      # image batch
-      images = np.concatenate([images_rest_part, images_new_part], axis=0)
-    else:
-      start = self._index_in_epoch[index]
-      self._index_in_epoch[index] += batch_size
-      images = self._images[index][start:self._index_in_epoch[index]]
+      # return class index to 0
+      self._class_indices[label] = 0
 
     # produce labels
-    labels = np.repeat(self._labels[index], len(images))
+    labels = np.repeat(label, len(patches))
 
-    return images, labels
+    return patches, labels
 
 
 class Dataset:
