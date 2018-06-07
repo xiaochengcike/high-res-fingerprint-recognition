@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 import utils
-import aligned_images
+from polyu import aligned_images
 
 
 class _Dataset:
@@ -24,12 +24,14 @@ class _Dataset:
 
     # shuffle for first epoch
     if self._shuffle:
+      self._class_indices = []
       for i in range(self.n_labels):
-        self._class_indices[i] = np.random.permutation(len(self._classes[i]))
+        self._class_indices.append(
+            np.random.permutation(len(self._classes[i])))
 
     # initialize inner class pointers
-    self._epochs_completed = np.zeros(self.n_labels)
-    self._index_in_epoch = np.zeros(self.n_labels)
+    self._epochs_completed = np.zeros(self.n_labels, dtype=np.int32)
+    self._index_in_epoch = np.zeros(self.n_labels, dtype=np.int32)
 
   def next_batch(self, batch_size):
     assert batch_size <= self.n_labels, 'Batch size must be at most number of labels'
@@ -48,15 +50,16 @@ class _Dataset:
       batch_patches.extend(class_patches)
       batch_labels.extend(class_labels)
 
-    return batch_patches, batch_labels
+    return np.array(batch_patches), np.array(batch_labels)
 
   def _next_class_batch(self, label):
     # retrieve patches from class
-    patches = self._classes[label][self._index_in_epoch[label]]
+    batch_index = self._class_indices[label][self._index_in_epoch[label]]
+    patches = self._classes[label][batch_index]
 
     # update class index
-    if self._index_in_epoch[label] + 1 < len(self._class[label]):
-      self._class_indices[label] += 1
+    if self._index_in_epoch[label] + 1 < len(self._classes[label]):
+      self._index_in_epoch[label] += 1
     else:
       # finished epoch
       self._epochs_completed[label] += 1
@@ -66,13 +69,13 @@ class _Dataset:
         self._class_indices[label] = np.random.permutation(
             len(self._classes[label]))
 
-      # return class index to 0
-      self._class_indices[label] = 0
+      # return class index in epoch to 0
+      self._index_in_epoch[label] = 0
 
     # produce labels
     labels = np.repeat(label, len(patches))
 
-    return patches, labels
+    return np.array(patches), labels
 
 
 class Dataset:
