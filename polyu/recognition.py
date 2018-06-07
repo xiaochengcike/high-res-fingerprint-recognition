@@ -81,45 +81,47 @@ class _Dataset:
 class Dataset:
   def __init__(self,
                images_folder_path,
+               pts_folder_path,
+               patch_size,
                val_split=True,
-               should_shuffle=True,
-               balanced_batches=True):
+               should_shuffle=True):
     images, labels = self._load_images_with_labels(images_folder_path)
-    images_by_labels, labels = self._group_images_by_labels(images, labels)
+    pts = self._load_detections(pts_folder_path)
+    images_by_labels, pts_by_labels = self._group_examples_by_labels(
+        images, pts, labels)
 
     # create separate validation set
     if val_split:
       # randomly pick subjects comprising 20% of
       # whole dataset for validation set
       val_images_by_labels = []
-      val_labels = []
+      val_pts_by_labels = []
       val_size = 0
       perm = np.random.permutation(len(images_by_labels))
       i = 0
       while val_size < 0.2 * len(images):
         val_size += len(images_by_labels[perm[i]])
         val_images_by_labels.append(images_by_labels[perm[i]])
-        val_labels.append(labels[perm[i]])
+        val_pts_by_labels.append(pts_by_labels[perm[i]])
         i += 1
       self.val = _Dataset(
           val_images_by_labels,
-          val_labels,
-          should_shuffle=should_shuffle,
-          balanced_batches=balanced_batches,
-          incomplete_batches=True)
+          val_pts_by_labels,
+          patch_size,
+          should_shuffle=should_shuffle)
 
       # remainder of images for training set
       train_images_by_labels = []
-      train_labels = []
+      train_pts_by_labels = []
       while i < len(perm):
         train_images_by_labels.append(images_by_labels[perm[i]])
-        train_labels.append(labels[perm[i]])
+        train_pts_by_labels.append(pts_by_labels[perm[i]])
         i += 1
-      self.train = _Dataset(train_images_by_labels, train_labels,
-                            should_shuffle, balanced_batches, False)
+      self.train = _Dataset(train_images_by_labels, train_pts_by_labels,
+                            patch_size, should_shuffle)
     else:
-      self.train = _Dataset(images_by_labels, labels, should_shuffle,
-                            balanced_batches, False)
+      self.train = _Dataset(images_by_labels, pts_by_labels, patch_size,
+                            should_shuffle)
 
   def _load_images_with_labels(self, folder_path):
     images = []
@@ -134,14 +136,26 @@ class Dataset:
   def _retrieve_label_from_image_path(self, image_path):
     return int(image_path.split('_')[0])
 
-  def _group_images_by_labels(self, images, labels):
+  def _load_detections(self, folder_path):
+    pts = []
+    for pts_path in sorted(os.listdir(folder_path)):
+      if pts_path.endswith('.txt'):
+        pts.append(utils.load_dets_txt(os.path.join(folder_path, pts_path)))
+
+    return pts
+
+  def _group_examples_by_labels(self, images, pts, labels):
     # convert to np array
     images = np.array(images)
+    pts = np.array(pts)
     labels = np.array(labels)
 
     grouped_images = []
+    grouped_pts = []
     all_labels = np.unique(labels)
     for label in all_labels:
       indices = np.where(labels == label)
       grouped_images.append(images[indices])
-    return grouped_images, all_labels
+      grouped_pts.append(pts[indices])
+
+    return grouped_images, grouped_pts
