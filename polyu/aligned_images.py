@@ -8,8 +8,14 @@ import numpy as np
 import align
 
 
-def _transf(s, A, b):
-  return lambda x: s * np.dot(x, A.T) + b
+class _Transf:
+  def __init__(self, s, A, b):
+    self._s = s
+    self._A = A
+    self._b = b
+
+  def __call__(self, x):
+    return self._s * np.dot(x, self._A.T) + self._b
 
 
 def _find_alignments(all_imgs, all_pts):
@@ -21,7 +27,7 @@ def _find_alignments(all_imgs, all_pts):
     A, b, s = align.iterative(img1, all_pts[0], img2, all_pts[i + 1])
 
     # create mapping from img1 coordinates to img2 coordinates
-    transfs.append(_transf(s, A, b))
+    transfs.append(_Transf(s, A, b))
 
   return transfs
 
