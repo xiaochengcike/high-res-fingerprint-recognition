@@ -4,9 +4,9 @@ from __future__ import print_function
 from six.moves import range
 
 import tensorflow as tf
+import numpy as np
 import os
 import argparse
-import numpy as np
 
 import descriptor_detector
 import polyu
@@ -78,14 +78,14 @@ def train(det_dataset, desc_dataset, log_dir):
       for step in range(1, FLAGS.steps + 1):
         # detection train step
         feed_dict = utils.fill_detection_feed_dict(
-            det_dataset.train, patches_pl, labels_pl, FLAGS.det_batch_sz)
+            det_dataset.train, patches_pl, labels_pl, FLAGS.det_batch_size)
         det_loss_value, _ = sess.run(
             [net.det_loss, net.det_train], feed_dict=feed_dict)
 
         # description train step
         feed_dict = utils.fill_description_feed_dict(
             desc_dataset.train, patches_pl, labels_pl,
-            FLAGS.desc_batch_sz // FLAGS.classes_by_batch,
+            FLAGS.desc_batch_classes // FLAGS.classes_by_batch,
             FLAGS.classes_by_batch, FLAGS.patch_size)
         desc_loss_value, _ = sess.run(
             [net.desc_loss, net.desc_train], feed_dict=feed_dict)
@@ -110,7 +110,7 @@ def train(det_dataset, desc_dataset, log_dir):
           # detection validation
           print('Validation:')
           tdrs, fdrs, f_score, fdr, tdr, det_thr = validate.detection_by_patches(
-              sess, val_net.dets, FLAGS.det_batch_sz, patches_pl, labels_pl,
+              sess, val_net.dets, FLAGS.det_batch_size, patches_pl, labels_pl,
               det_dataset.val)
           print(
               'Detection:',
@@ -123,8 +123,8 @@ def train(det_dataset, desc_dataset, log_dir):
           eer = validate.report_recognition_eer(
               patches_pl, labels_pl, thresholds_pl, desc_dataset.val,
               FLAGS.thr_res, val_net.desc_val, sess, FLAGS.patch_size,
-              FLAGS.desc_batch_sz, desc_dataset.val.n_labels -
-              (FLAGS.desc_batch_sz % desc_dataset.val.n_labels),
+              FLAGS.desc_batch_classes, desc_dataset.val.n_labels -
+              (FLAGS.desc_batch_classes % desc_dataset.val.n_labels),
               FLAGS.val_steps)
           print('Description:', '\tEER = {}'.format(eer), sep='\n')
 
@@ -175,16 +175,19 @@ def train(det_dataset, desc_dataset, log_dir):
   print('best EER = {}'.format(best_eer))
 
 
-def load_description_dataset(polyu_dir_path, pts_dir_path, patch_size):
-  print('Loading PolyU-HRF DBI-Training dataset...')
-  polyu_dir_path = os.path.join(polyu_dir_path, 'DBI', 'Training')
-  dataset = polyu.recognition.Dataset(polyu_dir_path, pts_dir_path, patch_size)
+def load_description_dataset(dataset_path, patch_size):
+  import pickle
+  print('Loading precomputed descriptor dataset...')
+  with open(dataset_path, 'rb') as f:
+    dataset = pickle.load(f)
+  assert dataset.patch_size == patch_size, 'Incompatible patch sizes: {} and {}'.format(
+      dataset.patch_size, patch_size)
   print('Loaded.')
 
   return dataset
 
 
-def load_detection_dataset(polyu_dir_path):
+def load_detection_dataset(polyu_dir_path, patch_size):
   print('Loading PolyU-HRF PoreGroundTruth dataset...')
   polyu_dir_path = os.path.join(polyu_dir_path, 'GroundTruth',
                                 'PoreGroundTruth')
@@ -192,7 +195,7 @@ def load_detection_dataset(polyu_dir_path):
       os.path.join(polyu_dir_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_dir_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
-      window_size=FLAGS.patch_size)
+      window_size=patch_size)
   print('Loaded.')
 
   return dataset
@@ -200,13 +203,13 @@ def load_detection_dataset(polyu_dir_path):
 
 def main():
   # create folders to save train resources
-  log_dir = utils.create_dirs(FLAGS.log_dir, FLAGS.det_batch_sz, FLAGS.det_lr)
+  log_dir = utils.create_dirs(FLAGS.log_dir, FLAGS.det_batch_size,
+                              FLAGS.det_lr)
 
   # load datasets
-  # TODO: determine if must compute alignment or load precomputed dataset
-  det_dataset = load_detection_dataset(FLAGS.polyu_dir_path)
-  desc_dataset = load_description_dataset(FLAGS.polyu_dir_path,
-                                          FLAGS.pts_dir_path)
+  det_dataset = load_detection_dataset(FLAGS.polyu_dir_path, FLAGS.patch_size)
+  desc_dataset = load_description_dataset(FLAGS.rec_dataset_path,
+                                          FLAGS.patch_size)
 
   # train
   train(det_dataset, desc_dataset, log_dir)
@@ -220,10 +223,10 @@ if __name__ == '__main__':
       type=str,
       help='Path to PolyU-HRF dataset.')
   parser.add_argument(
-      '--pts_dir_path',
+      '--rec_dataset_path',
       required=True,
       type=str,
-      help='Path to pores detections dataset.')
+      help='Path to precomputed descriptor dataset.')
   parser.add_argument(
       '--desc_lr', type=float, default=1e-1, help='Description learning rate.')
   parser.add_argument(
@@ -233,23 +236,14 @@ if __name__ == '__main__':
   parser.add_argument(
       '--tolerance', type=int, default=40, help='Early stopping tolerance.')
   parser.add_argument(
-      '--det_batch_sz', type=int, default=256, help='Detection batch size.')
+      '--det_batch_size', type=int, default=256, help='Detection batch size.')
   parser.add_argument(
-      '--desc_batch_sz', type=int, default=256, help='Description batch size.')
-  parser.add_argument(
-      '--classes_by_batch',
+      '--desc_batch_classes',
       type=int,
-      default=16,
-      help=
-      'Number of differente classes by batch. Must be less than total number of subjects in dataset'
-  )
+      default=28,
+      help='Number of classes in description batch size.')
   parser.add_argument(
       '--steps', type=int, default=100000, help='Maximum training steps.')
-  parser.add_argument(
-      '--val_steps',
-      type=int,
-      default=200,
-      help='Number of sampled batches when validating')
   parser.add_argument(
       '--patch_size', type=int, default=17, help='Pore patch size.')
   parser.add_argument(

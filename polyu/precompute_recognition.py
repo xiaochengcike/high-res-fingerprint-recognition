@@ -35,8 +35,7 @@ if __name__ == '__main__':
   FLAGS, _ = parser.parse_known_args()
 
   print('Creating dataset object instance...')
-  # imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
-  imgs_dir_path = FLAGS.polyu_dir_path
+  imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
   dataset = polyu.recognition.Dataset(imgs_dir_path, FLAGS.pts_dir_path,
                                       FLAGS.patch_size)
   print('Done.')
