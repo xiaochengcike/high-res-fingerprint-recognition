@@ -84,9 +84,7 @@ def train(det_dataset, desc_dataset, log_dir):
 
         # description train step
         feed_dict = utils.fill_description_feed_dict(
-            desc_dataset.train, patches_pl, labels_pl,
-            FLAGS.desc_batch_classes // FLAGS.classes_by_batch,
-            FLAGS.classes_by_batch, FLAGS.patch_size)
+            desc_dataset.train, patches_pl, labels_pl, FLAGS.classes_by_batch)
         desc_loss_value, _ = sess.run(
             [net.desc_loss, net.desc_train], feed_dict=feed_dict)
 
@@ -238,7 +236,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--det_batch_size', type=int, default=256, help='Detection batch size.')
   parser.add_argument(
-      '--desc_batch_classes',
+      '--classes_by_batch',
       type=int,
       default=28,
       help='Number of classes in description batch size.')

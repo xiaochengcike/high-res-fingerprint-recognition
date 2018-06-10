@@ -29,32 +29,23 @@ def placeholder_inputs():
   return images, labels
 
 
-def fill_detection_feed_dict(dataset, windows_pl, labels_pl, batch_size):
-  windows_feed, labels_feed = dataset.next_batch(batch_size)
+def fill_detection_feed_dict(dataset, patches_pl, labels_pl, batch_size):
+  patches_feed, labels_feed = dataset.next_batch(batch_size)
   feed_dict = {
-      windows_pl:
-      windows_feed.reshape([-1, dataset.window_size, dataset.window_size, 1]),
+      patches_pl:
+      patches_feed.reshape([-1, dataset.window_size, dataset.window_size, 1]),
       labels_pl:
       labels_feed.reshape([-1, 1])
   }
+
   return feed_dict
 
 
-def fill_description_feed_dict(dataset, images_pl, labels_pl, n_subjects,
-                               n_transfs, window_size):
-  images, labels = dataset.next_batch(n_subjects)
-
-  # generate images feed by sampling windows
-  images_feed = []
-  for image in images:
-    images_feed.extend(
-        _pick_and_transform_window(image, n_transfs, window_size))
-
-  # generate labels feed by repeating labels
-  labels_feed = np.repeat(labels, n_transfs)
-
+def fill_description_feed_dict(dataset, patches_pl, labels_pl,
+                               classes_by_batch):
+  patches_feed, labels_feed = dataset.next_batch(classes_by_batch)
   feed_dict = {
-      images_pl: np.expand_dims(images_feed, axis=-1),
+      patches_pl: np.expand_dims(patches_feed, axis=-1),
       labels_pl: np.reshape(labels_feed, (-1, 1))
   }
 
