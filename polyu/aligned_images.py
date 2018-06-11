@@ -64,7 +64,7 @@ def _make_patch_mask(mask, patch_size):
   new_mask = np.zeros_like(mask, dtype=np.bool)
   half = patch_size // 2
   for i in range(mask.shape[0] - patch_size + 1):
-    for j in range(half, mask.shape[1] - patch_size + 1):
+    for j in range(mask.shape[1] - patch_size + 1):
       new_mask[i, j] = True
       for di in range(0, 3):
         for dj in range(0, 3):
