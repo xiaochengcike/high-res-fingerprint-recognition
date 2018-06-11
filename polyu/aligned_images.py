@@ -44,7 +44,7 @@ def _find_overlap(all_imgs, transfs):
       row = int(np.round(row))
       col = int(np.round(col))
       if 0 <= row < img2.shape[0]:
-        if 1 <= col < img2.shape[1]:
+        if 0 <= col < img2.shape[1]:
           aligned[ndindex[0], ndindex[1]] = True
 
     # update overall overlap
