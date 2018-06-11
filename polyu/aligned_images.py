@@ -32,49 +32,27 @@ def _find_alignments(all_imgs, all_pts):
   return transfs
 
 
-def _find_overlap(all_imgs, transfs):
-  # find pixels present in all images
+def _compute_valid_region(all_imgs, transfs, patch_size):
+  # find patches in img1 that are in all images
   img1 = all_imgs[0]
-  overlap = np.ones(img1.shape, dtype=np.bool)
-  for i, img2 in enumerate(all_imgs[1:]):
+  valid = np.ones_like(img1, dtype=np.bool)
+  half = patch_size // 2
+  for k, img2 in enumerate(all_imgs[1:]):
     # find pixels in both img1 and img2
     aligned = np.zeros_like(img1, dtype=np.bool)
-    for ndindex in np.ndindex(img1.shape):
-      row, col = transfs[i](ndindex)
-      row = int(np.round(row))
-      col = int(np.round(col))
-      if 0 <= row < img2.shape[0]:
-        if 0 <= col < img2.shape[1]:
-          aligned[ndindex[0], ndindex[1]] = True
+    for i in range(valid.shape[0] - patch_size + 1):
+      for j in range(valid.shape[1] - patch_size + 1):
+        row, col = transfs[k]((i + half, j + half))
+        row = int(np.round(row))
+        col = int(np.round(col))
+        if 0 <= row - half < img2.shape[0] and 0 <= row + half < img2.shape[0]:
+          if 0 <= col - half < img2.shape[1] and 0 <= col + half < img2.shape[1]:
+            aligned[i, j] = True
 
-    # update overall overlap
-    overlap = np.logical_and(overlap, aligned)
+    # update overall valid positions
+    valid = np.logical_and(valid, aligned)
 
-  return overlap
-
-
-def _make_patch_mask(mask, patch_size):
-  # make mask True only where a patch
-  # can be taken in every image
-
-  # for efficiency, this discards some
-  # valid indices, those outside the
-  # required circle but inside the
-  # bounding box
-  new_mask = np.zeros_like(mask, dtype=np.bool)
-  half = patch_size // 2
-  for i in range(mask.shape[0] - patch_size + 1):
-    for j in range(mask.shape[1] - patch_size + 1):
-      new_mask[i, j] = True
-      for di in range(0, 3):
-        for dj in range(0, 3):
-          if not mask[i + di * half, j + dj * half]:
-            new_mask[i, j] = False
-            break
-        if not new_mask[i, j]:
-          break
-
-  return new_mask
+  return valid
 
 
 class Handler:
@@ -83,14 +61,14 @@ class Handler:
     self._patch_size = patch_size
     self._half = patch_size // 2
 
+    # align all images to the first
     self._transfs = _find_alignments(self._imgs, all_pts)
 
-    # find valid area of overlap
-    overlap = _find_overlap(self._imgs, self._transfs)
-    self._mask = _make_patch_mask(overlap, self._patch_size)
+    # find valid area for extracting patches
+    mask = _compute_valid_region(self._imgs, self._transfs, self._patch_size)
 
     # get valid indices and store them for access
-    self._inds = np.argwhere(self._mask)
+    self._inds = np.argwhere(mask)
 
   def __getitem__(self, val):
     if isinstance(val, slice):
@@ -142,33 +120,3 @@ class Handler:
 
   def __len__(self):
     return len(self._inds)
-
-
-if __name__ == '__main__':
-  import utils
-  import cv2
-  import sys
-
-  imgs_path = '../datasets/polyu_hrf/DBI/Training/' + sys.argv[1]
-  pts_path = 'src/Pores_Dahia/' + sys.argv[1]
-
-  imgs_ = []
-  pts_ = []
-  for i in range(1, 3):
-    for j in range(1, 4):
-      img_path = '{}_{}_{}.jpg'.format(imgs_path, i, j)
-      img_ = cv2.imread(img_path, 0)
-      imgs_.append(img_)
-
-      img_pts_path = '{}_{}_{}.txt'.format(pts_path, i, j)
-      img_pts = utils.load_dets_txt(img_pts_path)
-      pts_.append(img_pts)
-
-  d = Handler(imgs_, pts_, 17)
-  for sample in d:
-    for i, patch in enumerate(sample):
-      cv2.imshow('patch' + str(i), patch)
-    cv2.waitKey(0)
-  mask = 255 * np.array(d._mask, dtype=np.uint8)
-  cv2.imshow('mask', mask)
-  cv2.waitKey(0)
