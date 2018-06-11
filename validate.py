@@ -78,7 +78,7 @@ def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
       fdrs, np.float32), best_f_score, best_fdr, best_tdr, best_thr
 
 
-def detection_by_images(sess, pred_op, images_pl, dataset):
+def detection_by_images(sess, pred_op, patches_pl, dataset):
   window_size = dataset.window_size
   half_window_size = window_size // 2
   preds = []
@@ -93,7 +93,7 @@ def detection_by_images(sess, pred_op, images_pl, dataset):
     # predict for each image
     pred = sess.run(
         pred_op,
-        feed_dict={images_pl: np.reshape(img, (-1, ) + img.shape + (1, ))})
+        feed_dict={patches_pl: np.reshape(img, (-1, ) + img.shape + (1, ))})
 
     # put predictions in image format
     pred = np.array(pred).reshape(img.shape[0] - window_size + 1,
@@ -168,12 +168,9 @@ def detection_by_images(sess, pred_op, images_pl, dataset):
   return best_f_score, best_tdr, best_fdr, best_inter_thr, best_prob_thr
 
 
-def report_statistics_by_thresholds(
-    images_pl, labels_pl, thresholds_pl, dataset, thresholds, statistics_op,
-    session, window_size, batch_size, classes_by_batch, total_steps):
-  # assert that sampling batches is possible
-  assert dataset.n_labels >= classes_by_batch
-
+def report_statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl,
+                                    dataset, thresholds, statistics_op,
+                                    session, classes_by_batch, total_steps):
   # initialize statistics
   true_pos = np.zeros_like(thresholds, np.int32)
   true_neg = np.zeros_like(thresholds, np.int32)
@@ -183,9 +180,8 @@ def report_statistics_by_thresholds(
   # validate in entire dataset, as specified by user
   for _ in range(total_steps):
     # sample mini-batch
-    feed_dict = utils.fill_description_feed_dict(
-        dataset, images_pl, labels_pl, classes_by_batch,
-        batch_size // classes_by_batch, window_size)
+    feed_dict = utils.fill_description_feed_dict(dataset, patches_pl,
+                                                 labels_pl, classes_by_batch)
     feed_dict[thresholds_pl] = thresholds
 
     # evaluate on mini-batch
@@ -201,15 +197,13 @@ def report_statistics_by_thresholds(
   return true_pos, true_neg, false_pos, false_neg
 
 
-def report_recognition_eer(images_pl, labels_pl, thresholds_pl, dataset,
+def report_recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
                            threshold_resolution, statistics_op, session,
-                           window_size, batch_size, classes_by_batch,
-                           total_steps):
+                           classes_by_batch, total_steps):
   true_pos, true_neg, false_pos, false_neg = report_statistics_by_thresholds(
-      images_pl, labels_pl, thresholds_pl, dataset,
-      np.arange(0, 2 + threshold_resolution,
-                threshold_resolution), statistics_op, session, window_size,
-      batch_size, classes_by_batch, total_steps)
+      patches_pl, labels_pl, thresholds_pl, dataset,
+      np.arange(0, 2 + threshold_resolution, threshold_resolution),
+      statistics_op, session, classes_by_batch, total_steps)
 
   # compute recall and specificity
   eps = 1e-12

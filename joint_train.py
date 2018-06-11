@@ -120,9 +120,7 @@ def train(det_dataset, desc_dataset, log_dir):
           # description validation
           eer = validate.report_recognition_eer(
               patches_pl, labels_pl, thresholds_pl, desc_dataset.val,
-              FLAGS.thr_res, val_net.desc_val, sess, FLAGS.patch_size,
-              FLAGS.desc_batch_classes, desc_dataset.val.n_labels -
-              (FLAGS.desc_batch_classes % desc_dataset.val.n_labels),
+              FLAGS.thr_res, val_net.desc_val, sess, desc_dataset.val.n_labels,
               FLAGS.val_steps)
           print('Description:', '\tEER = {}'.format(eer), sep='\n')
 
@@ -161,7 +159,7 @@ def train(det_dataset, desc_dataset, log_dir):
                                                 plot_dir,
                                                 '{}.png'.format(step)))
 
-          # plot roc?
+          # TODO: plot recognition roc?
 
           # write plot to summary
           plot_summary = sess.run(
