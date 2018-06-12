@@ -80,12 +80,6 @@ class Net:
 
   def build_detection_train(self, learning_rate):
     global_step = tf.Variable(1, name='det_global_step', trainable=False)
-    learning_rate = tf.train.exponential_decay(
-        learning_rate,
-        global_step,
-        decay_rate=0.96,
-        decay_steps=2000,
-        staircase=True)
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
