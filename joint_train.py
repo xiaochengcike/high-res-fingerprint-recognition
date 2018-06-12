@@ -230,7 +230,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--log_dir', type=str, default='log', help='Logging directory.')
   parser.add_argument(
-      '--tolerance', type=int, default=40, help='Early stopping tolerance.')
+      '--tolerance', type=int, default=5, help='Early stopping tolerance.')
   parser.add_argument(
       '--det_batch_size', type=int, default=256, help='Detection batch size.')
   parser.add_argument(
@@ -250,7 +250,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--val_steps',
       type=int,
-      default=200,
+      default=500,
       help='Number of sampled batches when validating')
 
   FLAGS, _ = parser.parse_known_args()
