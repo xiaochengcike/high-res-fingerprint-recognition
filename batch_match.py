@@ -28,17 +28,31 @@ if __name__ == '__main__':
       default='matching_results.txt',
       help='Path to results file.')
   parser.add_argument(
-      '--mode',
+      '--descriptors',
       type=str,
       default='sift',
-      help='Mode to match images. Can be "alignment" or "sift".')
+      help='Which descriptors to use. Can be "sift" or "trained"')
+  parser.add_argument(
+      '--mode',
+      type=str,
+      default='basic',
+      help='Mode to match images. Can be "basic" or "spatial".')
+  parser.add_argument(
+      '--thr', type=float, help='Second correspondence elimination threshold.')
   FLAGS, _ = parser.parse_known_args()
 
-  # find out which matching mode was specified
-  if FLAGS.mode == 'sift':
-    from matching.sift_bidirectional import match
+  # parse descriptor and adjust accordingly
+  if FLAGS.descriptors == 'sift':
+    compute_descriptors = utils.extract_sift_descriptors
   else:
-    from matching.alignment import match
+    # TODO: trained
+    pass
+
+  # parse matching mode and adjust accordingly
+  if FLAGS.mode == 'basic':
+    from matching import basic as match
+  else:
+    from matching import spatial as match
 
   # make dir path be full DBI Training path
   imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
@@ -51,25 +65,29 @@ if __name__ == '__main__':
   register_ids = [1, 2, 3]
   session_ids = [1, 2]
 
-  # load imgs, pts and make index correspondence
-  print('Loading images...')
+  # load images, points, compute descriptors and make indices correspondences
+  print('Loading images and detections, and computing descriptors...')
   id2index_dict = {}
-  imgs = []
-  pts = []
+  all_descs = []
+  all_pts = []
   index = 0
   for subject_id in subject_ids:
     for session_id in session_ids:
       for register_id in register_ids:
         instance = '{}_{}_{}'.format(subject_id, session_id, register_id)
 
-        # load img
+        # load image
         img_path = os.path.join(imgs_dir_path, '{}.jpg'.format(instance))
         img = cv2.imread(img_path, 0)
-        imgs.append(img)
 
-        # load pts
+        # load detections
         pts_path = os.path.join(FLAGS.pts_dir_path, '{}.txt'.format(instance))
-        pts.append(utils.load_dets_txt(pts_path))
+        pts = utils.load_dets_txt(pts_path)
+        all_pts.append(pts)
+
+        # compute image descriptors
+        descs = compute_descriptors(img, pts)
+        all_descs.append(descs)
 
         # make id2index correspondence
         id2index_dict[(subject_id, session_id, register_id)] = index
@@ -84,15 +102,15 @@ if __name__ == '__main__':
     for subject_id in subject_ids:
       for register_id1 in register_ids:
         index1 = id2index((subject_id, 1, register_id1))
-        img1 = imgs[index1]
-        pts1 = pts[index1]
+        descs1 = all_descs[index1]
+        pts1 = all_pts[index1]
         for register_id2 in register_ids:
           index2 = id2index((subject_id, 2, register_id2))
-          img2 = imgs[index2]
-          pts2 = pts[index2]
+          descs2 = all_descs[index2]
+          pts2 = all_pts[index2]
           print('{}_{}_{} x {}_{}_{}'.format(subject_id, 1, register_id1,
                                              subject_id, 2, register_id2))
-          print(1, match(img1, pts1, img2, pts2), file=f)
+          print(1, match(descs1, descs2, pts1, pts2, thr=FLAGS.thr), file=f)
 
     # different subject comparisons
     for subject_id1 in subject_ids:
@@ -101,12 +119,11 @@ if __name__ == '__main__':
           index1 = id2index((subject_id1, 1, 1))
           index2 = id2index((subject_id2, 2, 1))
 
-          img1 = imgs[index1]
-          pts1 = pts[index1]
-
-          img2 = imgs[index2]
-          pts2 = pts[index2]
+          descs1 = all_descs[index1]
+          descs2 = all_descs[index2]
+          pts1 = all_pts[index1]
+          pts2 = all_pts[index2]
 
           print('{}_{}_{} x {}_{}_{}'.format(subject_id1, 1, 1, subject_id2, 2,
                                              1))
-          print(0, match(img1, pts1, img2, pts2), file=f)
+          print(0, match(descs1, descs2, pts1, pts2, thr=FLAGS.thr), file=f)
