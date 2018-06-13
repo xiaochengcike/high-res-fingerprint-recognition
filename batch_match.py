@@ -39,7 +39,7 @@ if __name__ == '__main__':
       help='Mode to match images. Can be "basic" or "spatial".')
   parser.add_argument(
       '--thr', type=float, help='Second correspondence elimination threshold.')
-  FLAGS, _ = parser.parse_known_args()
+  FLAGS = parser.parse_args()
 
   # parse descriptor and adjust accordingly
   if FLAGS.descriptors == 'sift':

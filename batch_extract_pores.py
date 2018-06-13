@@ -75,6 +75,6 @@ if __name__ == '__main__':
       type=str,
       default='result',
       help='Path to folder in which results should be saved.')
-  FLAGS, unparsed = parser.parse_known_args()
+  FLAGS = parser.parse_args()
 
   main()

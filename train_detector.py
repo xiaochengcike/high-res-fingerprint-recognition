@@ -159,7 +159,7 @@ if __name__ == '__main__':
       '--label_size', type=int, default=3, help='Pore window size.')
   parser.add_argument(
       '--label_mode', type=str, default='hard_bb', help='Pore window size.')
-  FLAGS, _ = parser.parse_known_args()
+  FLAGS = parser.parse_args()
 
   main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.label_size,
        FLAGS.label_mode, FLAGS.steps, FLAGS.learning_rate, FLAGS.batch_size,

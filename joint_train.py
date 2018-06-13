@@ -253,6 +253,6 @@ if __name__ == '__main__':
       default=500,
       help='Number of sampled batches when validating')
 
-  FLAGS, _ = parser.parse_known_args()
+  FLAGS = parser.parse_args()
 
   main()

@@ -65,6 +65,6 @@ if __name__ == '__main__':
       '--batch_size', type=int, default=256, help='Batch size.')
   parser.add_argument(
       '--window_size', type=int, default=17, help='Pore window size.')
-  FLAGS, unparsed = parser.parse_known_args()
+  FLAGS = parser.parse_args()
 
   main(FLAGS.model_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.batch_size)

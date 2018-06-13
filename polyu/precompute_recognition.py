@@ -32,7 +32,7 @@ if __name__ == '__main__':
       type=str,
       default='rec_dataset.pkl',
       help='Path to save precomputed recognition dataset.')
-  FLAGS, _ = parser.parse_known_args()
+  FLAGS = parser.parse_args()
 
   print('Creating dataset object instance...')
   imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
