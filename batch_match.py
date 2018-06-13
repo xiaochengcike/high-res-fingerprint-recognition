@@ -25,7 +25,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--results_path',
       type=str,
-      default='alignment_matching.txt',
+      default='matching_results.txt',
       help='Path to results file.')
   parser.add_argument(
       '--mode',
