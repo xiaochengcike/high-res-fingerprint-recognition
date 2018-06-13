@@ -85,6 +85,8 @@ class Dataset:
                patch_size,
                val_split=True,
                should_shuffle=True):
+    self.patch_size = patch_size
+
     images, labels = self._load_images_with_labels(images_folder_path)
     pts = self._load_detections(pts_folder_path)
     images_by_labels, pts_by_labels = self._group_examples_by_labels(
