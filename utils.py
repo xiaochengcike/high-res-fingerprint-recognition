@@ -357,3 +357,70 @@ def extract_sift_descriptors(img, pts, scale):
   _, descs = sift.compute(img, kpts)
 
   return descs
+
+
+def find_correspondences(descs1,
+                         descs2,
+                         pts1=None,
+                         pts2=None,
+                         euclidean_weight=0,
+                         transf=None,
+                         thr=None):
+  # compute descriptors' pairwise distances
+  sqr1 = np.sum(descs1 * descs1, axis=1, keepdims=True)
+  sqr2 = np.sum(descs2 * descs2, axis=1)
+  D = sqr1 - 2 * np.matmul(descs1, descs2.T) + sqr2
+
+  # add points' euclidean distance
+  if euclidean_weight != 0:
+    assert transf is not None
+    assert pts1 is not None
+    assert pts2 is not None
+
+    # assure pts are np array
+    pts1 = transf(np.array(pts1))
+    pts2 = np.array(pts2)
+
+    # compute points' pairwise distances
+    sqr1 = np.sum(pts1 * pts1, axis=1, keepdims=True)
+    sqr2 = np.sum(pts2 * pts2, axis=1)
+    euclidean_D = sqr1 - 2 * np.matmul(pts1, pts2.T) + sqr2
+
+    # add to overral keypoints distance
+    D += euclidean_weight * euclidean_D
+
+  # find bidirectional corresponding points
+  pairs = []
+  if thr is None:
+    # find the best correspondence of each element
+    # in 'descs2' to an element in 'descs1'
+    corrs2 = np.argmin(D, axis=0)
+
+    # find the best correspondence of each element
+    # in 'descs1' to an element in 'descs2'
+    corrs1 = np.argmin(D, axis=1)
+
+    # keep only bidirectional correspondences
+    for i, j in enumerate(corrs2):
+      if corrs1[j] == i:
+        pairs.append((j, i, D[j, i]))
+  else:
+    # find the 2 best correspondences of each
+    # element in 'descs2' to an element in 'descs1'
+    corrs2 = np.argpartition(D.T, [0, 1])[:, :2]
+
+    # find the 2 best correspondences of each
+    # element in 'descs1' to an element in 'descs2'
+    corrs1 = np.argpartition(D, [0, 1])[:, :2]
+
+    # find bidirectional corresponding points
+    # with second best correspondence 'thr'
+    # worse than best one
+    for i, (j, _) in enumerate(corrs2):
+      if corrs1[j, 0] == i:
+        # discard close best second correspondences
+        if D[j, i] < D[corrs2[i, 1], i] * thr:
+          if D[j, i] < D[j, corrs1[j, 1]] * thr:
+            pairs.append((j, i, D[j, i]))
+
+  return pairs

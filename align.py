@@ -5,7 +5,7 @@ from six.moves import range
 
 import numpy as np
 
-import matching.sift_bidirectional as matching
+import utils
 
 
 def _inside(img, pt):
@@ -120,6 +120,8 @@ def iterative(img1,
               pts1,
               img2,
               pts2,
+              descs1=None,
+              descs2=None,
               euclidean_lambda=500,
               weighted=False,
               max_iter=10):
@@ -145,6 +147,8 @@ def iterative(img1,
       keypoint coordinate per row.
     img2: np array with image to align to.
     pts2: same as pts1, but for img2.
+    descs1: precomputed descriptors for img1.
+    descs2: same as descs1, but for img2.
     euclidean_lambda: \lambda in above equation.
     weighted: whether should consider the
       correspondence confidence - computed as
@@ -163,6 +167,12 @@ def iterative(img1,
   s = 1
   b = np.array([0, 0])
 
+  # precompute sift descriptors, if not given
+  if descs1 is None:
+    descs1 = utils.extract_sift_descriptors(img1, pts1, scale=8)
+  if descs2 is None:
+    descs2 = utils.extract_sift_descriptors(img2, pts2, scale=8)
+
   # iteratively align
   for _ in range(max_iter):
     # convergence criterion
@@ -173,14 +183,14 @@ def iterative(img1,
     euclidean_weight = euclidean_lambda / mse
 
     # find correspondences
-    pairs = matching.find_correspondences(
-        img1,
-        pts1,
-        img2,
-        pts2,
-        scale=8.0,
+    pairs = utils.find_correspondences(
+        descs1,
+        descs2,
+        pts1=pts1,
+        pts2=pts2,
         euclidean_weight=euclidean_weight,
-        transf=lambda x: _transf(x, A, s, b))
+        transf=lambda x: _transf(x, A, s, b),
+        thr=0.8)
 
     # end alignment if no further correspondences are found
     if len(pairs) <= 1:
@@ -214,12 +224,28 @@ def iterative(img1,
     dists = np.sum(error * error, axis=1)
     mse = np.mean(dists)
 
-    # filter points out of images overlap
-    pts1 = filter(lambda pt: _inside(img2, _transf(pt, A, s, b)), pts1)
-    pts1 = list(pts1)
+    # filter points and corresponding descriptors
+    # that are out of the images overlap
+    pts1_ = []
+    descs1_ = []
+    for i, pt in enumerate(pts1):
+      t_pt = _transf(pt, A, s, b)
+      if _inside(img2, t_pt):
+        pts1_.append(pt)
+        descs1_.append(descs1[i])
+    pts1 = pts1_
+    descs1 = np.array(descs1_)
 
-    pts2 = filter(lambda pt: _inside(img1, _inv_transf(pt, A, s, b)), pts2)
-    pts2 = list(pts2)
+    # same for second set
+    pts2_ = []
+    descs2_ = []
+    for i, pt in enumerate(pts2):
+      t_pt = _inv_transf(pt, A, s, b)
+      if _inside(img1, t_pt):
+        pts2_.append(pt)
+        descs2_.append(descs2[i])
+    pts2 = pts2_
+    descs2 = np.array(descs2_)
 
   return A, b, s
 
