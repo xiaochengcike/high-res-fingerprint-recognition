@@ -79,8 +79,8 @@ def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
 
 
 def detection_by_images(sess, pred_op, patches_pl, dataset):
-  window_size = dataset.window_size
-  half_window_size = window_size // 2
+  patch_size = dataset.patch_size
+  half_patch_size = patch_size // 2
   preds = []
   pores = []
   print('Predicting pores...')
@@ -96,12 +96,12 @@ def detection_by_images(sess, pred_op, patches_pl, dataset):
         feed_dict={patches_pl: np.reshape(img, (-1, ) + img.shape + (1, ))})
 
     # put predictions in image format
-    pred = np.array(pred).reshape(img.shape[0] - window_size + 1,
-                                  img.shape[1] - window_size + 1)
+    pred = np.array(pred).reshape(img.shape[0] - patch_size + 1,
+                                  img.shape[1] - patch_size + 1)
 
     # add borders lost in convolution
-    pred = np.pad(pred, ((half_window_size, half_window_size),
-                         (half_window_size, half_window_size)), 'constant')
+    pred = np.pad(pred, ((half_patch_size, half_patch_size),
+                         (half_patch_size, half_patch_size)), 'constant')
 
     # add image prediction to predictions
     preds.append(pred)

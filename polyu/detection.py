@@ -15,18 +15,18 @@ class _Dataset:
                labels,
                shuffle_behavior,
                incomplete_batches,
-               window_size=None,
+               patch_size=None,
                one_hot=False,
                label_mode=None,
                label_size=None):
     self._images = np.array(images, dtype=np.float32)
     self._labels = np.array(labels, dtype=np.float32)
-    self.window_size = window_size
+    self.patch_size = patch_size
     self._shuffle_behavior = shuffle_behavior
     self._one_hot = one_hot
     self._incomplete_batches = incomplete_batches
 
-    # window batch pointers
+    # patch batch pointers
     self._index_in_epoch = 0
     self._epochs_completed = 0
 
@@ -37,23 +37,23 @@ class _Dataset:
     self.num_images = len(self._images)
     self._image_rows = self._images[0].shape[0]
     self._image_cols = self._images[0].shape[1]
-    if window_size is not None:
-      self.num_samples = self.num_images * (self._image_rows - window_size) * (
-          self._image_cols - window_size)
+    if patch_size is not None:
+      self.num_samples = self.num_images * (self._image_rows - patch_size) * (
+          self._image_cols - patch_size)
 
-      # create labels to be sampled by windows
+      # create labels to be sampled by patches
       if label_mode == 'hard_bb':
-        self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
+        self._patch_labels = np.zeros_like(self._labels, dtype=np.float32)
 
         # draw 'label_size' bounding box around pores
-        for k, i, j in np.ndindex(self._window_labels.shape):
+        for k, i, j in np.ndindex(self._patch_labels.shape):
           i_ = max(i - label_size, 0)
           j_ = max(j - label_size, 0)
-          self._window_labels[k, i, j] = np.max(
+          self._patch_labels[k, i, j] = np.max(
               self._labels[k, i_:i + 1 + label_size, j_:j + 1 + label_size])
 
       elif label_mode == 'hard_l1' or label_mode == 'hard_l2':
-        self._window_labels = np.zeros_like(self._labels, dtype=np.float32)
+        self._patch_labels = np.zeros_like(self._labels, dtype=np.float32)
 
         # define norm to use
         norm_l = int(label_mode[-1])
@@ -61,7 +61,7 @@ class _Dataset:
         # enqueue pores with origins
         queue = []
         for pore in np.argwhere(self._labels >= 0.5):
-          self._window_labels[pore[0], pore[1], pore[2]] = self._labels[pore[
+          self._patch_labels[pore[0], pore[1], pore[2]] = self._labels[pore[
               0], pore[1], pore[2]]
           queue.append((pore, pore))
 
@@ -73,22 +73,22 @@ class _Dataset:
 
           # propagate pore anchor label
           k, i, j = anchor
-          val = self._window_labels[k, i, j]
+          val = self._patch_labels[k, i, j]
 
           # enqueue valid neighbors
           for d in [(0, 1, 0), (0, 0, 1), (0, -1, 0), (0, 0, -1)]:
             ngh = coords + d
             _, i, j = ngh
-            if 0 <= i < self._window_labels[k].shape[0] and \
-                0 <= j < self._window_labels[k].shape[1] and \
-                self._window_labels[k, i, j] == 0 and \
+            if 0 <= i < self._patch_labels[k].shape[0] and \
+                0 <= j < self._patch_labels[k].shape[1] and \
+                self._patch_labels[k, i, j] == 0 and \
                 np.linalg.norm(ngh - anchor, norm_l) <= label_size:
-              self._window_labels[k, i, j] = val
+              self._patch_labels[k, i, j] = val
               queue.append((ngh, anchor))
 
   def next_batch(self, batch_size, shuffle=None, incomplete=None):
     '''
-    Sample next batch, of size 'batch_size', of image windows.
+    Sample next batch, of size 'batch_size', of image patches.
 
     Args:
       batch_size: Size of batch to be sampled.
@@ -96,7 +96,7 @@ class _Dataset:
       incomplete: Overrides dataset incomplete batch behavior, ie if when completing an epoch, a batch should be provided with less samples than predicted so to not get samples from different epochs.
 
     Returns:
-      The sampled window batch and corresponding labels as np arrays.
+      The sampled patch batch and corresponding labels as np arrays.
     '''
     # determine shuffle and incomplete behaviors
     if shuffle is None:
@@ -120,7 +120,7 @@ class _Dataset:
 
       # get the rest of samples in this epoch
       rest_num_samples = self.num_samples - start
-      images_rest_part, labels_rest_part = self._to_windows(self._perm[start:])
+      images_rest_part, labels_rest_part = self._to_patches(self._perm[start:])
 
       # shuffle the data
       if shuffle:
@@ -138,7 +138,7 @@ class _Dataset:
       end = self._index_in_epoch
 
       # retrive samples in the new epoch
-      images_new_part, labels_new_part = self._to_windows(
+      images_new_part, labels_new_part = self._to_patches(
           self._perm[start:end])
 
       return np.concatenate(
@@ -147,7 +147,7 @@ class _Dataset:
     else:
       self._index_in_epoch += batch_size
       end = self._index_in_epoch
-      return self._to_windows(self._perm[start:end])
+      return self._to_patches(self._perm[start:end])
 
   def next_image_batch(self, batch_size, shuffle=None, incomplete=None):
     '''
@@ -213,25 +213,25 @@ class _Dataset:
       end = self._image_index_in_epoch
       return self._images[start:end], self._labels[start:end]
 
-  def _to_windows(self, indices):
+  def _to_patches(self, indices):
     '''
-    Retrieves image windows, on demand, corresponding to given indices.
-    A window of size WINDOW_SIZE is centered in the i-th row of the j-th column of the k-th image (of dimensions ROWS x COLS) according to the given index I:
+    Retrieves image patches, on demand, corresponding to given indices.
+    A patch of size WINDOW_SIZE is centered in the i-th row of the j-th column of the k-th image (of dimensions ROWS x COLS) according to the given index I:
       k = I / ((ROWS - WINDOW_SIZE) * (COLS - WINDOW_SIZE))
       i = I / (COLS - WINDOW_SIZE) - k * (ROWS - WINDOW_SIZE)
       j = I mod (COLS - SIZE)
 
       Args:
-        indices: Indices for which windows will be produced.
+        indices: Indices for which patches will be produced.
 
       Returns:
-        windows: Windows corresponding to the given indices.
-        labels: Labels of the returned windows.
+        patches: Windows corresponding to the given indices.
+        labels: Labels of the returned patches.
 
     '''
-    # windows (samples) and labels
-    size = self.window_size
-    windows = np.empty([indices.shape[0], size, size], np.float32)
+    # patches (samples) and labels
+    size = self.patch_size
+    patches = np.empty([indices.shape[0], size, size], np.float32)
     if self._one_hot:
       labels = np.empty([indices.shape[0], 2], np.float32)
     else:
@@ -247,18 +247,18 @@ class _Dataset:
           self._image_rows - size)
       j = image_index % (self._image_cols - size)
 
-      # generate window
-      windows[index] = self._images[k, i:i + size, j:j + size]
+      # generate patch
+      patches[index] = self._images[k, i:i + size, j:j + size]
 
       # generate corresponding label
       center = size // 2
       if self._one_hot:
-        labels[index, 0] = self._window_labels[k, i + center, j + center]
+        labels[index, 0] = self._patch_labels[k, i + center, j + center]
         labels[index, 1] = 1 - labels[index, 0]
       else:
-        labels[index] = self._window_labels[k, i + center, j + center]
+        labels[index] = self._patch_labels[k, i + center, j + center]
 
-    return windows, labels
+    return patches, labels
 
 
 class Dataset:
@@ -266,7 +266,7 @@ class Dataset:
                images_folder_path,
                labels_folder_path,
                split,
-               window_size=None,
+               patch_size=None,
                label_mode='hard_bb',
                label_size=3,
                should_shuffle=True,
@@ -281,7 +281,7 @@ class Dataset:
           self._labels[:split[0]],
           shuffle_behavior=should_shuffle,
           incomplete_batches=False,
-          window_size=window_size,
+          patch_size=patch_size,
           one_hot=one_hot,
           label_mode=label_mode,
           label_size=label_size)
@@ -294,7 +294,7 @@ class Dataset:
           self._labels[split[0]:split[0] + split[1]],
           shuffle_behavior=False,
           incomplete_batches=True,
-          window_size=window_size,
+          patch_size=patch_size,
           one_hot=one_hot,
           label_mode=label_mode,
           label_size=label_size)
@@ -307,7 +307,7 @@ class Dataset:
           self._labels[split[0] + split[1]:split[0] + split[1] + split[2]],
           shuffle_behavior=False,
           incomplete_batches=True,
-          window_size=window_size,
+          patch_size=patch_size,
           one_hot=one_hot,
           label_mode=label_mode,
           label_size=label_size)

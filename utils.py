@@ -14,13 +14,13 @@ import scipy.misc
 import cv2
 
 
-def to_windows(img, window_size):
-  windows = []
-  for i in range(img.shape[0] - window_size + 1):
-    for j in range(img.shape[1] - window_size + 1):
-      windows.append(img[i:i + window_size, j:j + window_size])
+def to_patches(img, patch_size):
+  patches = []
+  for i in range(img.shape[0] - patch_size + 1):
+    for j in range(img.shape[1] - patch_size + 1):
+      patches.append(img[i:i + patch_size, j:j + patch_size])
 
-  return windows
+  return patches
 
 
 def placeholder_inputs():
@@ -33,7 +33,7 @@ def fill_detection_feed_dict(dataset, patches_pl, labels_pl, batch_size):
   patches_feed, labels_feed = dataset.next_batch(batch_size)
   feed_dict = {
       patches_pl:
-      patches_feed.reshape([-1, dataset.window_size, dataset.window_size, 1]),
+      patches_feed.reshape([-1, dataset.patch_size, dataset.patch_size, 1]),
       labels_pl:
       labels_feed.reshape([-1, 1])
   }
@@ -52,12 +52,12 @@ def fill_description_feed_dict(dataset, patches_pl, labels_pl,
   return feed_dict
 
 
-def _pick_and_transform_window(image, n_windows, size, row=None, col=None):
-  # compute margin for safe window retrieval
+def _pick_and_transform_patch(image, n_patches, size, row=None, col=None):
+  # compute margin for safe patch retrieval
   margin = np.ceil(size / 2 * np.sqrt(2)) + 4
 
   if row is None or col is None:
-    # randomly pick base window (with margins for small rotations)
+    # randomly pick base patch (with margins for small rotations)
     row = np.random.randint(margin, image.shape[0] - margin)
     col = np.random.randint(margin, image.shape[1] - margin)
   else:
@@ -65,11 +65,11 @@ def _pick_and_transform_window(image, n_windows, size, row=None, col=None):
     assert margin <= row < image.shape[0] - margin
     assert margin <= col < image.shape[1] - margin
 
-  window = image[row:row + size, col:col + size]
+  patch = image[row:row + size, col:col + size]
 
-  # transform windows
-  windows = [window]
-  for _ in range(n_windows - 1):
+  # transform patches
+  patches = [patch]
+  for _ in range(n_patches - 1):
     # small translation
     drow = row - np.random.randint(3)
     dcol = col - np.random.randint(3)
@@ -79,16 +79,16 @@ def _pick_and_transform_window(image, n_windows, size, row=None, col=None):
     rotation_mat = cv2.getRotationMatrix2D((dcol + size // 2,
                                             drow + size // 2), angle, 1)
     rotated_image = cv2.warpAffine(image, rotation_mat, image.shape[1::-1])
-    transfd_window = rotated_image[drow:drow + size, dcol:dcol + size]
+    transfd_patch = rotated_image[drow:drow + size, dcol:dcol + size]
 
     # brightness and contrast
-    transfd_window = np.random.normal(
-        loc=1.0, scale=0.05) * transfd_window + np.random.normal(
+    transfd_patch = np.random.normal(
+        loc=1.0, scale=0.05) * transfd_patch + np.random.normal(
             loc=0.0, scale=0.1)
 
-    windows.append(transfd_window)
+    patches.append(transfd_patch)
 
-  return windows
+  return patches
 
 
 def create_dirs(log_dir_path, batch_size, learning_rate):
@@ -121,15 +121,15 @@ def plot_precision_recall(tdr, fdr, path):
   return buf
 
 
-def nms(centers, probs, window_size, thr):
-  area = window_size * window_size
-  half_window_size = window_size // 2
+def nms(centers, probs, patch_size, thr):
+  area = patch_size * patch_size
+  half_patch_size = patch_size // 2
 
   xs, ys = np.transpose(centers)
-  x1 = xs - half_window_size
-  x2 = xs + half_window_size
-  y1 = ys - half_window_size
-  y2 = ys + half_window_size
+  x1 = xs - half_patch_size
+  x2 = xs + half_patch_size
+  y1 = ys - half_patch_size
+  y2 = ys + half_patch_size
 
   order = np.argsort(probs)[::-1]
 
@@ -161,7 +161,7 @@ def project_and_find_correspondences(pores,
                                      dets,
                                      dist_thr=np.inf,
                                      proj_shape=None,
-                                     mode='window'):
+                                     mode='patch'):
   # compute projection shape, if not given
   if proj_shape is None:
     ys = np.concatenate([dets.T[0], pores.T[0]])
@@ -178,14 +178,14 @@ def project_and_find_correspondences(pores,
   pore_dcorrs = np.full(len(pores), dist_thr)
   det_corrs = np.full(len(dets), -1, dtype=np.int32)
   det_dcorrs = np.full(len(dets), dist_thr)
-  if mode == 'window':
+  if mode == 'patch':
     for pore_ind, (pore_i, pore_j) in enumerate(pores):
       # all detections within l2 'dist_thr' distance from
       # 'pore' are within l1 'dist_thr' distance from it
-      window = projection[pore_i - dist_thr:pore_i + dist_thr + 1,
-                          pore_j - dist_thr:pore_j + dist_thr + 1]
+      patch = projection[pore_i - dist_thr:pore_i + dist_thr + 1,
+                         pore_j - dist_thr:pore_j + dist_thr + 1]
 
-      for det, det_ind in np.ndenumerate(window):
+      for det, det_ind in np.ndenumerate(patch):
         # check whether 'det' has a detection
         if det_ind != 0:
           det_ind -= 1

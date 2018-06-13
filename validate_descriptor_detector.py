@@ -19,24 +19,24 @@ def load_detection_dataset(polyu_path):
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
-      window_size=FLAGS.window_size)
+      patch_size=FLAGS.patch_size)
 
   return dataset
 
 
-def main(model_dir, polyu_path, window_size, batch_size):
+def main(model_dir, polyu_path, patch_size, batch_size):
   print('Loading PolyU-HRF dataset...')
   dataset = load_detection_dataset(polyu_path)
   print('Done.')
 
   with tf.Graph().as_default():
-    # gets placeholders for windows and labels
-    windows_pl, labels_pl = utils.placeholder_inputs()
+    # gets placeholders for patches and labels
+    patches_pl, labels_pl = utils.placeholder_inputs()
 
     # builds inference graph
     print('Building graph...')
     net = descriptor_detector.Net(
-        windows_pl, dataset.train.window_size, training=False)
+        patches_pl, dataset.train.patch_size, training=False)
     print('Done.')
 
     with tf.Session() as sess:
@@ -45,7 +45,7 @@ def main(model_dir, polyu_path, window_size, batch_size):
       print('Done.')
 
       image_f_score, image_tdr, image_fdr, inter_thr = validate.detection_by_images(
-          sess, net.dets, windows_pl, dataset.val)
+          sess, net.dets, patches_pl, dataset.val)
       print(
           'Whole image evaluation:',
           '\tTDR = {}'.format(image_tdr),
@@ -64,7 +64,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--batch_size', type=int, default=256, help='Batch size.')
   parser.add_argument(
-      '--window_size', type=int, default=17, help='Pore window size.')
+      '--patch_size', type=int, default=17, help='Pore patch size.')
   FLAGS = parser.parse_args()
 
-  main(FLAGS.model_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.batch_size)
+  main(FLAGS.model_dir, FLAGS.polyu_dir, FLAGS.patch_size, FLAGS.batch_size)

@@ -27,7 +27,7 @@ def train(det_dataset, desc_dataset, log_dir):
     thresholds_pl = tf.placeholder(tf.float32, [None])
 
     # build net graph
-    net = descriptor_detector.Net(patches_pl, FLAGS.patch_size)
+    net = descriptor_detector.Net(patches_pl)
 
     # build detection training related ops
     net.build_detection_loss(labels_pl)
@@ -38,8 +38,7 @@ def train(det_dataset, desc_dataset, log_dir):
     net.build_description_train(FLAGS.desc_lr)
 
     # builds validation graph
-    val_net = descriptor_detector.Net(
-        patches_pl, FLAGS.patch_size, training=False, reuse=True)
+    val_net = descriptor_detector.Net(patches_pl, training=False, reuse=True)
     val_net.build_description_validation(labels_pl, thresholds_pl)
 
     # add summary to plot losses, eer, f score, tdr and fdr
@@ -191,7 +190,7 @@ def load_detection_dataset(polyu_dir_path, patch_size):
       os.path.join(polyu_dir_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_dir_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
-      window_size=patch_size)
+      patch_size=patch_size)
   print('Loaded.')
 
   return dataset

@@ -19,13 +19,13 @@ def main():
   images, image_names = utils.load_images_with_names(FLAGS.imgs_dir)
   print('Done.')
 
-  half_window_size = FLAGS.window_size // 2
+  half_patch_size = FLAGS.patch_size // 2
 
   with tf.Graph().as_default():
     images_pl, _ = utils.placeholder_inputs()
 
     print('Building graph...')
-    net = detector.Net(images_pl, FLAGS.window_size, training=False)
+    net = detector.Net(images_pl, FLAGS.patch_size, training=False)
     print('Done.')
 
     with tf.Session() as sess:
@@ -43,8 +43,8 @@ def main():
 
         # add borders lost in convolution
         pred = np.reshape(pred, pred.shape[1:-1])
-        pred = np.pad(pred, ((half_window_size, half_window_size),
-                             (half_window_size, half_window_size)), 'constant')
+        pred = np.pad(pred, ((half_patch_size, half_patch_size),
+                             (half_patch_size, half_patch_size)), 'constant')
 
         # convert into coordinates
         pick = pred > 0.9
@@ -69,7 +69,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--batch_size', type=int, default=256, help='Batch size.')
   parser.add_argument(
-      '--window_size', type=int, default=17, help='Pore window size.')
+      '--patch_size', type=int, default=17, help='Pore patch size.')
   parser.add_argument(
       '--results_dir',
       type=str,

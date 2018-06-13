@@ -20,17 +20,16 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
   plot_dir = os.path.join(log_dir, 'plot')
 
   with tf.Graph().as_default():
-    # gets placeholders for windows and labels
-    windows_pl, labels_pl = utils.placeholder_inputs()
+    # gets placeholders for patches and labels
+    patches_pl, labels_pl = utils.placeholder_inputs()
 
     # build train related ops
-    net = detector.Net(windows_pl, dataset.train.window_size)
+    net = detector.Net(patches_pl)
     net.build_loss(labels_pl)
     net.build_train(learning_rate)
 
     # builds validation inference graph
-    val_net = detector.Net(
-        windows_pl, dataset.train.window_size, training=False, reuse=True)
+    val_net = detector.Net(patches_pl, training=False, reuse=True)
 
     # add summary to plot loss, f score, tdr and fdr
     f_score_pl = tf.placeholder(tf.float32, shape=())
@@ -60,7 +59,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
       sess.run(init)
 
       for step in range(1, max_steps + 1):
-        feed_dict = utils.fill_detection_feed_dict(dataset.train, windows_pl,
+        feed_dict = utils.fill_detection_feed_dict(dataset.train, patches_pl,
                                                    labels_pl, batch_size)
 
         _, loss_value = sess.run([net.train, net.loss], feed_dict=feed_dict)
@@ -74,8 +73,8 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
         # evaluate the model periodically
         if step % 1000 == 0:
           print('Evaluation:')
-          tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection_by_windows(
-              sess, val_net.preds, batch_size, windows_pl, labels_pl,
+          tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection_by_patches(
+              sess, val_net.preds, batch_size, patches_pl, labels_pl,
               dataset.val)
           print(
               '\tTDR = {}'.format(tdr),
@@ -118,7 +117,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
           summary_writer.add_summary(plot_summary, global_step=step)
 
 
-def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
+def main(log_dir_path, polyu_path, patch_size, label_size, label_mode,
          max_steps, learning_rate, batch_size, tolerance):
   # create folders to save train resources
   log_dir = utils.create_dirs(log_dir_path, batch_size, learning_rate)
@@ -130,7 +129,7 @@ def main(log_dir_path, polyu_path, window_size, label_size, label_mode,
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
-      window_size=window_size,
+      patch_size=patch_size,
       label_mode=label_mode,
       label_size=label_size)
   print('Loaded.')
@@ -154,13 +153,13 @@ if __name__ == '__main__':
   parser.add_argument(
       '--steps', type=int, default=100000, help='Maximum training steps.')
   parser.add_argument(
-      '--window_size', type=int, default=17, help='Pore window size.')
+      '--patch_size', type=int, default=17, help='Pore patch size.')
   parser.add_argument(
-      '--label_size', type=int, default=3, help='Pore window size.')
+      '--label_size', type=int, default=3, help='Pore label size.')
   parser.add_argument(
-      '--label_mode', type=str, default='hard_bb', help='Pore window size.')
+      '--label_mode', type=str, default='hard_bb', help='Pore patch size.')
   FLAGS = parser.parse_args()
 
-  main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.window_size, FLAGS.label_size,
+  main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.patch_size, FLAGS.label_size,
        FLAGS.label_mode, FLAGS.steps, FLAGS.learning_rate, FLAGS.batch_size,
        FLAGS.tolerance)

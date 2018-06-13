@@ -7,8 +7,7 @@ import tensorflow as tf
 
 
 class Net:
-  def __init__(self, images, window_size, layers=7, training=True,
-               reuse=False):
+  def __init__(self, images, layers=7, training=True, reuse=False):
     # kernel size is fixed across entire net
     kernel_size = [3, 3]
 
