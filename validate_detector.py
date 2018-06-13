@@ -31,20 +31,6 @@ def main(model_dir, polyu_path, window_size, batch_size):
     # builds inference graph
     net = detector.Net(windows_pl, dataset.train.window_size, training=False)
 
-    # add summary to plot f score, tdr and fdr
-    f_score_pl = tf.placeholder(tf.float32, shape=())
-    tdr_pl = tf.placeholder(tf.float32, shape=())
-    fdr_pl = tf.placeholder(tf.float32, shape=())
-    f_score_summary_op = tf.summary.scalar('f_score', f_score_pl)
-    tdr_summary_op = tf.summary.scalar('tdr', tdr_pl)
-    fdr_summary_op = tf.summary.scalar('fdr', fdr_pl)
-
-    # resources to tensorboard plots
-    plot_buf_pl = tf.placeholder(tf.string)
-    plot_png = tf.image.decode_png(plot_buf_pl)
-    expanded_plot_png = tf.expand_dims(plot_png, 0)
-    plot_summary_op = tf.summary.image('plot', expanded_plot_png)
-
     with tf.Session() as sess:
       utils.restore_model(sess, model_dir)
 
