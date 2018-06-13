@@ -13,7 +13,7 @@ if __name__ == '__main__':
   # parse args
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--imgs_dir_path',
+      '--polyu_dir_path',
       required=True,
       type=str,
       help='Path to PolyU-HRF dataset.')
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     from matching.alignment import match
 
   # make dir path be full DBI Training path
-  imgs_dir_path = os.path.join(FLAGS.imgs_dir_path, 'DBI', 'Training')
+  imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
 
   subject_ids = [
       6, 9, 11, 13, 16, 18, 34, 41, 42, 47, 62, 67, 118, 186, 187, 188, 196,
