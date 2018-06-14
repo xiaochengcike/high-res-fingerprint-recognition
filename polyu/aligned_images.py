@@ -68,7 +68,10 @@ class Handler:
     mask = _compute_valid_region(self._imgs, self._transfs, self._patch_size)
 
     # get valid indices and store them for access
-    self._inds = np.argwhere(mask)
+    self._inds = []
+    for pt in all_pts[0]:
+      if mask[pt[0], pt[1]]:
+        self._inds.append(pt)
 
   def __getitem__(self, val):
     if isinstance(val, slice):
