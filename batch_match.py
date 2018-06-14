@@ -63,7 +63,7 @@ if __name__ == '__main__':
     utils.restore_model(sess, FLAGS.model_dir_path)
     print('Done.')
 
-    trained_descs = tf.gather_nd(net.descs, pts_pl)
+    trained_descs = tf.gather_nd(tf.squeeze(net.spatial_descs), pts_pl)
     compute_descriptors = lambda img, pts: sess.run(trained_descs,
         feed_dict={
           img_pl: np.reshape(img, (1,) + img.shape + (1,)),

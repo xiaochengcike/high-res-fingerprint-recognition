@@ -63,6 +63,8 @@ class Net:
         descs_layer, training=training, name='descs_batch_norm', reuse=reuse)
 
     # descriptors
+    self.spatial_descs = tf.nn.l2_normalize(
+        descs_layer, axis=-1, name='spatial_descriptors')
     descs_layer = tf.reshape(descs_layer, (-1, 128))
     self.descs = tf.nn.l2_normalize(descs_layer, axis=1, name='descriptors')
 
