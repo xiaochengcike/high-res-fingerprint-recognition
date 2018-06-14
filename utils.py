@@ -424,3 +424,18 @@ def find_correspondences(descs1,
             pairs.append((j, i, D[j, i]))
 
   return pairs
+
+
+def load_images_with_labels(folder_path):
+  images = []
+  labels = []
+  for image_path in sorted(os.listdir(folder_path)):
+    if image_path.endswith(('.jpg', '.png', '.bmp')):
+      images.append(load_image(os.path.join(folder_path, image_path)))
+      labels.append(retrieve_label_from_image_path(image_path))
+
+  return images, labels
+
+
+def retrieve_label_from_image_path(image_path):
+  return int(image_path.split('_')[0])
