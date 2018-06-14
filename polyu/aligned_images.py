@@ -40,9 +40,9 @@ def _compute_valid_region(all_imgs, transfs, patch_size):
   for k, img2 in enumerate(all_imgs[1:]):
     # find pixels in both img1 and img2
     aligned = np.zeros_like(img1, dtype=np.bool)
-    for i in range(valid.shape[0] - patch_size + 1):
-      for j in range(valid.shape[1] - patch_size + 1):
-        row, col = transfs[k]((i + half, j + half))
+    for i in range(half, valid.shape[0] - half):
+      for j in range(half, valid.shape[1] - half):
+        row, col = transfs[k]((i, j))
         row = int(np.round(row))
         col = int(np.round(col))
         if 0 <= row - half < img2.shape[0] and 0 <= row + half < img2.shape[0]:
@@ -79,13 +79,14 @@ class Handler:
       for i, j in self._inds[val]:
         # add first image patch
         sample = [
-            self._imgs[0][i:i + self._patch_size, j:j + self._patch_size]
+            self._imgs[0][i - self._half:i + self._half + 1, j - self._half:
+                          j + self._half + 1]
         ]
 
         # add remaining image patches
         for k, img in enumerate(self._imgs[1:]):
           # find transformed coordinates of patch
-          ti, tj = self._transfs[k]((i + self._half, j + self._half))
+          ti, tj = self._transfs[k]((i, j))
 
           # convert them to int
           ti = int(np.round(ti))
@@ -104,12 +105,15 @@ class Handler:
       i, j = self._inds[val]
 
       # add first image patch
-      samples = [self._imgs[0][i:i + self._patch_size, j:j + self._patch_size]]
+      samples = [
+          self._imgs[0][i - self._half:i + self._half + 1, j - self._half:
+                        j + self._half + 1]
+      ]
 
       # add remaining image patches
       for k, img in enumerate(self._imgs[1:]):
         # find transformed coordinates of patch
-        ti, tj = self._transfs[k]((i + self._half, j + self._half))
+        ti, tj = self._transfs[k]((i, j))
 
         # convert them to int
         ti = int(np.round(ti))
