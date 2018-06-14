@@ -67,7 +67,7 @@ if __name__ == '__main__':
     compute_descriptors = lambda img, pts: sess.run(trained_descs,
         feed_dict={
           img_pl: np.reshape(img, (1,) + img.shape + (1,)),
-          pts_pl: pts
+          pts_pl: pts - FLAGS.patch_size // 2
           })
 
   # parse matching mode and adjust accordingly
