@@ -50,6 +50,8 @@ if __name__ == '__main__':
     assert FLAGS.model_dir_path is not None, \
         'Trained model path is required when using trained descriptor'
     import tensorflow as tf
+    import numpy as np
+
     import descriptor_detector
 
     img_pl, _ = utils.placeholder_inputs()
@@ -64,7 +66,7 @@ if __name__ == '__main__':
     trained_descs = tf.gather_nd(net.descs, pts_pl)
     compute_descriptors = lambda img, pts: sess.run(trained_descs,
         feed_dict={
-          img_pl: img,
+          img_pl: np.reshape(img, (1,) + img.shape + (1,)),
           pts_pl: pts
           })
 
