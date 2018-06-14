@@ -39,14 +39,36 @@ if __name__ == '__main__':
       help='Mode to match images. Can be "basic" or "spatial".')
   parser.add_argument(
       '--thr', type=float, help='Second correspondence elimination threshold.')
+  parser.add_argument(
+      '--model_dir_path', type=str, help='Trained model directory path.')
   FLAGS = parser.parse_args()
 
   # parse descriptor and adjust accordingly
   if FLAGS.descriptors == 'sift':
     compute_descriptors = utils.extract_sift_descriptors
   else:
-    # TODO: trained
-    pass
+    assert FLAGS.model_dir_path is not None, \
+        'Trained model path is required when using trained descriptor'
+    import tensorflow as tf
+    import numpy as np
+
+    import descriptor_detector
+
+    img_pl, _ = utils.placeholder_inputs()
+    pts_pl = tf.placeholder(tf.int32, shape=[None, 2])
+    net = descriptor_detector.Net(img_pl, training=False)
+    sess = tf.Session()
+
+    print('Restoring model in {}...'.format(FLAGS.model_dir_path))
+    utils.restore_model(sess, FLAGS.model_dir_path)
+    print('Done.')
+
+    trained_descs = tf.gather_nd(tf.squeeze(net.spatial_descs), pts_pl)
+    compute_descriptors = lambda img, pts: sess.run(trained_descs,
+        feed_dict={
+          img_pl: np.reshape(img, (1,) + img.shape + (1,)),
+          pts_pl: pts
+          })
 
   # parse matching mode and adjust accordingly
   if FLAGS.mode == 'basic':
