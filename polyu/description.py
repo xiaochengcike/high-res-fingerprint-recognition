@@ -66,7 +66,7 @@ class _Dataset:
       batch_size = batch_size // self._imgs_per_label
       end = self.n_labels
 
-    if self._index + batch_size >= self.n_images:
+    if self._index + batch_size >= end:
       # finished epoch
       self.epochs += 1
 
