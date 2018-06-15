@@ -169,8 +169,7 @@ def detection_by_images(sess, pred_op, patches_pl, dataset):
 
 
 def statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl, dataset,
-                             thresholds, statistics_op, session,
-                             classes_by_batch, total_steps):
+                             thresholds, statistics_op, session, batch_size):
   # initialize statistics
   true_pos = np.zeros_like(thresholds, np.int32)
   true_neg = np.zeros_like(thresholds, np.int32)
@@ -178,10 +177,11 @@ def statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl, dataset,
   false_neg = np.zeros_like(thresholds, np.int32)
 
   # validate in entire dataset, as specified by user
-  for _ in range(total_steps):
+  prev_epoch_n = dataset.epochs
+  while prev_epoch_n == dataset.epochs:
     # sample mini-batch
-    feed_dict = utils.fill_description_feed_dict(dataset, patches_pl,
-                                                 labels_pl, classes_by_batch)
+    feed_dict = utils.fill_feed_dict(dataset, patches_pl, labels_pl,
+                                     batch_size)
     feed_dict[thresholds_pl] = thresholds
 
     # evaluate on mini-batch
@@ -198,12 +198,11 @@ def statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl, dataset,
 
 
 def recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
-                    threshold_resolution, statistics_op, session,
-                    classes_by_batch, total_steps):
+                    threshold_resolution, statistics_op, session, batch_size):
   true_pos, true_neg, false_pos, false_neg = statistics_by_thresholds(
       patches_pl, labels_pl, thresholds_pl, dataset,
       np.arange(0, 2 + threshold_resolution, threshold_resolution),
-      statistics_op, session, classes_by_batch, total_steps)
+      statistics_op, session, batch_size)
 
   # compute recall and specificity
   eps = 1e-12

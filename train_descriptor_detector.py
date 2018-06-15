@@ -119,8 +119,8 @@ def train(det_dataset, desc_dataset, log_dir):
           # description validation
           eer = validate.recognition_eer(
               patches_pl, labels_pl, thresholds_pl, desc_dataset.val,
-              FLAGS.thr_res, val_net.desc_val, sess, desc_dataset.val.n_labels,
-              FLAGS.val_steps)
+              FLAGS.thr_res, val_net.desc_val, sess, FLAGS.desc_batch_size)
+
           print('Description:', '\tEER = {}'.format(eer), sep='\n')
 
           # early stopping
