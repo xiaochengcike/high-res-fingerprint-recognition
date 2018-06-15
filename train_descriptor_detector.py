@@ -170,13 +170,9 @@ def train(det_dataset, desc_dataset, log_dir):
   print('best EER = {}'.format(best_eer))
 
 
-def load_description_dataset(dataset_path, patch_size):
-  import pickle
-  print('Loading precomputed descriptor dataset...')
-  with open(dataset_path, 'rb') as f:
-    dataset = pickle.load(f)
-  assert dataset.patch_size == patch_size, 'Incompatible patch sizes: {} and {}'.format(
-      dataset.patch_size, patch_size)
+def load_description_dataset(dataset_path):
+  print('Loading description dataset...')
+  dataset = polyu.description.Dataset(dataset_path)
   print('Loaded.')
 
   return dataset
@@ -203,8 +199,7 @@ def main():
 
   # load datasets
   det_dataset = load_detection_dataset(FLAGS.polyu_dir_path, FLAGS.patch_size)
-  desc_dataset = load_description_dataset(FLAGS.rec_dataset_path,
-                                          FLAGS.patch_size)
+  desc_dataset = load_description_dataset(FLAGS.desc_dataset_path)
 
   # train
   train(det_dataset, desc_dataset, log_dir)
@@ -218,10 +213,10 @@ if __name__ == '__main__':
       type=str,
       help='Path to PolyU-HRF dataset.')
   parser.add_argument(
-      '--rec_dataset_path',
+      '--desc_dataset_path',
       required=True,
       type=str,
-      help='Path to precomputed descriptor dataset.')
+      help='Path to description dataset.')
   parser.add_argument(
       '--desc_lr', type=float, default=1e-1, help='Description learning rate.')
   parser.add_argument(
@@ -233,10 +228,10 @@ if __name__ == '__main__':
   parser.add_argument(
       '--det_batch_size', type=int, default=256, help='Detection batch size.')
   parser.add_argument(
-      '--classes_by_batch',
+      '--desc_batch_size',
       type=int,
-      default=28,
-      help='Number of classes in description batch size.')
+      default=256,
+      help='Description batch size.')
   parser.add_argument(
       '--steps', type=int, default=100000, help='Maximum training steps.')
   parser.add_argument(
