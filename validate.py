@@ -168,9 +168,9 @@ def detection_by_images(sess, pred_op, patches_pl, dataset):
   return best_f_score, best_tdr, best_fdr, best_inter_thr, best_prob_thr
 
 
-def report_statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl,
-                                    dataset, thresholds, statistics_op,
-                                    session, classes_by_batch, total_steps):
+def statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl, dataset,
+                             thresholds, statistics_op, session,
+                             classes_by_batch, total_steps):
   # initialize statistics
   true_pos = np.zeros_like(thresholds, np.int32)
   true_neg = np.zeros_like(thresholds, np.int32)
@@ -197,10 +197,10 @@ def report_statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl,
   return true_pos, true_neg, false_pos, false_neg
 
 
-def report_recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
-                           threshold_resolution, statistics_op, session,
-                           classes_by_batch, total_steps):
-  true_pos, true_neg, false_pos, false_neg = report_statistics_by_thresholds(
+def recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
+                    threshold_resolution, statistics_op, session,
+                    classes_by_batch, total_steps):
+  true_pos, true_neg, false_pos, false_neg = statistics_by_thresholds(
       patches_pl, labels_pl, thresholds_pl, dataset,
       np.arange(0, 2 + threshold_resolution, threshold_resolution),
       statistics_op, session, classes_by_batch, total_steps)
