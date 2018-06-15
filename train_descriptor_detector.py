@@ -76,14 +76,14 @@ def train(det_dataset, desc_dataset, log_dir):
       # joint train loop
       for step in range(1, FLAGS.steps + 1):
         # detection train step
-        feed_dict = utils.fill_detection_feed_dict(
-            det_dataset.train, patches_pl, labels_pl, FLAGS.det_batch_size)
+        feed_dict = utils.fill_feed_dict(det_dataset.train, patches_pl,
+                                         labels_pl, FLAGS.det_batch_size)
         det_loss_value, _ = sess.run(
             [net.det_loss, net.det_train], feed_dict=feed_dict)
 
         # description train step
-        feed_dict = utils.fill_description_feed_dict(
-            desc_dataset.train, patches_pl, labels_pl, FLAGS.classes_by_batch)
+        feed_dict = utils.fill_feed_dict(desc_dataset.train, patches_pl,
+                                         labels_pl, FLAGS.desc_batch_size)
         desc_loss_value, _ = sess.run(
             [net.desc_loss, net.desc_train], feed_dict=feed_dict)
 

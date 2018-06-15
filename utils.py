@@ -29,24 +29,11 @@ def placeholder_inputs():
   return images, labels
 
 
-def fill_detection_feed_dict(dataset, patches_pl, labels_pl, batch_size):
+def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size):
   patches_feed, labels_feed = dataset.next_batch(batch_size)
   feed_dict = {
-      patches_pl:
-      patches_feed.reshape([-1, dataset.patch_size, dataset.patch_size, 1]),
-      labels_pl:
-      labels_feed.reshape([-1, 1])
-  }
-
-  return feed_dict
-
-
-def fill_description_feed_dict(dataset, patches_pl, labels_pl,
-                               classes_by_batch):
-  patches_feed, labels_feed = dataset.next_batch(classes_by_batch)
-  feed_dict = {
       patches_pl: np.expand_dims(patches_feed, axis=-1),
-      labels_pl: np.reshape(labels_feed, (-1, 1))
+      labels_pl: np.expand_dims(labels_feed, axis=-1)
   }
 
   return feed_dict
