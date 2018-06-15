@@ -106,11 +106,11 @@ class _Dataset:
       batch_labels = self._labels[start:self._index]
 
     # reshape balanced batches
-    # if self._balance:
-    # batch_images = np.reshape(batch_images,
-    # (full_batch_size, ) + batch_images.shape[2:])
-    # batch_labels = np.repeat(batch_labels,
-    # len(batch_images) // len(batch_labels))
+    if self._balance:
+      batch_images = np.reshape(batch_images,
+                                (full_batch_size, ) + batch_images.shape[2:])
+      batch_labels = np.repeat(batch_labels,
+                               len(batch_images) // len(batch_labels))
 
     return batch_images, batch_labels
 
