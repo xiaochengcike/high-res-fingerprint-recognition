@@ -16,8 +16,8 @@ def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
 
   steps_per_epoch = (dataset.num_samples + batch_size - 1) // batch_size
   for _ in range(steps_per_epoch):
-    feed_dict = utils.fill_detection_feed_dict(dataset, patches_pl, labels_pl,
-                                               batch_size)
+    feed_dict = utils.fill_feed_dict(dataset, patches_pl, labels_pl,
+                                     batch_size)
 
     # evaluate batch
     batch_preds = sess.run(preds, feed_dict=feed_dict)
