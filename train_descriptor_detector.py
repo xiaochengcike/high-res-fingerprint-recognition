@@ -24,7 +24,7 @@ def train(det_dataset, desc_dataset, log_dir):
   with tf.Graph().as_default():
     # gets placeholders for patches and labels
     patches_pl, labels_pl = utils.placeholder_inputs()
-    thresholds_pl = tf.placeholder(tf.float32, [None])
+    thresholds_pl = tf.placeholder(tf.float32, [None], name='thrs')
 
     # build net graph
     net = descriptor_detector.Net(patches_pl)

@@ -24,8 +24,8 @@ def to_patches(img, patch_size):
 
 
 def placeholder_inputs():
-  images = tf.placeholder(tf.float32, [None, None, None, 1])
-  labels = tf.placeholder(tf.float32, [None, 1])
+  images = tf.placeholder(tf.float32, [None, None, None, 1], name='images')
+  labels = tf.placeholder(tf.float32, [None, 1], name='labels')
   return images, labels
 
 
