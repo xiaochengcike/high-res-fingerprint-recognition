@@ -41,6 +41,8 @@ if __name__ == '__main__':
       '--thr', type=float, help='Second correspondence elimination threshold.')
   parser.add_argument(
       '--model_dir_path', type=str, help='Trained model directory path.')
+  parser.add_argument(
+      '--patch_size', type=int, required=True, help='Pore patch size.')
   FLAGS = parser.parse_args()
 
   # parse descriptor and adjust accordingly
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     compute_descriptors = lambda img, pts: sess.run(trained_descs,
         feed_dict={
           img_pl: np.reshape(img, (1,) + img.shape + (1,)),
-          pts_pl: pts - FLAGS.patch_size // 2
+          pts_pl: np.array(pts) - FLAGS.patch_size // 2
           })
 
   # parse matching mode and adjust accordingly
