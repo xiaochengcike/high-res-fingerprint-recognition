@@ -62,8 +62,8 @@ class _Dataset:
     if not self._balance:
       end = self.n_images
     else:
-      full_batch_size = batch_size
       batch_size = batch_size // self._imgs_per_label
+      full_batch_size = batch_size * self._imgs_per_label
       end = self.n_labels
 
     if self._index + batch_size >= end:
@@ -82,8 +82,9 @@ class _Dataset:
         self._images = self._images[perm]
         self._labels = self._labels[perm]
 
-      # return incomplete batch
+      # handle incomplete batches
       if self._incomplete:
+        # return incomplete batch
         self._index = 0
         batch_images = images_rest_part
         batch_labels = labels_rest_part
