@@ -245,12 +245,12 @@ if __name__ == '__main__':
       '--thr_res',
       type=float,
       default=0.01,
-      help='Threshold resolution of ROC curve')
+      help='Threshold resolution of ROC curve.')
   parser.add_argument(
       '--val_steps',
       type=int,
       default=500,
-      help='Number of sampled batches when validating')
+      help='Number of sampled batches when validating.')
 
   FLAGS = parser.parse_args()
 
