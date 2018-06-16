@@ -4,6 +4,7 @@ from __future__ import print_function
 from six.moves import range
 
 import numpy as np
+
 import utils
 
 
@@ -273,4 +274,7 @@ def rank_n(instances, labels, sample_size):
         # update ranks, indexed from 0
         ranks[rank - 1] += 1
 
-  return ranks / np.sum(ranks)
+  # rank is cumulative
+  ranks = np.cumsum(ranks)
+
+  return ranks / ranks[-1]
