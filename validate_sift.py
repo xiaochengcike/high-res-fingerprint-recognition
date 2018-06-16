@@ -28,19 +28,15 @@ def main():
   dataset = load_description_dataset(FLAGS.desc_dataset_path)
   print('Done.')
 
-  print('Unpacking dataset...')
-  imgs = []
+  print('Unpacking dataset and extracting sift descriptors...')
+  descs = []
   labels = []
   prev_epoch = dataset.epochs
   while prev_epoch == dataset.epochs:
     (img, *_), (label, *_) = dataset.next_batch(1)
-    imgs.append(img)
+    pt = [np.array(img.shape) // 2]
+    descs.append(sift(img, pt))
     labels.append(label)
-  print('Done.')
-
-  print('Extracting sift descriptors...')
-  pts = [[np.array(img.shape) // 2] for img in imgs]
-  descs = [sift(img, pt) for img, pt in zip(imgs, pts)]
   print('Done.')
 
   # perform 'repeats' random splits
