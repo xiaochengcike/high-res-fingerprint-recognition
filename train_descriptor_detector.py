@@ -130,9 +130,7 @@ def train(det_dataset, desc_dataset, log_dir):
             best_eer = eer
 
             saver.save(
-                sess,
-                os.path.join(train_dir, 'model-{}.ckpt'.format(det_thr)),
-                global_step=step)
+                sess, os.path.join(train_dir, 'model.ckpt'), global_step=step)
             faults = 0
           else:
             faults += 1
