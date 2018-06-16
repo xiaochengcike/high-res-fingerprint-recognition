@@ -220,14 +220,14 @@ def recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
 def retrieval_rank(probe_instance, probe_label, instances, labels):
   # compute distance of 'probe_instance' to
   # every instance in 'instances'
-  dists = np.sum((instances - probe_instance)**2)
+  dists = np.sum((instances - probe_instance)**2, axis=1)
 
   # sort labels according to instances distances
   matches = np.argsort(dists)
   labels = labels[matches]
 
   # find index of last instance of label 'probe_label'
-  last_ind = np.argwhere(labels == probe_label)[-1]
+  last_ind = np.argwhere(labels == probe_label)[-1, 0]
 
   # compute retrieval rank
   labels_up_to_last_ind = np.unique(labels[:last_ind])
@@ -239,19 +239,23 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
 def rank_n(instances, labels, sample_size):
   # initialize ranks
   ranks = np.zeros_like(labels, dtype=np.int32)
+  total = 0
 
   # sort examples by labels
   inds = np.argsort(labels)
   instances = instances[inds]
   labels = labels[inds]
 
-  # compute rank following belongie's protocol
+  # compute rank following protocol in belongie et al.
   examples = list(zip(instances, labels))
-  for probe, probe_label in examples:
+  for i, (probe, probe_label) in enumerate(examples):
     for target, target_label in examples[i + 1:]:
-      if probe_label == target_label:
+      if probe_label != target_label:
+        break
+      else:
         # mix examples of other labels
         other_labels_inds = np.argwhere(labels != probe_label)
+        other_labels_inds = np.squeeze(other_labels_inds)
         inds_to_pick = np.random.choice(
             other_labels_inds, sample_size - 1, replace=False)
         instances_to_mix = instances[inds_to_pick]
@@ -268,7 +272,5 @@ def rank_n(instances, labels, sample_size):
 
         # update ranks, indexed from 0
         ranks[rank - 1] += 1
-      else:
-        break
 
-  return ranks
+  return ranks / np.sum(ranks)
