@@ -266,8 +266,8 @@ def rank_n(instances, labels, sample_size):
         # compute retrieval rank for probe
         rank = retrieval_rank(probe, probe_label, instance_set, label_set)
 
-        # update ranks
-        ranks[rank] += 1
+        # update ranks, indexed from 0
+        ranks[rank - 1] += 1
       else:
         break
 
