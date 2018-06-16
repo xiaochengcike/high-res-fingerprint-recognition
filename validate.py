@@ -278,3 +278,31 @@ def rank_n(instances, labels, sample_size):
   ranks = np.cumsum(ranks)
 
   return ranks / ranks[-1]
+
+
+def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
+                   sample_size):
+  # extracting descriptors for entire dataset
+  descs = []
+  labels = []
+  prev_epoch = dataset.epochs
+  while prev_epoch == dataset.epochs:
+    # sample next batch
+    patches, batch_labels = dataset.next_batch(batch_size)
+    feed_dict = {patches_pl: patches}
+
+    # describe batch
+    batch_descs = sess.run(descs_op, feed_dict=feed_dict)
+
+    # add to overall
+    descs.extend(batch_descs)
+    labels.extend(batch_labels)
+
+  # convert to np array and remove extra dims
+  descs = np.squeeze(descs)
+  labels = np.squeeze(labels)
+
+  # compute ranks
+  ranks = rank_n(descs, labels, sample_size)
+
+  return ranks[0]
