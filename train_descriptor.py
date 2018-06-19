@@ -112,7 +112,7 @@ def main():
                               FLAGS.learning_rate)
 
   # load dataset
-  dataset = load_description_dataset(FLAGS.desc_dataset_path)
+  dataset = load_description_dataset(FLAGS.dataset_path)
 
   # train
   train(dataset, log_dir)
@@ -121,10 +121,7 @@ def main():
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--desc_dataset_path',
-      required=True,
-      type=str,
-      help='Path to description dataset.')
+      '--dataset_path', required=True, type=str, help='Path to dataset.')
   parser.add_argument(
       '--learning_rate', type=float, default=1e-1, help='Learning rate.')
   parser.add_argument(
