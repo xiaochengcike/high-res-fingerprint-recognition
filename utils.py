@@ -426,3 +426,38 @@ def load_images_with_labels(folder_path):
 
 def retrieve_label_from_image_path(image_path):
   return int(image_path.split('_')[0])
+
+
+def eer(pos, neg):
+  # sort comparisons arrays for efficiency
+  pos = sorted(pos, reverse=True)
+  neg = sorted(neg, reverse=True)
+
+  # iterate to find equal error rate
+  far = old_far = 0
+  frr = old_frr = 0
+  j = 0
+  for i, neg_score in enumerate(neg):
+    # find correspondent positive score
+    while j < len(pos) and pos[j] > neg_score:
+      j += 1
+
+    # keep old metrics for approximation
+    old_far = far
+    old_frr = frr
+
+    # compute new metrics
+    far = i / len(neg)
+    frr = 1 - j / len(pos)
+
+    # if crossing happened, eer is found
+    if far >= frr:
+      break
+
+  # if crossing is precisely found, return it
+  # otherwise, approximate it though linear
+  # interpolation and mean of curves
+  if far == frr:
+    return far
+  else:
+    return (old_far + far + frr + old_frr) / 4
