@@ -70,14 +70,21 @@ class Handler:
 
     # get valid indices and store them for access
     self._inds = []
-    for pt in all_pts[0]:
-      if mask[pt[0], pt[1]]:
-        self._inds.append(pt)
+    if self._augment:
+      # augment with flips
+      for pt in all_pts[0]:
+        if mask[pt[0], pt[1]]:
+          self._inds.append((0, pt))
+          self._inds.append((1, pt))
+    else:
+      for pt in all_pts[0]:
+        if mask[pt[0], pt[1]]:
+          self._inds.append((0, pt))
 
   def __getitem__(self, val):
     if isinstance(val, slice):
       samples = []
-      for i, j in self._inds[val]:
+      for flip, (i, j) in self._inds[val]:
         # add first image patch
         sample = [
             self._imgs[0][i - self._half:i + self._half + 1, j - self._half:
@@ -101,7 +108,7 @@ class Handler:
         samples.append(sample)
     else:
       # retrieve coordinates for given index
-      i, j = self._inds[val]
+      flip, (i, j) = self._inds[val]
 
       # add first image patch
       samples = [
@@ -124,6 +131,7 @@ class Handler:
 
     # augment with all 90 degree rotations
     if self._augment:
+      # rotation augmentation
       aug_samples = [samples]
       for k in range(1, 4):
         # rotate samples by 'k'*90 degrees
@@ -137,7 +145,14 @@ class Handler:
           aug_samples,
           (np.prod(np.shape(aug_samples)[:2]), ) + np.shape(samples)[-2:])
 
+      # flip augmentation
+      if flip != 0:
+        samples = np.flip(samples, axis=flip)
+
     return np.array(samples)
 
   def __len__(self):
+    if self._augment:
+      return 2 * len(self._inds)
+
     return len(self._inds)
