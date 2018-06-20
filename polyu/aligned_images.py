@@ -56,7 +56,8 @@ def _compute_valid_region(all_imgs, transfs, patch_size):
 
 
 class Handler:
-  def __init__(self, all_imgs, all_pts, patch_size):
+  def __init__(self, all_imgs, all_pts, patch_size, augment=False):
+    self._augment = augment
     self._imgs = all_imgs
     self._patch_size = patch_size
     self._half = patch_size // 2
@@ -98,8 +99,6 @@ class Handler:
 
         # add to overall
         samples.append(sample)
-
-      return np.array(samples)
     else:
       # retrieve coordinates for given index
       i, j = self._inds[val]
@@ -123,7 +122,22 @@ class Handler:
         samples.append(img[ti - self._half:ti + self._half + 1,
                            tj - self._half:tj + self._half + 1])
 
-      return samples
+    # augment with all 90 degree rotations
+    if self._augment:
+      aug_samples = [samples]
+      for k in range(1, 4):
+        # rotate samples by 'k'*90 degrees
+        rot_samples = np.rot90(samples, k=k, axes=(1, 2))
+
+        # add to overall samples
+        aug_samples.append(rot_samples)
+
+      # return augmented sample set
+      samples = np.reshape(
+          aug_samples,
+          (np.prod(np.shape(aug_samples)[:2]), ) + np.shape(samples)[-2:])
+
+    return np.array(samples)
 
   def __len__(self):
     return len(self._inds)
