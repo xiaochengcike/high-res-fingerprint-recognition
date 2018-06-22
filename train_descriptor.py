@@ -54,8 +54,8 @@ def train(dataset, log_dir):
 
       # train loop
       for step in range(1, FLAGS.steps + 1):
-        feed_dict = utils.fill_feed_dict(dataset.train, patches_pl, labels_pl,
-                                         FLAGS.batch_size)
+        feed_dict = utils.fill_description_feed_dict(
+            dataset.train, patches_pl, labels_pl, FLAGS.batch_size)
         loss_value, _ = sess.run(
             [net.desc_loss, net.desc_train], feed_dict=feed_dict)
 
@@ -71,9 +71,9 @@ def train(dataset, log_dir):
         # evaluate the model periodically
         if step % 1000 == 0:
           print('Validation:')
-          eer = validate.recognition_eer(
+          eer = validate.report_recognition_eer(
               patches_pl, labels_pl, thresholds_pl, dataset.val, FLAGS.thr_res,
-              val_net.desc_val, sess, FLAGS.batch_size)
+              val_net.desc_val, sess, dataset.val.n_labels, FLAGS.val_steps)
           print('EER = {}'.format(eer))
 
           # early stopping
@@ -99,8 +99,10 @@ def train(dataset, log_dir):
 
 
 def load_description_dataset(dataset_path):
-  print('Loading description dataset...')
-  dataset = polyu.description.Dataset(dataset_path)
+  import pickle
+  print('Loading precomputed descriptor dataset...')
+  with open(dataset_path, 'rb') as f:
+    dataset = pickle.load(f)
   print('Loaded.')
 
   return dataset
@@ -112,7 +114,7 @@ def main():
                               FLAGS.learning_rate)
 
   # load dataset
-  dataset = load_description_dataset(FLAGS.desc_dataset_path)
+  dataset = load_description_dataset(FLAGS.rec_dataset_path)
 
   # train
   train(dataset, log_dir)
@@ -121,10 +123,10 @@ def main():
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--desc_dataset_path',
+      '--rec_dataset_path',
       required=True,
       type=str,
-      help='Path to description dataset.')
+      help='Path to precomputed descriptor dataset.')
   parser.add_argument(
       '--learning_rate', type=float, default=1e-1, help='Learning rate.')
   parser.add_argument(
@@ -132,7 +134,10 @@ if __name__ == '__main__':
   parser.add_argument(
       '--tolerance', type=int, default=5, help='Early stopping tolerance.')
   parser.add_argument(
-      '--batch_size', type=int, default=256, help='Batch size.')
+      '--batch_size',
+      type=int,
+      default=28,
+      help='Number of classes in description batch size.')
   parser.add_argument(
       '--steps', type=int, default=100000, help='Maximum training steps.')
   parser.add_argument(
@@ -140,6 +145,11 @@ if __name__ == '__main__':
       type=float,
       default=0.01,
       help='Threshold resolution of ROC curve.')
+  parser.add_argument(
+      '--val_steps',
+      type=int,
+      default=500,
+      help='Number of sampled batches when validating.')
 
   FLAGS = parser.parse_args()
 
