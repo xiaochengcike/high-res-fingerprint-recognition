@@ -8,7 +8,7 @@ import numpy as np
 import os
 import argparse
 
-import descriptor_detector
+from models import description
 import polyu
 import utils
 import validate
@@ -27,19 +27,19 @@ def train(dataset, log_dir):
     thresholds_pl = tf.placeholder(tf.float32, [None], name='thrs')
 
     # build net graph
-    net = descriptor_detector.Net(patches_pl)
+    net = description.Net(patches_pl)
 
     # build training related ops
-    net.build_description_loss(labels_pl)
-    net.build_description_train(FLAGS.learning_rate)
+    net.build_loss(labels_pl)
+    net.build_train(FLAGS.learning_rate)
 
     # builds validation graph
-    val_net = descriptor_detector.Net(patches_pl, training=False, reuse=True)
-    val_net.build_description_validation(labels_pl, thresholds_pl)
+    val_net = description.Net(patches_pl, training=False, reuse=True)
+    val_net.build_validation(labels_pl, thresholds_pl)
 
     # add summary to plot loss and eer
-    eer_pl = tf.placeholder(tf.float32, shape=())
-    loss_pl = tf.placeholder(tf.float32, shape=())
+    eer_pl = tf.placeholder(tf.float32, shape=(), name='eer_pl')
+    loss_pl = tf.placeholder(tf.float32, shape=(), name='loss_pl')
     eer_summary_op = tf.summary.scalar('eer', eer_pl)
     loss_summary_op = tf.summary.scalar('loss', loss_pl)
 
@@ -56,8 +56,7 @@ def train(dataset, log_dir):
       for step in range(1, FLAGS.steps + 1):
         feed_dict = utils.fill_feed_dict(dataset.train, patches_pl, labels_pl,
                                          FLAGS.batch_size)
-        loss_value, _ = sess.run(
-            [net.desc_loss, net.desc_train], feed_dict=feed_dict)
+        loss_value, _ = sess.run([net.loss, net.train], feed_dict=feed_dict)
 
         # write loss summary every 100 steps
         if step % 100 == 0:
@@ -73,7 +72,7 @@ def train(dataset, log_dir):
           print('Validation:')
           eer = validate.recognition_eer(
               patches_pl, labels_pl, thresholds_pl, dataset.val, FLAGS.thr_res,
-              val_net.desc_val, sess, FLAGS.batch_size)
+              val_net.validation, sess, FLAGS.batch_size)
           print('EER = {}'.format(eer))
 
           # early stopping
