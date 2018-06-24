@@ -55,18 +55,18 @@ if __name__ == '__main__':
     import tensorflow as tf
     import numpy as np
 
-    import descriptor_detector
+    from models import description
 
     img_pl, _ = utils.placeholder_inputs()
     pts_pl = tf.placeholder(tf.int32, shape=[None, 2])
-    net = descriptor_detector.Net(img_pl, training=False)
+    net = description.Net(img_pl, training=False)
     sess = tf.Session()
 
     print('Restoring model in {}...'.format(FLAGS.model_dir_path))
     utils.restore_model(sess, FLAGS.model_dir_path)
     print('Done.')
 
-    trained_descs = tf.gather_nd(tf.squeeze(net.spatial_descs), pts_pl)
+    trained_descs = tf.gather_nd(tf.squeeze(net.spatial_descriptors), pts_pl)
     compute_descriptors = lambda img, pts: sess.run(trained_descs,
         feed_dict={
           img_pl: np.reshape(img, (1,) + img.shape + (1,)),
