@@ -3,11 +3,13 @@ from __future__ import division
 from __future__ import print_function
 from six.moves import range
 
-import numpy as np
 import argparse
+import itertools
+import numpy as np
 
-import polyu
 from utils import extract_sift_descriptors as sift
+import polyu
+import utils
 import validate
 
 FLAGS = None
@@ -39,24 +41,51 @@ def main():
     labels.append(label)
   print('Done.')
 
-  # perform 'repeats' random splits
-  ranks = []
-  descs = np.array(descs)
-  descs = np.squeeze(descs)
-  labels = np.array(labels)
-  for i in range(FLAGS.repeats):
-    print('Split {}:'.format(i + 1))
+  if FLAGS.mode == 'rank-n':
+    # perform 'repeats' random splits
+    ranks = []
+    descs = np.squeeze(descs)
+    labels = np.array(labels)
+    for i in range(FLAGS.repeats):
+      print('Split {}:'.format(i + 1))
 
-    # compute rank-n for current split
-    split_ranks = validate.rank_n(descs, labels, FLAGS.sample_size)
-    rank_1 = split_ranks[0]
-    print('Rank-1 = {}'.format(rank_1))
+      # compute rank-n for current split
+      split_ranks = validate.rank_n(descs, labels, FLAGS.sample_size)
+      rank_1 = split_ranks[0]
+      print('Rank-1 = {}'.format(rank_1))
 
-    # add only rank-1
-    ranks.append(rank_1)
+      # add only rank-1
+      ranks.append(rank_1)
 
-  # compute mean rank-1
-  print('Mean Rank-1 = {}'.format(np.mean(ranks)))
+    # compute mean rank-1
+    print('Mean Rank-1 = {}'.format(np.mean(ranks)))
+  elif FLAGS.mode == 'eer':
+    # perform 'repeats' samples of size 'sample_size'
+    descs = np.squeeze(descs)
+    labels = np.array(labels)
+    pos = []
+    neg = []
+    for _ in range(FLAGS.repeats):
+      # sample randomly
+      sample = np.random.choice(len(descs), FLAGS.sample_size, replace=False)
+      sample_descs = descs[sample]
+      sample_labels = labels[sample]
+      sample_examples = zip(sample_descs, sample_labels)
+
+      # compare pair-wise
+      for (desc1, label1), (desc2, label2) in itertools.combinations(
+          sample_examples, 2):
+        dist = np.sum((desc1 - desc2)**2)
+        if label1 == label2:
+          pos.append(dist)
+        else:
+          neg.append(dist)
+
+    # compute equal error rate
+    print('EER = {}'.format(utils.eer(pos, neg)))
+  else:
+    raise ValueError(
+        'Validation mode "{}" not available. Possible are "eer" and "rank-n".')
 
 
 if __name__ == '__main__':
@@ -76,6 +105,11 @@ if __name__ == '__main__':
       default=5,
       type=int,
       help='Number of random splits to average validation from.')
+  parser.add_argument(
+      '--mode',
+      default='eer',
+      type=str,
+      help='Mode of validation. Possible are "eer" and "rank-n".')
 
   FLAGS = parser.parse_args()
 
