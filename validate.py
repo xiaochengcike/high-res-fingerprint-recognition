@@ -289,7 +289,7 @@ def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
   while prev_epoch == dataset.epochs:
     # sample next batch
     patches, batch_labels = dataset.next_batch(batch_size)
-    feed_dict = {patches_pl: patches}
+    feed_dict = {patches_pl: np.expand_dims(patches, axis=-1)}
 
     # describe batch
     batch_descs = sess.run(descs_op, feed_dict=feed_dict)
