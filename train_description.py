@@ -130,7 +130,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--sample_size',
       type=int,
-      default=100,
+      default=425,
       help='Sample size to retrieve from in rank-N validation.')
 
   FLAGS = parser.parse_args()
