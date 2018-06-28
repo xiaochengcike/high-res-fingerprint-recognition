@@ -240,7 +240,6 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
 def rank_n(instances, labels, sample_size):
   # initialize ranks
   ranks = np.zeros_like(labels, dtype=np.int32)
-  total = 0
 
   # sort examples by labels
   inds = np.argsort(labels)
@@ -272,7 +271,7 @@ def rank_n(instances, labels, sample_size):
         rank = retrieval_rank(probe, probe_label, instance_set, label_set)
 
         # update ranks, indexed from 0
-        ranks[rank - 1] += 1
+        ranks[rank] += 1
 
   # rank is cumulative
   ranks = np.cumsum(ranks)
@@ -289,7 +288,7 @@ def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
   while prev_epoch == dataset.epochs:
     # sample next batch
     patches, batch_labels = dataset.next_batch(batch_size)
-    feed_dict = {patches_pl: patches}
+    feed_dict = {patches_pl: np.expand_dims(patches, axis=-1)}
 
     # describe batch
     batch_descs = sess.run(descs_op, feed_dict=feed_dict)
