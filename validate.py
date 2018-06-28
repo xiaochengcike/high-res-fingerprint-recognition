@@ -240,7 +240,6 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
 def rank_n(instances, labels, sample_size):
   # initialize ranks
   ranks = np.zeros_like(labels, dtype=np.int32)
-  total = 0
 
   # sort examples by labels
   inds = np.argsort(labels)
@@ -272,7 +271,7 @@ def rank_n(instances, labels, sample_size):
         rank = retrieval_rank(probe, probe_label, instance_set, label_set)
 
         # update ranks, indexed from 0
-        ranks[rank - 1] += 1
+        ranks[rank] += 1
 
   # rank is cumulative
   ranks = np.cumsum(ranks)
