@@ -97,7 +97,7 @@ if __name__ == '__main__':
       help='Path to description dataset.')
   parser.add_argument(
       '--sample_size',
-      default=100,
+      default=425,
       type=int,
       help='Number of instances to mix in retrieval task.')
   parser.add_argument(

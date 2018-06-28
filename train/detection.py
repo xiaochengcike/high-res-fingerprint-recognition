@@ -6,15 +6,16 @@ from six.moves import range
 import tensorflow as tf
 import os
 import argparse
-import numpy as np
 
-import detector
+from models import detection
 import polyu
 import utils
 import validate
 
+FLAGS = None
 
-def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
+
+def train(dataset, log_dir):
   # other directories paths
   train_dir = os.path.join(log_dir, 'train')
   plot_dir = os.path.join(log_dir, 'plot')
@@ -24,12 +25,12 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
     patches_pl, labels_pl = utils.placeholder_inputs()
 
     # build train related ops
-    net = detector.Net(patches_pl)
+    net = detection.Net(patches_pl)
     net.build_loss(labels_pl)
-    net.build_train(learning_rate)
+    net.build_train(FLAGS.learning_rate)
 
     # builds validation inference graph
-    val_net = detector.Net(patches_pl, training=False, reuse=True)
+    val_net = detection.Net(patches_pl, training=False, reuse=True)
 
     # add summary to plot loss, f score, tdr and fdr
     f_score_pl = tf.placeholder(tf.float32, shape=())
@@ -58,9 +59,9 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
 
       sess.run(init)
 
-      for step in range(1, max_steps + 1):
-        feed_dict = utils.fill_detection_feed_dict(dataset.train, patches_pl,
-                                                   labels_pl, batch_size)
+      for step in range(1, FLAGS.steps + 1):
+        feed_dict = utils.fill_feed_dict(dataset.train, patches_pl, labels_pl,
+                                         FLAGS.batch_size)
 
         _, loss_value = sess.run([net.train, net.loss], feed_dict=feed_dict)
 
@@ -71,11 +72,11 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
           summary_writer.add_summary(summary_str, step)
 
         # evaluate the model periodically
-        if step % 1000 == 0:
+        if step % 100 == 0:
           print('Evaluation:')
           tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection_by_patches(
-              sess, val_net.preds, batch_size, patches_pl, labels_pl,
-              dataset.val)
+              sess, val_net.predictions, FLAGS.batch_size, patches_pl,
+              labels_pl, dataset.val)
           print(
               '\tTDR = {}'.format(tdr),
               '\tFDR = {}'.format(fdr),
@@ -92,7 +93,7 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
             faults = 0
           else:
             faults += 1
-            if faults >= tolerance:
+            if faults >= FLAGS.tolerance:
               print('Training stopped early')
               break
 
@@ -117,35 +118,39 @@ def train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir):
           summary_writer.add_summary(plot_summary, global_step=step)
 
 
-def main(log_dir_path, polyu_path, patch_size, label_size, label_mode,
-         max_steps, learning_rate, batch_size, tolerance):
+def main():
   # create folders to save train resources
-  log_dir = utils.create_dirs(log_dir_path, batch_size, learning_rate)
+  log_dir = utils.create_dirs(FLAGS.log_dir_path, FLAGS.batch_size,
+                              FLAGS.learning_rate)
 
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')
-  polyu_path = os.path.join(polyu_path, 'GroundTruth', 'PoreGroundTruth')
+  polyu_path = os.path.join(FLAGS.polyu_dir_path, 'GroundTruth',
+                            'PoreGroundTruth')
   dataset = polyu.detection.Dataset(
       os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
-      patch_size=patch_size,
-      label_mode=label_mode,
-      label_size=label_size)
+      patch_size=FLAGS.patch_size,
+      label_mode=FLAGS.label_mode,
+      label_size=FLAGS.label_size)
   print('Loaded.')
 
   # train
-  train(dataset, learning_rate, batch_size, max_steps, tolerance, log_dir)
+  train(dataset, log_dir)
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--polyu_dir', required=True, type=str, help='Path to PolyU-HRF dataset')
+      '--polyu_dir_path',
+      required=True,
+      type=str,
+      help='Path to PolyU-HRF dataset')
   parser.add_argument(
       '--learning_rate', type=float, default=1e-1, help='Learning rate.')
   parser.add_argument(
-      '--log_dir', type=str, default='log', help='Logging directory.')
+      '--log_dir_path', type=str, default='log', help='Logging directory.')
   parser.add_argument(
       '--tolerance', type=int, default=5, help='Early stopping tolerance.')
   parser.add_argument(
@@ -160,6 +165,4 @@ if __name__ == '__main__':
       '--label_mode', type=str, default='hard_bb', help='Pore patch size.')
   FLAGS = parser.parse_args()
 
-  main(FLAGS.log_dir, FLAGS.polyu_dir, FLAGS.patch_size, FLAGS.label_size,
-       FLAGS.label_mode, FLAGS.steps, FLAGS.learning_rate, FLAGS.batch_size,
-       FLAGS.tolerance)
+  main()
