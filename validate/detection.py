@@ -8,8 +8,7 @@ import numpy as np
 import utils
 
 
-def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
-                         dataset):
+def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
   # initialize dataset statistics
   true_preds = []
   false_preds = []
@@ -79,7 +78,7 @@ def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
       fdrs, np.float32), best_f_score, best_fdr, best_tdr, best_thr
 
 
-def detection_by_images(sess, pred_op, patches_pl, dataset):
+def by_images(sess, pred_op, patches_pl, dataset):
   patch_size = dataset.patch_size
   half_patch_size = patch_size // 2
   preds = []
@@ -169,139 +168,53 @@ def detection_by_images(sess, pred_op, patches_pl, dataset):
   return best_f_score, best_tdr, best_fdr, best_inter_thr, best_prob_thr
 
 
-def statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl, dataset,
-                             thresholds, statistics_op, session, batch_size):
-  # initialize statistics
-  true_pos = np.zeros_like(thresholds, np.int32)
-  true_neg = np.zeros_like(thresholds, np.int32)
-  false_pos = np.zeros_like(thresholds, np.int32)
-  false_neg = np.zeros_like(thresholds, np.int32)
+if __name__ == '__main__':
+  import argparse
+  import os
+  import tensorflow as tf
 
-  # validate in entire dataset, as specified by user
-  prev_epoch_n = dataset.epochs
-  while prev_epoch_n == dataset.epochs:
-    # sample mini-batch
-    feed_dict = utils.fill_feed_dict(dataset, patches_pl, labels_pl,
-                                     batch_size)
-    feed_dict[thresholds_pl] = thresholds
+  import polyu
+  from models import detection
 
-    # evaluate on mini-batch
-    batch_true_pos, batch_true_neg, batch_false_pos, batch_false_neg = session.run(
-        statistics_op, feed_dict=feed_dict)
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+      '--polyu_dir_path',
+      required=True,
+      type=str,
+      help='Path to PolyU-HRF dataset')
+  parser.add_argument(
+      '--model_dir_path', type=str, required=True, help='Logging directory.')
+  parser.add_argument(
+      '--patch_size', type=int, default=17, help='Pore patch size.')
+  flags = parser.parse_args()
 
-    # update running statistics
-    true_pos += batch_true_pos
-    true_neg += batch_true_neg
-    false_pos += batch_false_pos
-    false_neg += batch_false_neg
+  # load polyu dataset
+  print('Loading PolyU-HRF dataset...')
+  polyu_path = os.path.join(flags.polyu_dir_path, 'GroundTruth',
+                            'PoreGroundTruth')
+  dataset = polyu.detection.Dataset(
+      os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
+      os.path.join(polyu_path, 'PoreGroundTruthMarked'),
+      split=(15, 5, 10),
+      patch_size=flags.patch_size)
+  print('Loaded.')
 
-  return true_pos, true_neg, false_pos, false_neg
+  # gets placeholders for patches and labels
+  patches_pl, labels_pl = utils.placeholder_inputs()
 
+  # builds inference graph
+  net = detection.Net(patches_pl, training=False)
 
-def recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
-                    threshold_resolution, statistics_op, session, batch_size):
-  true_pos, true_neg, false_pos, false_neg = statistics_by_thresholds(
-      patches_pl, labels_pl, thresholds_pl, dataset,
-      np.arange(0, 2 + threshold_resolution, threshold_resolution),
-      statistics_op, session, batch_size)
+  with tf.Session() as sess:
+    print('Restoring model...')
+    utils.restore_model(sess, flags.model_dir_path)
+    print('Done.')
 
-  # compute recall and specificity
-  eps = 1e-12
-  recall = true_pos / (true_pos + false_neg + eps)
-  specificity = false_pos / (true_neg + false_pos + eps)
-
-  # compute equal error rate
-  for i in range(0, len(recall)):
-    if recall[i] >= 1.0 - specificity[i]:
-      return 1 - (recall[i] + 1.0 - specificity[i]) / 2
-
-  return 0
-
-
-def retrieval_rank(probe_instance, probe_label, instances, labels):
-  # compute distance of 'probe_instance' to
-  # every instance in 'instances'
-  dists = np.sum((instances - probe_instance)**2, axis=1)
-
-  # sort labels according to instances distances
-  matches = np.argsort(dists)
-  labels = labels[matches]
-
-  # find index of last instance of label 'probe_label'
-  last_ind = np.argwhere(labels == probe_label)[-1, 0]
-
-  # compute retrieval rank
-  labels_up_to_last_ind = np.unique(labels[:last_ind])
-  rank = len(labels_up_to_last_ind)
-
-  return rank
-
-
-def rank_n(instances, labels, sample_size):
-  # initialize ranks
-  ranks = np.zeros_like(labels, dtype=np.int32)
-
-  # sort examples by labels
-  inds = np.argsort(labels)
-  instances = instances[inds]
-  labels = labels[inds]
-
-  # compute rank following protocol in belongie et al.
-  examples = list(zip(instances, labels))
-  for i, (probe, probe_label) in enumerate(examples):
-    for target, target_label in examples[i + 1:]:
-      if probe_label != target_label:
-        break
-      else:
-        # mix examples of other labels
-        other_labels_inds = np.argwhere(labels != probe_label)
-        other_labels_inds = np.squeeze(other_labels_inds)
-        inds_to_pick = np.random.choice(
-            other_labels_inds, sample_size - 1, replace=False)
-        instances_to_mix = instances[inds_to_pick]
-        labels_to_mix = labels[inds_to_pick]
-
-        # make set for retrieval
-        target = np.expand_dims(target, axis=0)
-        instance_set = np.concatenate([instances_to_mix, target], axis=0)
-        target_label = np.expand_dims(target_label, axis=0)
-        label_set = np.concatenate([labels_to_mix, target_label], axis=0)
-
-        # compute retrieval rank for probe
-        rank = retrieval_rank(probe, probe_label, instance_set, label_set)
-
-        # update ranks, indexed from 0
-        ranks[rank] += 1
-
-  # rank is cumulative
-  ranks = np.cumsum(ranks)
-
-  return ranks / ranks[-1]
-
-
-def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
-                   sample_size):
-  # extracting descriptors for entire dataset
-  descs = []
-  labels = []
-  prev_epoch = dataset.epochs
-  while prev_epoch == dataset.epochs:
-    # sample next batch
-    patches, batch_labels = dataset.next_batch(batch_size)
-    feed_dict = {patches_pl: np.expand_dims(patches, axis=-1)}
-
-    # describe batch
-    batch_descs = sess.run(descs_op, feed_dict=feed_dict)
-
-    # add to overall
-    descs.extend(batch_descs)
-    labels.extend(batch_labels)
-
-  # convert to np array and remove extra dims
-  descs = np.squeeze(descs)
-  labels = np.squeeze(labels)
-
-  # compute ranks
-  ranks = rank_n(descs, labels, sample_size)
-
-  return ranks[0]
+    image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = by_images(
+        sess, net.predictions, patches_pl, dataset.val)
+    print('Whole image evaluation:')
+    print('TDR = {}'.format(image_tdr))
+    print('FDR = {}'.format(image_fdr))
+    print('F score = {}'.format(image_f_score))
+    print('inter_thr = {}'.format(inter_thr))
+    print('prob_thr = {}'.format(prob_thr))

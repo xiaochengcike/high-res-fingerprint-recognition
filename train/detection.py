@@ -65,16 +65,16 @@ def train(dataset, log_dir):
 
         _, loss_value = sess.run([net.train, net.loss], feed_dict=feed_dict)
 
-        # write loss summary every 100 steps
+        # write loss summary periodically
         if step % 100 == 0:
           print('Step {}: loss = {}'.format(step, loss_value))
           summary_str = sess.run(loss_summary_op, feed_dict=feed_dict)
           summary_writer.add_summary(summary_str, step)
 
         # evaluate the model periodically
-        if step % 100 == 0:
+        if step % 1000 == 0:
           print('Evaluation:')
-          tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection_by_patches(
+          tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection.by_patches(
               sess, val_net.predictions, FLAGS.batch_size, patches_pl,
               labels_pl, dataset.val)
           print(

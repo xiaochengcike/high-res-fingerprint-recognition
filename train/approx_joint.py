@@ -105,13 +105,13 @@ def train(desc_dataset, det_dataset, log_dir):
         if step % 100 == 0:
           # evaluate description
           print('Validation:')
-          rank = validate.dataset_rank_n(
+          rank = validate.description.dataset_rank_n(
               patches_pl, sess, desc_val_net.descriptors, desc_dataset.val,
               FLAGS.desc_batch_size, FLAGS.sample_size)
           print('Rank-1 = {}'.format(rank))
 
           # evaluate detection
-          _, _, f_score, fdr, tdr, _ = validate.detection_by_patches(
+          _, _, f_score, fdr, tdr, _ = validate.detection.by_patches(
               sess, det_val_net.predictions, FLAGS.det_batch_size, patches_pl,
               labels_pl, det_dataset.val)
           print('TDR = {}'.format(tdr))

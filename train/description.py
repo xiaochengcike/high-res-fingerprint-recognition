@@ -16,7 +16,7 @@ FLAGS = None
 
 
 def train(dataset, log_dir):
-  # other directories paths
+  # train directory path
   train_dir = os.path.join(log_dir, 'train')
 
   with tf.Graph().as_default():
@@ -54,7 +54,7 @@ def train(dataset, log_dir):
                                          FLAGS.batch_size)
         loss_value, _ = sess.run([net.loss, net.train], feed_dict=feed_dict)
 
-        # write loss summary every 100 steps
+        # write loss summary periodically
         if step % 100 == 0:
           print('Step {}: loss = {}'.format(step, loss_value))
 
@@ -66,9 +66,9 @@ def train(dataset, log_dir):
         # evaluate the model periodically
         if step % 1000 == 0:
           print('Validation:')
-          rank = validate.dataset_rank_n(patches_pl, sess, val_net.descriptors,
-                                         dataset.val, FLAGS.batch_size,
-                                         FLAGS.sample_size)
+          rank = validate.description.dataset_rank_n(
+              patches_pl, sess, val_net.descriptors, dataset.val,
+              FLAGS.batch_size, FLAGS.sample_size)
           print('Rank-1 = {}'.format(rank))
 
           # early stopping
