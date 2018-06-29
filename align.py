@@ -253,7 +253,6 @@ def iterative(img1,
 if __name__ == '__main__':
   import sys
   import cv2
-  import utils
 
   if len(sys.argv) < 5:
     raise Exception(
