@@ -139,27 +139,6 @@ def train(desc_dataset, det_dataset, log_dir):
   print('best Rank-1 = {}'.format(best_rank))
 
 
-def load_description_dataset(dataset_path):
-  print('Loading description dataset...')
-  dataset = polyu.description.Dataset(dataset_path)
-  print('Loaded.')
-
-  return dataset
-
-
-def load_detection_dataset(dataset_path, patch_size):
-  print('Loading PolyU-HRF dataset...')
-  polyu_path = os.path.join(dataset_path, 'GroundTruth', 'PoreGroundTruth')
-  dataset = polyu.detection.Dataset(
-      os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
-      os.path.join(polyu_path, 'PoreGroundTruthMarked'),
-      split=(15, 5, 10),
-      patch_size=patch_size)
-  print('Loaded.')
-
-  return dataset
-
-
 def main():
   # create folders to save train resources
   log_dir = utils.create_dirs(FLAGS.log_dir, FLAGS.desc_batch_size,
@@ -167,9 +146,19 @@ def main():
                               FLAGS.det_learning_rate)
 
   # load datasets
-  desc_dataset = load_description_dataset(FLAGS.desc_dataset_path)
-  det_dataset = load_detection_dataset(FLAGS.det_dataset_path,
-                                       FLAGS.patch_size)
+  print('Loading description dataset...')
+  desc_dataset = polyu.description.Dataset(FLAGS.desc_dataset_path)
+  print('Loaded.')
+
+  print('Loading PolyU-HRF dataset...')
+  det_dataset_path = os.path.join(FLAGS.det_dataset_path, 'GroundTruth',
+                                  'PoreGroundTruth')
+  det_dataset = polyu.detection.Dataset(
+      os.path.join(det_dataset_path, 'PoreGroundTruthSampleimage'),
+      os.path.join(det_dataset_path, 'PoreGroundTruthMarked'),
+      split=(15, 5, 10),
+      patch_size=FLAGS.patch_size)
+  print('Loaded.')
 
   # train
   train(desc_dataset, det_dataset, log_dir)

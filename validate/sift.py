@@ -9,19 +9,13 @@ import validate
 FLAGS = None
 
 
-def load_description_dataset(dataset_path):
-  dataset = polyu.description.Dataset(
-      dataset_path,
-      val_split=False,
-      should_shuffle=False,
-      balanced_batches=False)
-
-  return dataset.train
-
-
 def main():
   print('Loading description dataset...')
-  dataset = load_description_dataset(FLAGS.dataset_path)
+  dataset = polyu.description.Dataset(
+      FLAGS.dataset_path,
+      val_split=False,
+      should_shuffle=False,
+      balanced_batches=False).train
   print('Done.')
 
   print('Unpacking dataset and extracting sift descriptors...')

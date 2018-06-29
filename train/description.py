@@ -85,21 +85,15 @@ def train(dataset, log_dir):
   print('best Rank-1 = {}'.format(best_rank))
 
 
-def load_description_dataset(dataset_path):
-  print('Loading description dataset...')
-  dataset = polyu.description.Dataset(dataset_path)
-  print('Loaded.')
-
-  return dataset
-
-
 def main():
   # create folders to save train resources
   log_dir = utils.create_dirs(FLAGS.log_dir, FLAGS.batch_size,
                               FLAGS.learning_rate)
 
   # load dataset
-  dataset = load_description_dataset(FLAGS.dataset_path)
+  print('Loading description dataset...')
+  dataset = polyu.description.Dataset(FLAGS.dataset_path)
+  print('Loaded.')
 
   # train
   train(dataset, log_dir)
