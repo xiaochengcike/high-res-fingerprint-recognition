@@ -33,12 +33,10 @@ if __name__ == '__main__':
       help='path to save description dataset')
   parser.add_argument(
       '--flip',
-      dest='flip',
       action='store_true',
       help=
       'use this flag to produce flipped patches, doubling description dataset size'
   )
-  parser.set_defaults(flip=False)
   FLAGS = parser.parse_args()
 
   # load detections
