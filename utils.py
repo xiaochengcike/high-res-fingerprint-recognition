@@ -78,11 +78,7 @@ def create_dirs(log_dir_path, batch_size, learning_rate):
   timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
   log_dir = os.path.join(log_dir_path, 'bs-{}_lr-{:.0e}_t-{}'.format(
       batch_size, learning_rate, timestamp))
-  plot_dir = os.path.join(log_dir, 'plot')
-  train_dir = os.path.join(log_dir, 'train')
-  tf.gfile.MakeDirs(train_dir)
   tf.gfile.MakeDirs(log_dir)
-  tf.gfile.MakeDirs(plot_dir)
 
   return log_dir
 

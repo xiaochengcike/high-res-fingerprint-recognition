@@ -12,9 +12,6 @@ FLAGS = None
 
 
 def train(desc_dataset, det_dataset, log_dir):
-  # other directories paths
-  train_dir = os.path.join(log_dir, 'train')
-
   with tf.Graph().as_default():
     # gets placeholders for patches and labels
     patches_pl, labels_pl = utils.placeholder_inputs()
@@ -119,7 +116,7 @@ def train(desc_dataset, det_dataset, log_dir):
             best_rank = rank
 
             saver.save(
-                sess, os.path.join(train_dir, 'model.ckpt'), global_step=step)
+                sess, os.path.join(log_dir, 'model.ckpt'), global_step=step)
             faults = 0
           else:
             faults += 1

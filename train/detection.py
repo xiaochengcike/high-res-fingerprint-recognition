@@ -11,10 +11,6 @@ FLAGS = None
 
 
 def train(dataset, log_dir):
-  # other directories paths
-  train_dir = os.path.join(log_dir, 'train')
-  plot_dir = os.path.join(log_dir, 'plot')
-
   with tf.Graph().as_default():
     # gets placeholders for patches and labels
     patches_pl, labels_pl = utils.placeholder_inputs()
