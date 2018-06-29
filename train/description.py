@@ -43,7 +43,7 @@ def train(dataset, log_dir):
       # train loop
       for step in range(1, FLAGS.steps + 1):
         feed_dict = utils.fill_feed_dict(dataset.train, patches_pl, labels_pl,
-                                         FLAGS.batch_size)
+                                         FLAGS.batch_size, FLAGS.augment)
         loss_value, _ = sess.run([net.loss, net.train], feed_dict=feed_dict)
 
         # write loss summary periodically
@@ -117,6 +117,10 @@ if __name__ == '__main__':
       type=int,
       default=425,
       help='sample size to retrieve from in rank-N validation')
+  parser.add_argument(
+      '--augment',
+      action='store_true',
+      help='use this flag to perform dataset augmentation')
 
   FLAGS = parser.parse_args()
 

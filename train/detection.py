@@ -48,7 +48,7 @@ def train(dataset, log_dir):
 
       for step in range(1, FLAGS.steps + 1):
         feed_dict = utils.fill_feed_dict(dataset.train, patches_pl, labels_pl,
-                                         FLAGS.batch_size)
+                                         FLAGS.batch_size, FLAGS.augment)
 
         _, loss_value = sess.run([net.train, net.loss], feed_dict=feed_dict)
 
@@ -136,6 +136,11 @@ if __name__ == '__main__':
       '--label_size', type=int, default=3, help='pore label size')
   parser.add_argument(
       '--label_mode', type=str, default='hard_bb', help='pore patch size')
+  parser.add_argument(
+      '--augment',
+      action='store_true',
+      help='use this flag to perform dataset augmentation')
+
   FLAGS = parser.parse_args()
 
   main()

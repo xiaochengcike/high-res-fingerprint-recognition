@@ -24,8 +24,12 @@ def placeholder_inputs():
   return images, labels
 
 
-def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size):
+def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size, augment=False):
   patches_feed, labels_feed = dataset.next_batch(batch_size)
+
+  if augment:
+    patches_feed = _transform_mini_batch(patches_feed)
+
   feed_dict = {
       patches_pl: np.expand_dims(patches_feed, axis=-1),
       labels_pl: np.expand_dims(labels_feed, axis=-1)
@@ -34,43 +38,34 @@ def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size):
   return feed_dict
 
 
-def _pick_and_transform_patch(image, n_patches, size, row=None, col=None):
-  # compute margin for safe patch retrieval
-  margin = np.ceil(size / 2 * np.sqrt(2)) + 4
+def _transform_mini_batch(sample):
+  # contrast and brightness variations
+  contrast = np.random.normal(loc=1, scale=0.05, size=(sample.shape[0], 1, 1))
+  brightness = np.random.normal(
+      loc=0, scale=0.05, size=(sample.shape[0], 1, 1))
+  sample = contrast * sample + brightness
 
-  if row is None or col is None:
-    # randomly pick base patch (with margins for small rotations)
-    row = np.random.randint(margin, image.shape[0] - margin)
-    col = np.random.randint(margin, image.shape[1] - margin)
-  else:
-    # assert row and col preserve margins for rotations
-    assert margin <= row < image.shape[0] - margin
-    assert margin <= col < image.shape[1] - margin
+  # translation and rotation
+  transformed = []
+  for point in sample:
+    # random translation
+    dx = np.random.normal(loc=0, scale=1)
+    dy = np.random.normal(loc=0, scale=1)
+    A = np.array([[1, 0, dx], [0, 1, dy]])
 
-  patch = image[row:row + size, col:col + size]
+    # random rotation
+    theta = np.random.normal(loc=0, scale=7.5)
+    center = (point.shape[1] // 2, point.shape[0] // 2)
+    B = cv2.getRotationMatrix2D(center, theta, 1)
 
-  # transform patches
-  patches = [patch]
-  for _ in range(n_patches - 1):
-    # small translation
-    drow = row - np.random.randint(3)
-    dcol = col - np.random.randint(3)
+    # transform patch
+    point = cv2.warpAffine(point, A, point.shape[::-1])
+    point = cv2.warpAffine(point, B, point.shape[::-1])
 
-    # rotation
-    angle = np.random.random() * 360.0
-    rotation_mat = cv2.getRotationMatrix2D((dcol + size // 2,
-                                            drow + size // 2), angle, 1)
-    rotated_image = cv2.warpAffine(image, rotation_mat, image.shape[1::-1])
-    transfd_patch = rotated_image[drow:drow + size, dcol:dcol + size]
+    # add to batch patches
+    transformed.append(point)
 
-    # brightness and contrast
-    transfd_patch = np.random.normal(
-        loc=1.0, scale=0.05) * transfd_patch + np.random.normal(
-            loc=0.0, scale=0.1)
-
-    patches.append(transfd_patch)
-
-  return patches
+  return np.array(transformed)
 
 
 def create_dirs(log_dir_path,

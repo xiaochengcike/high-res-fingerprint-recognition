@@ -69,13 +69,15 @@ def train(desc_dataset, det_dataset, log_dir):
       for step in range(1, FLAGS.steps + 1):
         # description training step
         feed_dict = utils.fill_feed_dict(desc_dataset.train, patches_pl,
-                                         labels_pl, FLAGS.desc_batch_size)
+                                         labels_pl, FLAGS.desc_batch_size,
+                                         FLAGS.augment_desc)
         desc_loss_value, _ = sess.run(
             [desc_net.loss, desc_net.train], feed_dict=feed_dict)
 
         # detection training step
         feed_dict = utils.fill_feed_dict(det_dataset.train, patches_pl,
-                                         labels_pl, FLAGS.det_batch_size)
+                                         labels_pl, FLAGS.det_batch_size,
+                                         FLAGS.augment_det)
         det_loss_value, _ = sess.run(
             [det_net.loss, det_net.train], feed_dict=feed_dict)
 
@@ -208,6 +210,14 @@ if __name__ == '__main__':
       type=int,
       default=425,
       help='sample size to retrieve from in rank-N validation')
+  parser.add_argument(
+      '--augment_desc',
+      action='store_true',
+      help='use this flag to perform description dataset augmentation')
+  parser.add_argument(
+      '--augment_det',
+      action='store_true',
+      help='use this flag to perform detection dataset augmentation')
 
   FLAGS = parser.parse_args()
 
