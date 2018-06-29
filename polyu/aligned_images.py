@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 
 import align
 
@@ -51,7 +52,8 @@ def _compute_valid_region(all_imgs, transfs, patch_size):
 
 
 class Handler:
-  def __init__(self, all_imgs, all_pts, patch_size, flip=False):
+  def __init__(self, all_imgs, all_pts, patch_size, flip=False,
+               for_sift=False):
     self._flip = flip
     self._imgs = all_imgs
     self._patch_size = patch_size
@@ -62,6 +64,15 @@ class Handler:
 
     # find valid area for extracting patches
     mask = _compute_valid_region(self._imgs, self._transfs, self._patch_size)
+
+    # adjust images for sift patches
+    if for_sift:
+      clahe = cv2.createCLAHE(clipLimit=3)
+      for i, img in enumerate(self._imgs):
+        img = np.array(255 * img, dtype=np.uint8)
+        img = cv2.medianBlur(img, ksize=3)
+        img = clahe.apply(img)
+        self._imgs[i] = np.array(img, dtype=np.float32) / 255
 
     # get valid indices and store them for access
     self._inds = []

@@ -35,8 +35,12 @@ if __name__ == '__main__':
       '--flip',
       action='store_true',
       help=
-      'use this flag to produce flipped patches, doubling description dataset size'
+      'use this flag to also generate flipped patches, doubling the description dataset size'
   )
+  parser.add_argument(
+      '--for_sift',
+      action='store_true',
+      help='use this flag to generate patches fit for validate.sift use')
   FLAGS = parser.parse_args()
 
   # load detections
@@ -75,7 +79,8 @@ if __name__ == '__main__':
   patch_index = 1
   for imgs, pts, label in zip(grouped_imgs, grouped_pts, unique_labels):
     print('Aligning images of subject {}...'.format(label))
-    handler = aligned_images.Handler(imgs, pts, FLAGS.patch_size, FLAGS.flip)
+    handler = aligned_images.Handler(imgs, pts, FLAGS.patch_size, FLAGS.flip,
+                                     FLAGS.for_sift)
     print('Done.')
 
     print("Extracting patches of subject's {} images...".format(label))
