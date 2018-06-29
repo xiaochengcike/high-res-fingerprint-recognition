@@ -31,16 +31,12 @@ def train(dataset, log_dir):
     f_score_pl = tf.placeholder(tf.float32, shape=())
     tdr_pl = tf.placeholder(tf.float32, shape=())
     fdr_pl = tf.placeholder(tf.float32, shape=())
-    f_score_summary_op = tf.summary.scalar('f_score', f_score_pl)
-    tdr_summary_op = tf.summary.scalar('tdr', tdr_pl)
-    fdr_summary_op = tf.summary.scalar('fdr', fdr_pl)
+    scores_summary_op = tf.summary.merge([
+        tf.summary.scalar('f_score', f_score_pl),
+        tf.summary.scalar('tdr', tdr_pl),
+        tf.summary.scalar('fdr', fdr_pl)
+    ])
     loss_summary_op = tf.summary.scalar('loss', net.loss)
-
-    # resources to tensorboard plots
-    plot_buf_pl = tf.placeholder(tf.string)
-    plot_png = tf.image.decode_png(plot_buf_pl)
-    expanded_plot_png = tf.expand_dims(plot_png, 0)
-    plot_summary_op = tf.summary.image('plot', expanded_plot_png)
 
     # add variable initialization to graph
     init = tf.global_variables_initializer()
@@ -69,22 +65,18 @@ def train(dataset, log_dir):
         # evaluate the model periodically
         if step % 1000 == 0:
           print('Evaluation:')
-          tdrs, fdrs, f_score, fdr, tdr, thr = validate.detection.by_patches(
+          f_score, fdr, tdr = validate.detection.by_patches(
               sess, val_net.predictions, FLAGS.batch_size, patches_pl,
               labels_pl, dataset.val)
-          print(
-              '\tTDR = {}'.format(tdr),
-              '\tFDR = {}'.format(fdr),
-              '\tF score = {}'.format(f_score),
-              sep='\n')
+          print('TDR = {}'.format(tdr))
+          print('FDR = {}'.format(fdr))
+          print('F score = {}'.format(f_score))
 
           # early stopping
           if f_score > best_f_score:
             best_f_score = f_score
             saver.save(
-                sess,
-                os.path.join(train_dir, 'model-{}.ckpt'.format(thr)),
-                global_step=step)
+                sess, os.path.join(log_dir, 'model.ckpt'), global_step=step)
             faults = 0
           else:
             faults += 1
@@ -93,24 +85,12 @@ def train(dataset, log_dir):
               break
 
           # write f score, tdr and fdr to summary
-          score_summaries = sess.run(
-              [f_score_summary_op, tdr_summary_op, fdr_summary_op],
+          scores_summary = sess.run(
+              scores_summary_op,
               feed_dict={f_score_pl: f_score,
                          tdr_pl: tdr,
                          fdr_pl: fdr})
-          for score_summary in score_summaries:
-            summary_writer.add_summary(score_summary, global_step=step)
-
-          # plot recall vs precision
-          buf = utils.plot_precision_recall(tdrs, fdrs,
-                                            os.path.join(
-                                                plot_dir,
-                                                '{}.png'.format(step)))
-
-          # write plot to summary
-          plot_summary = sess.run(
-              plot_summary_op, feed_dict={plot_buf_pl: buf.getvalue()})
-          summary_writer.add_summary(plot_summary, global_step=step)
+          summary_writer.add_summary(scores_summary, global_step=step)
 
 
 def main():

@@ -106,7 +106,7 @@ def train(desc_dataset, det_dataset, log_dir):
           print('Rank-1 = {}'.format(rank))
 
           # evaluate detection
-          _, _, f_score, fdr, tdr, _ = validate.detection.by_patches(
+          f_score, fdr, tdr = validate.detection.by_patches(
               sess, det_val_net.predictions, FLAGS.det_batch_size, patches_pl,
               labels_pl, det_dataset.val)
           print('TDR = {}'.format(tdr))
