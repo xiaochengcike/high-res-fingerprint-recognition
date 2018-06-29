@@ -94,7 +94,7 @@ def train(desc_dataset, det_dataset, log_dir):
           summary_writer.add_summary(losses_summary, step)
 
         # evaluate the model periodically
-        if step % 100 == 0:
+        if step % 1000 == 0:
           # evaluate description
           print('Validation:')
           rank = validate.description.dataset_rank_n(
@@ -114,6 +114,7 @@ def train(desc_dataset, det_dataset, log_dir):
           if rank > best_rank and f_score > best_f_score:
             # update best statistics
             best_rank = rank
+            best_f_score = f_score
 
             saver.save(
                 sess, os.path.join(log_dir, 'model.ckpt'), global_step=step)
@@ -137,6 +138,7 @@ def train(desc_dataset, det_dataset, log_dir):
 
   print('Finished')
   print('best Rank-1 = {}'.format(best_rank))
+  print('best F score = {}'.format(best_f_score))
 
 
 def main():
