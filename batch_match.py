@@ -10,6 +10,8 @@ import cv2
 
 import utils
 
+FLAGS = None
+
 if __name__ == '__main__':
   # parse args
   parser = argparse.ArgumentParser()
@@ -42,18 +44,20 @@ if __name__ == '__main__':
       '--thr', type=float, help='Second correspondence elimination threshold.')
   parser.add_argument(
       '--model_dir_path', type=str, help='Trained model directory path.')
-  parser.add_argument(
-      '--patch_size', type=int, required=True, help='Pore patch size.')
+  parser.add_argument('--patch_size', type=int, help='Pore patch size.')
   FLAGS = parser.parse_args()
 
   # parse descriptor and adjust accordingly
   if FLAGS.descriptors == 'sift':
     compute_descriptors = utils.extract_sift_descriptors
   else:
-    assert FLAGS.model_dir_path is not None, \
-        'Trained model path is required when using trained descriptor'
+    if FLAGS.model_dir_path is None:
+      raise TypeError(
+          'Trained model path is required when using trained descriptor')
+    if FLAGS.patch_size is None:
+      raise TypeError('Patch size is required when using trained descriptor')
+
     import tensorflow as tf
-    import numpy as np
 
     from models import description
 
