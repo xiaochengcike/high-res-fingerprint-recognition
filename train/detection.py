@@ -88,6 +88,9 @@ def train(dataset, log_dir):
                          fdr_pl: fdr})
           summary_writer.add_summary(scores_summary, global_step=step)
 
+  print('Finished')
+  print('best F score = {}'.format(best_f_score))
+
 
 def main():
   # create folders to save train resources
