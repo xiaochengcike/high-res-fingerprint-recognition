@@ -2,9 +2,8 @@ import argparse
 import itertools
 import numpy as np
 
-from utils import extract_sift_descriptors as sift
-import polyu
 import utils
+import polyu
 import validate
 
 FLAGS = None
@@ -32,7 +31,7 @@ def main():
   while prev_epoch == dataset.epochs:
     (img, *_), (label, *_) = dataset.next_batch(1)
     pt = [np.array(img.shape) // 2]
-    descs.append(sift(img, pt))
+    descs.append(utils.sift_descriptors(img, pt))
     labels.append(label)
   print('Done.')
 

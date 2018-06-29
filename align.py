@@ -164,9 +164,9 @@ def iterative(img1,
 
   # precompute sift descriptors, if not given
   if descs1 is None:
-    descs1 = utils.extract_sift_descriptors(img1, pts1, scale=8)
+    descs1 = utils.sift_descriptors(img1, pts1, scale=8)
   if descs2 is None:
-    descs2 = utils.extract_sift_descriptors(img2, pts2, scale=8)
+    descs2 = utils.sift_descriptors(img2, pts2, scale=8)
 
   # iteratively align
   for _ in range(max_iter):

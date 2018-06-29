@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
   # parse descriptor and adjust accordingly
   if FLAGS.descriptors == 'sift':
-    compute_descriptors = utils.extract_sift_descriptors
+    compute_descriptors = utils.sift_descriptors
   else:
     if FLAGS.model_dir_path is None:
       raise TypeError(

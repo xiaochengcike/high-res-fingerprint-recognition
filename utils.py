@@ -320,7 +320,7 @@ def bilinear_interpolation(x, y, f):
   return np.dot(np.dot(lhs, fq), rhs)
 
 
-def extract_sift_descriptors(img, pts, scale=4):
+def sift_descriptors(img, pts, scale=4):
   # convert float image to np uint8
   if img.dtype == np.float32:
     img = np.array(255 * img, dtype=np.uint8)
