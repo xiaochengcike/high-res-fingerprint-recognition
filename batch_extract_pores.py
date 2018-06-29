@@ -4,7 +4,7 @@ import argparse
 import os
 
 import utils
-import detector
+from models import detection
 
 FLAGS = None
 
@@ -20,7 +20,7 @@ def main():
     images_pl, _ = utils.placeholder_inputs()
 
     print('Building graph...')
-    net = detector.Net(images_pl, FLAGS.patch_size, training=False)
+    net = detection.Net(images_pl, training=False)
     print('Done.')
 
     with tf.Session() as sess:
@@ -33,7 +33,7 @@ def main():
         print('Extracting pores in image {}...'.format(image_names[i]))
         # predict probability of pores
         pred = sess.run(
-            net.preds,
+            net.predictions,
             feed_dict={images_pl: np.reshape(img, (1, ) + img.shape + (1, ))})
 
         # add borders lost in convolution
