@@ -32,11 +32,13 @@ if __name__ == '__main__':
       required=True,
       help='path to save description dataset')
   parser.add_argument(
-      '--augment',
-      dest='augment',
+      '--flip',
+      dest='flip',
       action='store_true',
-      help='use this flag to augment description dataset')
-  parser.set_defaults(augment=False)
+      help=
+      'use this flag to produce flipped patches, doubling description dataset size'
+  )
+  parser.set_defaults(flip=False)
   FLAGS = parser.parse_args()
 
   # load detections
@@ -75,8 +77,7 @@ if __name__ == '__main__':
   patch_index = 1
   for imgs, pts, label in zip(grouped_imgs, grouped_pts, unique_labels):
     print('Aligning images of subject {}...'.format(label))
-    handler = aligned_images.Handler(imgs, pts, FLAGS.patch_size,
-                                     FLAGS.augment)
+    handler = aligned_images.Handler(imgs, pts, FLAGS.patch_size, FLAGS.flip)
     print('Done.')
 
     print("Extracting patches of subject's {} images...".format(label))
