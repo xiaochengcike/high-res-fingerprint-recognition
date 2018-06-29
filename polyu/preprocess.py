@@ -6,6 +6,8 @@ import cv2
 import utils
 from polyu import aligned_images
 
+FLAGS = None
+
 if __name__ == '__main__':
   # parse args
   parser = argparse.ArgumentParser()
@@ -13,27 +15,27 @@ if __name__ == '__main__':
       '--polyu_dir_path',
       required=True,
       type=str,
-      help='Path to PolyU-HRF dataset.')
+      help='path to PolyU-HRF dataset')
   parser.add_argument(
       '--pts_dir_path',
       type=str,
       required=True,
-      help='Path to PolyU-HRF DBI Training dataset keypoints detections.')
+      help='path to PolyU-HRF DBI Training dataset keypoints detections')
   parser.add_argument(
       '--patch_size',
       type=int,
       default=17,
-      help='Image patch size for descriptor.')
+      help='image patch size for descriptor')
   parser.add_argument(
       '--result_dir_path',
       type=str,
       required=True,
-      help='Path to save description dataset.')
+      help='path to save description dataset')
   parser.add_argument(
       '--augment',
       dest='augment',
       action='store_true',
-      help='Use this flag to augment description dataset.')
+      help='use this flag to augment description dataset')
   parser.set_defaults(augment=False)
   FLAGS = parser.parse_args()
 

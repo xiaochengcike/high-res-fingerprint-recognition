@@ -11,7 +11,7 @@ FLAGS = None
 
 def main():
   print('Loading images...')
-  images, image_names = utils.load_images_with_names(FLAGS.imgs_dir)
+  images, image_names = utils.load_images_with_names(FLAGS.imgs_dir_path)
   print('Done.')
 
   half_patch_size = FLAGS.patch_size // 2
@@ -24,8 +24,8 @@ def main():
     print('Done.')
 
     with tf.Session() as sess:
-      print('Restoring model in {}...'.format(FLAGS.model_dir))
-      utils.restore_model(sess, FLAGS.model_dir)
+      print('Restoring model in {}...'.format(FLAGS.model_dir_path))
+      utils.restore_model(sess, FLAGS.model_dir_path)
       print('Done.')
 
       # extract pores for each image
@@ -58,18 +58,20 @@ def main():
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--imgs_dir', required=True, type=str, help='Path to images directory')
+      '--imgs_dir_path',
+      required=True,
+      type=str,
+      help='path to images directory')
   parser.add_argument(
-      '--model_dir', type=str, required=True, help='Logging directory.')
+      '--model_dir_path', type=str, required=True, help='logging directory')
+  parser.add_argument('--batch_size', type=int, default=256, help='batch size')
   parser.add_argument(
-      '--batch_size', type=int, default=256, help='Batch size.')
+      '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument(
-      '--patch_size', type=int, default=17, help='Pore patch size.')
-  parser.add_argument(
-      '--results_dir',
+      '--results_dir_path',
       type=str,
       default='result',
-      help='Path to folder in which results should be saved.')
+      help='path to folder in which results should be saved')
   FLAGS = parser.parse_args()
 
   main()

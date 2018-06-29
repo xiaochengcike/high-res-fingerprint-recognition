@@ -141,23 +141,22 @@ if __name__ == '__main__':
       '--polyu_dir_path',
       required=True,
       type=str,
-      help='Path to PolyU-HRF dataset')
+      help='path to PolyU-HRF dataset')
   parser.add_argument(
-      '--learning_rate', type=float, default=1e-1, help='Learning rate.')
+      '--learning_rate', type=float, default=1e-1, help='learning rate')
   parser.add_argument(
-      '--log_dir_path', type=str, default='log', help='Logging directory.')
+      '--log_dir_path', type=str, default='log', help='logging directory')
   parser.add_argument(
-      '--tolerance', type=int, default=5, help='Early stopping tolerance.')
+      '--tolerance', type=int, default=5, help='early stopping tolerance')
+  parser.add_argument('--batch_size', type=int, default=256, help='batch size')
   parser.add_argument(
-      '--batch_size', type=int, default=256, help='Batch size.')
+      '--steps', type=int, default=100000, help='maximum training steps')
   parser.add_argument(
-      '--steps', type=int, default=100000, help='Maximum training steps.')
+      '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument(
-      '--patch_size', type=int, default=17, help='Pore patch size.')
+      '--label_size', type=int, default=3, help='pore label size')
   parser.add_argument(
-      '--label_size', type=int, default=3, help='Pore label size.')
-  parser.add_argument(
-      '--label_mode', type=str, default='hard_bb', help='Pore patch size.')
+      '--label_mode', type=str, default='hard_bb', help='pore patch size')
   FLAGS = parser.parse_args()
 
   main()

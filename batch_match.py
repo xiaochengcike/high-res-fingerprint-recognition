@@ -14,32 +14,32 @@ if __name__ == '__main__':
       '--polyu_dir_path',
       required=True,
       type=str,
-      help='Path to PolyU-HRF dataset.')
+      help='path to PolyU-HRF dataset')
   parser.add_argument(
       '--pts_dir_path',
       type=str,
       required=True,
-      help='Path to PolyU-HRF DBI Training dataset keypoints detections.')
+      help='path to PolyU-HRF DBI Training dataset keypoints detections')
   parser.add_argument(
       '--results_path',
       type=str,
       default='matching_results.txt',
-      help='Path to results file.')
+      help='path to results file')
   parser.add_argument(
       '--descriptors',
       type=str,
       default='sift',
-      help='Which descriptors to use. Can be "sift" or "trained"')
+      help='which descriptors to use. Can be "sift" or "trained"')
   parser.add_argument(
       '--mode',
       type=str,
       default='basic',
-      help='Mode to match images. Can be "basic" or "spatial".')
+      help='mode to match images. Can be "basic" or "spatial"')
   parser.add_argument(
-      '--thr', type=float, help='Second correspondence elimination threshold.')
+      '--thr', type=float, help='second correspondence elimination threshold')
   parser.add_argument(
-      '--model_dir_path', type=str, help='Trained model directory path.')
-  parser.add_argument('--patch_size', type=int, help='Pore patch size.')
+      '--model_dir_path', type=str, help='trained model directory path')
+  parser.add_argument('--patch_size', type=int, help='pore patch size')
   FLAGS = parser.parse_args()
 
   # parse descriptor and adjust accordingly

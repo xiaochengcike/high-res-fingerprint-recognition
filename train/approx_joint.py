@@ -183,42 +183,42 @@ if __name__ == '__main__':
       '--desc_dataset_path',
       required=True,
       type=str,
-      help='Path to description dataset.')
+      help='path to description dataset')
   parser.add_argument(
       '--det_dataset_path',
       required=True,
       type=str,
-      help='Path to detection dataset.')
+      help='path to detection dataset')
   parser.add_argument(
       '--desc_learning_rate',
       type=float,
       default=1e-1,
-      help='Description learning rate.')
+      help='description learning rate')
   parser.add_argument(
       '--det_learning_rate',
       type=float,
       default=1e-1,
-      help='Detection learning rate.')
+      help='detection learning rate')
   parser.add_argument(
-      '--log_dir', type=str, default='log', help='Logging directory.')
+      '--log_dir', type=str, default='log', help='logging directory')
   parser.add_argument(
-      '--tolerance', type=int, default=5, help='Early stopping tolerance.')
+      '--tolerance', type=int, default=5, help='early stopping tolerance')
   parser.add_argument(
-      '--det_batch_size', type=int, default=256, help='Detection batch size.')
+      '--det_batch_size', type=int, default=256, help='detection batch size')
   parser.add_argument(
       '--desc_batch_size',
       type=int,
       default=256,
-      help='Description batch size.')
+      help='description batch size')
   parser.add_argument(
-      '--steps', type=int, default=100000, help='Maximum training steps.')
+      '--steps', type=int, default=100000, help='maximum training steps')
   parser.add_argument(
-      '--patch_size', type=int, default=17, help='Pore patch size.')
+      '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument(
       '--sample_size',
       type=int,
       default=425,
-      help='Sample size to retrieve from in rank-N validation.')
+      help='sample size to retrieve from in rank-N validation')
 
   FLAGS = parser.parse_args()
 

@@ -111,22 +111,21 @@ def main():
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--dataset_path', required=True, type=str, help='Path to dataset.')
+      '--dataset_path', required=True, type=str, help='path to dataset')
   parser.add_argument(
-      '--learning_rate', type=float, default=1e-1, help='Learning rate.')
+      '--learning_rate', type=float, default=1e-1, help='learning rate')
   parser.add_argument(
-      '--log_dir', type=str, default='log', help='Logging directory.')
+      '--log_dir', type=str, default='log', help='logging directory')
   parser.add_argument(
-      '--tolerance', type=int, default=5, help='Early stopping tolerance.')
+      '--tolerance', type=int, default=5, help='early stopping tolerance')
+  parser.add_argument('--batch_size', type=int, default=256, help='batch size')
   parser.add_argument(
-      '--batch_size', type=int, default=256, help='Batch size.')
-  parser.add_argument(
-      '--steps', type=int, default=100000, help='Maximum training steps.')
+      '--steps', type=int, default=100000, help='maximum training steps')
   parser.add_argument(
       '--sample_size',
       type=int,
       default=425,
-      help='Sample size to retrieve from in rank-N validation.')
+      help='sample size to retrieve from in rank-N validation')
 
   FLAGS = parser.parse_args()
 
