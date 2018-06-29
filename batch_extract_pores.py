@@ -42,7 +42,7 @@ def main():
                              (half_patch_size, half_patch_size)), 'constant')
 
         # convert into coordinates
-        pick = pred > 0.9
+        pick = pred > 0.5
         coords = np.argwhere(pick)
         probs = pred[pick]
 
@@ -50,7 +50,7 @@ def main():
         dets, _ = utils.nms(coords, probs, 7, 0.1)
 
         # save results
-        filename = os.path.join(FLAGS.results_dir,
+        filename = os.path.join(FLAGS.results_dir_path,
                                 '{}.txt'.format(image_names[i]))
         utils.save_dets_txt(dets, filename)
 
