@@ -27,7 +27,7 @@ def load_description_dataset(dataset_path):
 
 def main():
   print('Loading description dataset...')
-  dataset = load_description_dataset(FLAGS.desc_dataset_path)
+  dataset = load_description_dataset(FLAGS.dataset_path)
   print('Done.')
 
   print('Unpacking dataset and extracting sift descriptors...')
@@ -91,7 +91,7 @@ def main():
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--desc_dataset_path',
+      '--dataset_path',
       required=True,
       type=str,
       help='Path to description dataset.')
