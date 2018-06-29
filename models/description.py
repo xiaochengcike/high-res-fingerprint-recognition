@@ -2,12 +2,7 @@ import tensorflow as tf
 
 
 class Net:
-  def __init__(self,
-               inputs,
-               output_shape=128,
-               reuse=False,
-               training=True,
-               scope='description'):
+  def __init__(self, inputs, reuse=False, training=True, scope='description'):
     with tf.variable_scope(scope):
       # reduction convolutions
       net = inputs
