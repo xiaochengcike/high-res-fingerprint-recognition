@@ -24,29 +24,16 @@ def to_patches(img, patch_size):
 
 
 def placeholder_inputs():
-  images = tf.placeholder(tf.float32, [None, None, None, 1])
-  labels = tf.placeholder(tf.float32, [None, 1])
+  images = tf.placeholder(tf.float32, [None, None, None, 1], name='images')
+  labels = tf.placeholder(tf.float32, [None, 1], name='labels')
   return images, labels
 
 
-def fill_detection_feed_dict(dataset, patches_pl, labels_pl, batch_size):
+def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size):
   patches_feed, labels_feed = dataset.next_batch(batch_size)
   feed_dict = {
-      patches_pl:
-      patches_feed.reshape([-1, dataset.patch_size, dataset.patch_size, 1]),
-      labels_pl:
-      labels_feed.reshape([-1, 1])
-  }
-
-  return feed_dict
-
-
-def fill_description_feed_dict(dataset, patches_pl, labels_pl,
-                               classes_by_batch):
-  patches_feed, labels_feed = dataset.next_batch(classes_by_batch)
-  feed_dict = {
       patches_pl: np.expand_dims(patches_feed, axis=-1),
-      labels_pl: np.reshape(labels_feed, (-1, 1))
+      labels_pl: np.expand_dims(labels_feed, axis=-1)
   }
 
   return feed_dict
@@ -424,6 +411,21 @@ def find_correspondences(descs1,
             pairs.append((j, i, D[j, i]))
 
   return pairs
+
+
+def load_images_with_labels(folder_path):
+  images = []
+  labels = []
+  for image_path in sorted(os.listdir(folder_path)):
+    if image_path.endswith(('.jpg', '.png', '.bmp')):
+      images.append(load_image(os.path.join(folder_path, image_path)))
+      labels.append(retrieve_label_from_image_path(image_path))
+
+  return images, labels
+
+
+def retrieve_label_from_image_path(image_path):
+  return int(image_path.split('_')[0])
 
 
 def eer(pos, neg):

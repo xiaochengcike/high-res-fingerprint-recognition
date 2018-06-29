@@ -4,11 +4,11 @@ from __future__ import print_function
 from six.moves import range
 
 import numpy as np
+
 import utils
 
 
-def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
-                         dataset):
+def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
   # initialize dataset statistics
   true_preds = []
   false_preds = []
@@ -16,8 +16,8 @@ def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
 
   steps_per_epoch = (dataset.num_samples + batch_size - 1) // batch_size
   for _ in range(steps_per_epoch):
-    feed_dict = utils.fill_detection_feed_dict(dataset, patches_pl, labels_pl,
-                                               batch_size)
+    feed_dict = utils.fill_feed_dict(dataset, patches_pl, labels_pl,
+                                     batch_size)
 
     # evaluate batch
     batch_preds = sess.run(preds, feed_dict=feed_dict)
@@ -78,7 +78,7 @@ def detection_by_patches(sess, preds, batch_size, patches_pl, labels_pl,
       fdrs, np.float32), best_f_score, best_fdr, best_tdr, best_thr
 
 
-def detection_by_images(sess, pred_op, patches_pl, dataset):
+def by_images(sess, pred_op, patches_pl, dataset):
   patch_size = dataset.patch_size
   half_patch_size = patch_size // 2
   preds = []
@@ -168,51 +168,53 @@ def detection_by_images(sess, pred_op, patches_pl, dataset):
   return best_f_score, best_tdr, best_fdr, best_inter_thr, best_prob_thr
 
 
-def report_statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl,
-                                    dataset, thresholds, statistics_op,
-                                    session, classes_by_batch, total_steps):
-  # initialize statistics
-  true_pos = np.zeros_like(thresholds, np.int32)
-  true_neg = np.zeros_like(thresholds, np.int32)
-  false_pos = np.zeros_like(thresholds, np.int32)
-  false_neg = np.zeros_like(thresholds, np.int32)
+if __name__ == '__main__':
+  import argparse
+  import os
+  import tensorflow as tf
 
-  # validate in entire dataset, as specified by user
-  for _ in range(total_steps):
-    # sample mini-batch
-    feed_dict = utils.fill_description_feed_dict(dataset, patches_pl,
-                                                 labels_pl, classes_by_batch)
-    feed_dict[thresholds_pl] = thresholds
+  import polyu
+  from models import detection
 
-    # evaluate on mini-batch
-    batch_true_pos, batch_true_neg, batch_false_pos, batch_false_neg = session.run(
-        statistics_op, feed_dict=feed_dict)
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+      '--polyu_dir_path',
+      required=True,
+      type=str,
+      help='Path to PolyU-HRF dataset')
+  parser.add_argument(
+      '--model_dir_path', type=str, required=True, help='Logging directory.')
+  parser.add_argument(
+      '--patch_size', type=int, default=17, help='Pore patch size.')
+  flags = parser.parse_args()
 
-    # update running statistics
-    true_pos += batch_true_pos
-    true_neg += batch_true_neg
-    false_pos += batch_false_pos
-    false_neg += batch_false_neg
+  # load polyu dataset
+  print('Loading PolyU-HRF dataset...')
+  polyu_path = os.path.join(flags.polyu_dir_path, 'GroundTruth',
+                            'PoreGroundTruth')
+  dataset = polyu.detection.Dataset(
+      os.path.join(polyu_path, 'PoreGroundTruthSampleimage'),
+      os.path.join(polyu_path, 'PoreGroundTruthMarked'),
+      split=(15, 5, 10),
+      patch_size=flags.patch_size)
+  print('Loaded.')
 
-  return true_pos, true_neg, false_pos, false_neg
+  # gets placeholders for patches and labels
+  patches_pl, labels_pl = utils.placeholder_inputs()
 
+  # builds inference graph
+  net = detection.Net(patches_pl, training=False)
 
-def report_recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
-                           threshold_resolution, statistics_op, session,
-                           classes_by_batch, total_steps):
-  true_pos, true_neg, false_pos, false_neg = report_statistics_by_thresholds(
-      patches_pl, labels_pl, thresholds_pl, dataset,
-      np.arange(0, 2 + threshold_resolution, threshold_resolution),
-      statistics_op, session, classes_by_batch, total_steps)
+  with tf.Session() as sess:
+    print('Restoring model...')
+    utils.restore_model(sess, flags.model_dir_path)
+    print('Done.')
 
-  # compute recall and specificity
-  eps = 1e-12
-  recall = true_pos / (true_pos + false_neg + eps)
-  specificity = false_pos / (true_neg + false_pos + eps)
-
-  # compute equal error rate
-  for i in range(0, len(recall)):
-    if recall[i] >= 1.0 - specificity[i]:
-      return 1 - (recall[i] + 1.0 - specificity[i]) / 2
-
-  return 0
+    image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = by_images(
+        sess, net.predictions, patches_pl, dataset.val)
+    print('Whole image evaluation:')
+    print('TDR = {}'.format(image_tdr))
+    print('FDR = {}'.format(image_fdr))
+    print('F score = {}'.format(image_f_score))
+    print('inter_thr = {}'.format(inter_thr))
+    print('prob_thr = {}'.format(prob_thr))

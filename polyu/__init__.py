@@ -1,2 +1,2 @@
 import polyu.detection
-import polyu.recognition
+import polyu.description
