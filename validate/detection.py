@@ -33,7 +33,6 @@ def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
   false_preds.reverse()
 
   # compute tdr/fdr score over thresholds
-  best_thr = 0
   best_f_score = 0
   best_fdr = None
   best_tdr = None
@@ -63,9 +62,8 @@ def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
       best_tdr = tdr
       best_fdr = fdr
       best_f_score = f_score
-      best_thr = thr
 
-  return best_f_score, best_fdr, best_tdr, best_thr
+  return best_f_score, best_fdr, best_tdr
 
 
 def by_images(sess, pred_op, patches_pl, dataset):
