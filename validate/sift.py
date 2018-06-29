@@ -96,7 +96,7 @@ if __name__ == '__main__':
       help='Number of random splits to average validation from.')
   parser.add_argument(
       '--mode',
-      default='eer',
+      default='rank-n',
       type=str,
       help='Mode of validation. Possible are "eer" and "rank-n".')
 
