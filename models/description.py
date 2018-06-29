@@ -9,77 +9,33 @@ class Net:
                training=True,
                scope='description'):
     with tf.variable_scope(scope):
-      # conv 1
-      net = tf.layers.conv2d(
-          inputs,
-          filters=64,
-          kernel_size=3,
-          strides=1,
-          padding='valid',
-          activation=tf.nn.relu,
-          use_bias=False,
-          name='conv_1',
-          reuse=reuse)
-      net = tf.layers.batch_normalization(
-          net, training=training, name='batchnorm_1', reuse=reuse)
+      # reduction convolutions
+      net = inputs
+      filters_list = [64, 128, 128, 128]
+      activations = [tf.nn.relu for _ in range(3)] + [None]
+      i = 1
+      for filters, activation in zip(filters_list, activations):
+        # ith conv layer
+        net = tf.layers.conv2d(
+            net,
+            filters=filters,
+            kernel_size=3,
+            strides=1,
+            padding='valid',
+            activation=activation,
+            use_bias=False,
+            name='conv_{}'.format(i),
+            reuse=reuse)
 
-      # max pooling 1
-      net = tf.layers.max_pooling2d(
-          net, pool_size=3, strides=1, name='maxpool_1')
+        # ith batch norm
+        net = tf.layers.batch_normalization(
+            net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
 
-      # conv 2
-      net = tf.layers.conv2d(
-          net,
-          filters=128,
-          kernel_size=3,
-          strides=1,
-          padding='valid',
-          activation=tf.nn.relu,
-          use_bias=False,
-          name='conv_2',
-          reuse=reuse)
-      net = tf.layers.batch_normalization(
-          net, training=training, name='batchnorm_2', reuse=reuse)
+        # ith max pooling
+        net = tf.layers.max_pooling2d(
+            net, pool_size=3, strides=1, name='maxpool_{}'.format(i))
 
-      # max pooling 2
-      net = tf.layers.max_pooling2d(
-          net, pool_size=3, strides=1, padding='valid', name='maxpool_2')
-
-      # conv 3
-      net = tf.layers.conv2d(
-          net,
-          filters=128,
-          kernel_size=3,
-          strides=1,
-          padding='valid',
-          activation=tf.nn.relu,
-          use_bias=False,
-          name='conv_3',
-          reuse=reuse)
-      net = tf.layers.batch_normalization(
-          net, training=training, name='batchnorm_3', reuse=reuse)
-
-      # max pooling 3
-      net = tf.layers.max_pooling2d(
-          net, pool_size=3, strides=1, padding='valid', name='maxpool_3')
-
-      # conv 4
-      net = tf.layers.conv2d(
-          net,
-          filters=128,
-          kernel_size=3,
-          strides=1,
-          padding='valid',
-          activation=None,
-          use_bias=False,
-          name='conv_4',
-          reuse=reuse)
-      net = tf.layers.batch_normalization(
-          net, training=training, name='batchnorm_4', reuse=reuse)
-
-      # max pooling 4
-      net = tf.layers.max_pooling2d(
-          net, pool_size=3, strides=1, name='maxpool_4')
+        i += 1
 
       # descriptors
       self.spatial_descriptors = tf.nn.l2_normalize(
