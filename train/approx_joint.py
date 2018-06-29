@@ -163,7 +163,8 @@ def load_detection_dataset(dataset_path, patch_size):
 def main():
   # create folders to save train resources
   log_dir = utils.create_dirs(FLAGS.log_dir, FLAGS.desc_batch_size,
-                              FLAGS.desc_learning_rate)
+                              FLAGS.desc_learning_rate, FLAGS.det_batch_size,
+                              FLAGS.det_learning_rate)
 
   # load datasets
   desc_dataset = load_description_dataset(FLAGS.desc_dataset_path)
