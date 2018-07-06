@@ -458,3 +458,40 @@ def eer(pos, neg):
     return far
   else:
     return (old_far + far + frr + old_frr) / 4
+
+
+def roc(pos, neg, resolution=0.01):
+  # sort comparisons arrays for efficiency
+  pos = sorted(pos, reverse=True)
+  neg = sorted(neg, reverse=True)
+
+  # find lower and upper bounds for scores
+  # and compute step size
+  lb = min(np.min(pos), np.min(neg))
+  ub = max(np.max(pos), np.max(neg))
+  step = resolution * (ub - lb)
+
+  # iterate over scores, computing
+  # far and frr for each score
+  fars = []
+  frrs = []
+  pos_cursor = 0
+  neg_cursor = 0
+  for score in np.arange(lb, ub + step, step):
+    # update cursor of positives, below score
+    while pos_cursor < len(pos) and pos[pos_cursor] < score:
+      pos_cursor += 1
+
+    # update cursor of negatives, below score
+    while neg_cursor < len(neg) and neg[neg_cursor] < score:
+      neg_cursor += 1
+
+    # compute far and frr for score threshold
+    far = neg_cursor / len(neg)
+    frr = 1 - pos_cursor / len(pos)
+
+    # update statistics
+    fars.append(far)
+    frrs.append(frr)
+
+  return far, frr
