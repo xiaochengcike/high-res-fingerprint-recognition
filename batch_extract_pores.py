@@ -64,7 +64,6 @@ if __name__ == '__main__':
       help='path to images directory')
   parser.add_argument(
       '--model_dir_path', type=str, required=True, help='logging directory')
-  parser.add_argument('--batch_size', type=int, default=256, help='batch size')
   parser.add_argument(
       '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument(
