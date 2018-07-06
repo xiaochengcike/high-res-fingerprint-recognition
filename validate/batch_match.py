@@ -60,8 +60,11 @@ def main():
     ]
     register_ids = [1, 2, 3]
     session_ids = [1, 2]
-  elif FLAGS.fold == 'DBI-test':
-    imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Test')
+  else:
+    if FLAGS.fold == 'DBI-test':
+      imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Test')
+    else:
+      imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBII')
 
     subject_ids = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
