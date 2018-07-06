@@ -5,7 +5,6 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import os
-import scipy.misc
 import cv2
 
 
@@ -253,8 +252,9 @@ def restore_model(sess, model_dir):
 
 
 def load_image(image_path):
-  return np.asarray(scipy.misc.imread(image_path, mode='F'),
-                    np.float32) / 255.0
+  image = cv2.imread(image_path, 0)
+  image = np.array(image, dtype=np.float32) / 255
+  return image
 
 
 def load_images(folder_path):

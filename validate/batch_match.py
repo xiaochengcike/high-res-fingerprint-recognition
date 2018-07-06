@@ -1,7 +1,6 @@
 import numpy as np
 import argparse
 import os
-import cv2
 
 import utils
 
@@ -102,8 +101,7 @@ if __name__ == '__main__':
 
         # load image
         img_path = os.path.join(imgs_dir_path, '{}.jpg'.format(instance))
-        img = cv2.imread(img_path, 0)
-        img = np.array(img, dtype=np.float32) / 255
+        img = utils.load_image(img_path)
 
         # load detections
         pts_path = os.path.join(FLAGS.pts_dir_path, '{}.txt'.format(instance))
