@@ -461,7 +461,7 @@ def eer_(pos, neg):
     return (old_far + far + frr + old_frr) / 4
 
 
-def eer(pos, neg, n_steps=1000):
+def eer(pos, neg, n_steps=5000):
   # compute roc
   fars, frrs = roc(pos, neg, n_steps)
 
@@ -481,7 +481,7 @@ def eer(pos, neg, n_steps=1000):
   return 1
 
 
-def roc(pos, neg, n_steps=1000):
+def roc(pos, neg, n_steps=5000):
   # sort comparisons arrays for efficiency
   pos = sorted(pos)
   neg = sorted(neg)
