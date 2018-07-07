@@ -1,10 +1,6 @@
+import os
 import tensorflow as tf
 import numpy as np
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-import io
-import os
 import cv2
 
 
@@ -89,6 +85,11 @@ def create_dirs(log_dir_path,
 
 
 def plot_precision_recall(tdr, fdr, path):
+  import matplotlib as mpl
+  mpl.use('Agg')
+  import matplotlib.pyplot as plt
+  import io
+
   plt.plot(tdr, 1 - fdr, 'g-')
   plt.xlabel('recall')
   plt.ylabel('precision')
@@ -425,7 +426,7 @@ def retrieve_label_from_image_path(image_path):
   return int(image_path.split('_')[0])
 
 
-def eer(pos, neg):
+def eer_(pos, neg):
   # sort comparisons arrays for efficiency
   pos = sorted(pos, reverse=True)
   neg = sorted(neg, reverse=True)
@@ -460,16 +461,36 @@ def eer(pos, neg):
     return (old_far + far + frr + old_frr) / 4
 
 
-def roc(pos, neg, resolution=0.01):
+def eer(pos, neg, n_steps=1000):
+  # compute roc
+  fars, frrs = roc(pos, neg, n_steps)
+
+  old_far = 0
+  old_frr = 0
+  for far, frr in zip(fars, frrs):
+    # find crossing
+    if frr > far:
+      return (frr + old_frr + far + old_far) / 4
+    elif frr == far:
+      return far
+
+    # keep previous
+    old_far = far
+    old_frr = frr
+
+  return 1
+
+
+def roc(pos, neg, n_steps=1000):
   # sort comparisons arrays for efficiency
-  pos = sorted(pos, reverse=True)
-  neg = sorted(neg, reverse=True)
+  pos = sorted(pos)
+  neg = sorted(neg)
 
   # find lower and upper bounds for scores
   # and compute step size
   lb = min(np.min(pos), np.min(neg))
   ub = max(np.max(pos), np.max(neg))
-  step = resolution * (ub - lb)
+  step = (ub - lb) / n_steps
 
   # iterate over scores, computing
   # far and frr for each score
@@ -487,11 +508,15 @@ def roc(pos, neg, resolution=0.01):
       neg_cursor += 1
 
     # compute far and frr for score threshold
-    far = neg_cursor / len(neg)
-    frr = 1 - pos_cursor / len(pos)
+    far = 1 - neg_cursor / len(neg)
+    frr = pos_cursor / len(pos)
 
     # update statistics
     fars.append(far)
     frrs.append(frr)
 
-  return far, frr
+  # add last step
+  fars.append(0.0)
+  frrs.append(1.0)
+
+  return fars, frrs
