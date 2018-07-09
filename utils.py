@@ -426,7 +426,7 @@ def retrieve_label_from_image_path(image_path):
   return int(image_path.split('_')[0])
 
 
-def eer_(pos, neg):
+def eer(pos, neg):
   # sort comparisons arrays for efficiency
   pos = sorted(pos, reverse=True)
   neg = sorted(neg, reverse=True)
@@ -459,26 +459,6 @@ def eer_(pos, neg):
     return far
   else:
     return (old_far + far + frr + old_frr) / 4
-
-
-def eer(pos, neg, n_steps=5000):
-  # compute roc
-  fars, frrs = roc(pos, neg, n_steps)
-
-  old_far = 0
-  old_frr = 0
-  for far, frr in zip(fars, frrs):
-    # find crossing
-    if frr > far:
-      return (frr + old_frr + far + old_far) / 4
-    elif frr == far:
-      return far
-
-    # keep previous
-    old_far = far
-    old_frr = frr
-
-  return 1
 
 
 def roc(pos, neg, n_steps=5000):
