@@ -98,6 +98,17 @@ def main():
         # load detections
         pts_path = os.path.join(FLAGS.pts_dir_path, '{}.txt'.format(instance))
         pts = utils.load_dets_txt(pts_path)
+
+        # filter detections at non valid border
+        if FLAGS.patch_size is not None:
+          half = FLAGS.patch_size // 2
+          pts_ = []
+          for pt in pts:
+            if half <= pt[0] < img.shape[0] - half:
+              if half <= pt[1] < img.shape[1] - half:
+                pts_.append(pt)
+          pts = pts_
+
         all_pts.append(pts)
 
         # compute image descriptors
