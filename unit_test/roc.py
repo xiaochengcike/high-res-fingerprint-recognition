@@ -11,7 +11,6 @@ def random_roc():
   neg = np.random.random(1000)
 
   # compare eer versions
-  print(utils.eer_(pos, neg))
   print(utils.eer(pos, neg))
 
   # plot curve
@@ -27,7 +26,6 @@ def separable_roc():
   neg = np.random.normal(0, 0.5, 1000)
 
   # compare eer versions
-  print(utils.eer_(pos, neg))
   print(utils.eer(pos, neg))
 
   # plot curve
