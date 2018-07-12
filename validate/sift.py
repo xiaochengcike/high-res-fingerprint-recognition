@@ -25,7 +25,7 @@ def main():
   while prev_epoch == dataset.epochs:
     (img, *_), (label, *_) = dataset.next_batch(1)
     pt = [np.array(img.shape) // 2]
-    descs.append(utils.sift_descriptors(img, pt))
+    descs.append(utils.sift_descriptors(img, pt, normalize=False))
     labels.append(label)
   print('Done.')
 

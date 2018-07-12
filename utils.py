@@ -323,15 +323,16 @@ def bilinear_interpolation(x, y, f):
   return np.dot(np.dot(lhs, fq), rhs)
 
 
-def sift_descriptors(img, pts, scale=4):
+def sift_descriptors(img, pts, scale=4, normalize=True):
   # convert float image to np uint8
   if img.dtype == np.float32:
     img = np.array(255 * img, dtype=np.uint8)
 
   # improve image quality with median blur and clahe
-  img = cv2.medianBlur(img, ksize=3)
-  clahe = cv2.createCLAHE(clipLimit=3)
-  img = clahe.apply(img)
+  if normalize:
+    img = cv2.medianBlur(img, ksize=3)
+    clahe = cv2.createCLAHE(clipLimit=3)
+    img = clahe.apply(img)
 
   # convert points to cv2.keypoints
   pts = list(np.asarray(pts)[:, [1, 0]])
