@@ -428,30 +428,19 @@ def retrieve_label_from_image_path(image_path):
 
 
 def eer(pos, neg):
-  # sort comparisons arrays for efficiency
-  pos = sorted(pos, reverse=True)
-  neg = sorted(neg, reverse=True)
+  # compute roc curve
+  fars, frrs = roc(pos, neg)
 
   # iterate to find equal error rate
-  far = old_far = 0
-  frr = old_frr = 0
-  j = 0
-  for i, neg_score in enumerate(neg):
-    # find correspondent positive score
-    while j < len(pos) and pos[j] > neg_score:
-      j += 1
-
-    # keep old metrics for approximation
-    old_far = far
-    old_frr = frr
-
-    # compute new metrics
-    far = i / len(neg)
-    frr = 1 - j / len(pos)
-
+  old_far = None
+  old_frr = None
+  for far, frr in zip(fars, frrs):
     # if crossing happened, eer is found
     if far >= frr:
       break
+    else:
+      old_far = far
+      old_frr = frr
 
   # if crossing is precisely found, return it
   # otherwise, approximate it though linear
@@ -462,42 +451,30 @@ def eer(pos, neg):
     return (old_far + far + frr + old_frr) / 4
 
 
-def roc(pos, neg, n_steps=5000):
+def roc(pos, neg):
   # sort comparisons arrays for efficiency
-  pos = sorted(pos)
-  neg = sorted(neg)
+  pos = sorted(pos, reverse=True)
+  neg = sorted(neg, reverse=True)
 
-  # find lower and upper bounds for scores
-  # and compute step size
-  lb = min(np.min(pos), np.min(neg))
-  ub = max(np.max(pos), np.max(neg))
-  step = (ub - lb) / n_steps
-
-  # iterate over scores, computing
-  # far and frr for each score
-  fars = []
-  frrs = []
+  # iterate to compute statistsics
+  fars = [0.0]
+  frrs = [1.0]
   pos_cursor = 0
-  neg_cursor = 0
-  for score in np.arange(lb, ub + step, step):
-    # update cursor of positives, below score
-    while pos_cursor < len(pos) and pos[pos_cursor] < score:
+  for neg_cursor, score in enumerate(neg):
+    # find correspondent positive score
+    while pos_cursor < len(pos) and pos[pos_cursor] > score:
       pos_cursor += 1
 
-    # update cursor of negatives, below score
-    while neg_cursor < len(neg) and neg[neg_cursor] < score:
-      neg_cursor += 1
+    # compute metrics for score
+    far = neg_cursor / len(neg)
+    frr = 1 - pos_cursor / len(pos)
 
-    # compute far and frr for score threshold
-    far = 1 - neg_cursor / len(neg)
-    frr = pos_cursor / len(pos)
-
-    # update statistics
+    # add to overall statisics
     fars.append(far)
     frrs.append(frr)
 
   # add last step
-  fars.append(0.0)
-  frrs.append(1.0)
+  fars.append(1.0)
+  frrs.append(0.0)
 
   return fars, frrs
