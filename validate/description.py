@@ -65,7 +65,7 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
   last_ind = np.argwhere(labels == probe_label)[-1, 0]
 
   # compute retrieval rank
-  labels_up_to_last_ind = np.unique(labels[:last_ind])
+  labels_up_to_last_ind = np.unique(labels[:last_ind + 1])
   rank = len(labels_up_to_last_ind)
 
   return rank
@@ -105,12 +105,15 @@ def rank_n(instances, labels, sample_size):
         rank = retrieval_rank(probe, probe_label, instance_set, label_set)
 
         # update ranks, indexed from 0
-        ranks[rank] += 1
+        ranks[rank - 1] += 1
 
   # rank is cumulative
   ranks = np.cumsum(ranks)
 
-  return ranks / ranks[-1]
+  # normalize rank to [0, 1] range
+  ranks = ranks / ranks[-1]
+
+  return ranks
 
 
 def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
