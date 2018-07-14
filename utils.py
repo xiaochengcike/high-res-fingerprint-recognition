@@ -509,8 +509,11 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
 
 
 def rank_n(instances, labels, sample_size):
+  # get unique labels
+  unique_labels = np.unique(labels)
+
   # initialize ranks
-  ranks = np.zeros_like(labels, dtype=np.int32)
+  ranks = np.zeros_like(unique_labels, dtype=np.int32)
 
   # sort examples by labels
   inds = np.argsort(labels)
