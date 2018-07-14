@@ -456,14 +456,23 @@ def roc(pos, neg):
   pos = sorted(pos, reverse=True)
   neg = sorted(neg, reverse=True)
 
+  # get all scores
+  scores = list(pos) + list(neg)
+  scores = np.unique(scores)
+
   # iterate to compute statistsics
   fars = [0.0]
   frrs = [1.0]
   pos_cursor = 0
-  for neg_cursor, score in enumerate(neg):
+  neg_cursor = 0
+  for score in reversed(scores):
     # find correspondent positive score
     while pos_cursor < len(pos) and pos[pos_cursor] > score:
       pos_cursor += 1
+
+    # find correspondent negative score
+    while neg_cursor < len(neg) and neg[neg_cursor] > score:
+      neg_cursor += 1
 
     # compute metrics for score
     far = neg_cursor / len(neg)
