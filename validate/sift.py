@@ -4,7 +4,6 @@ import numpy as np
 
 import utils
 import polyu
-import validate
 
 FLAGS = None
 
@@ -38,8 +37,7 @@ def main():
       print('Split {}:'.format(i + 1))
 
       # compute rank-n for current split
-      split_ranks = validate.description.rank_n(descs, labels,
-                                                FLAGS.sample_size)
+      split_ranks = utils.rank_n(descs, labels, FLAGS.sample_size)
       rank_1 = split_ranks[0]
       print('Rank-1 = {}'.format(rank_1))
 
