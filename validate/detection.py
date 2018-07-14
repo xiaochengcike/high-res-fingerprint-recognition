@@ -134,12 +134,7 @@ def by_images(sess, pred_op, patches_pl, dataset, discard=False):
         # update totals
         total_pores += len(pores[i])
         total_dets += len(dets[i])
-
-        # coincidences in pore-detection and detection-pore correspondences are true detections
-        pore_corrs, det_corrs = utils.matmul_corr_finding(pores[i], dets[i])
-        for pore_ind, pore_corr in enumerate(pore_corrs):
-          if det_corrs[pore_corr] == pore_ind:
-            true_dets += 1
+        true_dets += len(utils.find_correspondences(pores[i], dets[i]))
 
       # compute tdr, fdr and f score
       eps = 1e-5
