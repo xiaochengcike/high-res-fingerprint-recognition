@@ -141,98 +141,19 @@ def nms(centers, probs, patch_size, thr):
   return np.array(dets), np.array(det_probs)
 
 
-def project_and_find_correspondences(pores,
-                                     dets,
-                                     dist_thr=np.inf,
-                                     proj_shape=None,
-                                     mode='patch'):
-  # compute projection shape, if not given
-  if proj_shape is None:
-    ys = np.concatenate([dets.T[0], pores.T[0]])
-    xs = np.concatenate([dets.T[1], pores.T[1]])
-    proj_shape = (np.max(ys) + 1, np.max(xs) + 1)
+def pairwise_distances(x1, x2):
+  # memory efficient implementation based on Yaroslav Bulatov's answer in
+  # https://stackoverflow.com/questions/37009647/compute-pairwise-distance-in-a-batch-without-replicating-tensor-in-tensorflow
+  sqr1 = np.sum(x1 * x1, axis=1, keepdims=True)
+  sqr2 = np.sum(x2 * x2, axis=1)
+  D = sqr1 - 2 * np.matmul(x1, x2.T) + sqr2
 
-  # project detections
-  projection = np.zeros(proj_shape, dtype=np.int32)
-  for i, (y, x) in enumerate(dets):
-    projection[y, x] = i + 1
-
-  # find correspondences
-  pore_corrs = np.full(len(pores), -1, dtype=np.int32)
-  pore_dcorrs = np.full(len(pores), dist_thr)
-  det_corrs = np.full(len(dets), -1, dtype=np.int32)
-  det_dcorrs = np.full(len(dets), dist_thr)
-  if mode == 'patch':
-    for pore_ind, (pore_i, pore_j) in enumerate(pores):
-      # all detections within l2 'dist_thr' distance from
-      # 'pore' are within l1 'dist_thr' distance from it
-      patch = projection[pore_i - dist_thr:pore_i + dist_thr + 1,
-                         pore_j - dist_thr:pore_j + dist_thr + 1]
-
-      for det, det_ind in np.ndenumerate(patch):
-        # check whether 'det' has a detection
-        if det_ind != 0:
-          det_ind -= 1
-
-          # compute pore-detection distance
-          dist = np.linalg.norm(det)
-
-          # update pore-detection correspondence
-          if dist < pore_dcorrs[pore_ind]:
-            pore_dcorrs[pore_ind] = dist
-            pore_corrs[pore_ind] = det_ind
-
-          # update detection-pore correspondence
-          if dist < det_dcorrs[det_ind]:
-            det_dcorrs[det_ind] = dist
-            det_corrs[det_ind] = pore_ind
-  else:
-    for pore_ind, pore in enumerate(pores):
-      # enqueue 'pore'
-      queue = [pore]
-
-      # do not revisit pore
-      projection[pore[0], pore[1]] = -1
-
-      # bfs over possible correspondences
-      while len(queue) > 0:
-        # pop front of queue
-        coords = queue[0]
-        queue = queue[1:]
-        dist = np.linalg.norm(coords - pore)
-
-        # only consider correspondences better than current
-        if dist <= pore_dcorrs[pore_ind]:
-          # enqueue valid neighbors
-          for d in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-            ngh = coords + d
-            if 0 <= ngh[0] < proj_shape[0] and \
-                0 <= ngh[1] < proj_shape[1] and \
-                projection[ngh[0], ngh[1]] >= 0:
-              queue.append(ngh)
-
-          # check whether 'det' has a detection
-          det_ind = projection[coords[0], coords[1]] - 1
-          if det_ind > -1:
-            # update pore-detection correspondence
-            if dist < pore_dcorrs[pore_ind]:
-              pore_dcorrs[pore_ind] = dist
-              pore_corrs[pore_ind] = det_ind
-
-            # update detection-pore correspondence
-            if dist < det_dcorrs[det_ind]:
-              det_dcorrs[det_ind] = dist
-              det_corrs[det_ind] = pore_ind
-
-  return pore_corrs, pore_dcorrs, det_corrs, det_dcorrs
+  return D
 
 
 def matmul_corr_finding(pores, dets):
-  # memory efficient implementation based on Yaroslav Bulatov's answer in
-  # https://stackoverflow.com/questions/37009647/compute-pairwise-distance-in-a-batch-without-replicating-tensor-in-tensorflow
   # compute pair-wise distances
-  D = np.sum(pores * pores, axis=1).reshape(-1, 1) - \
-      2 * np.dot(pores, dets.T) + np.sum(dets * dets, axis=1)
+  D = pairwise_distances(pores, dets)
 
   # get pore-detection correspondences
   pore_corrs = np.argmin(D, axis=1)
@@ -353,9 +274,7 @@ def find_correspondences(descs1,
                          transf=None,
                          thr=None):
   # compute descriptors' pairwise distances
-  sqr1 = np.sum(descs1 * descs1, axis=1, keepdims=True)
-  sqr2 = np.sum(descs2 * descs2, axis=1)
-  D = sqr1 - 2 * np.matmul(descs1, descs2.T) + sqr2
+  D = pairwise_distances(descs1, descs2)
 
   # add points' euclidean distance
   if euclidean_weight != 0:
@@ -368,9 +287,7 @@ def find_correspondences(descs1,
     pts2 = np.array(pts2)
 
     # compute points' pairwise distances
-    sqr1 = np.sum(pts1 * pts1, axis=1, keepdims=True)
-    sqr2 = np.sum(pts2 * pts2, axis=1)
-    euclidean_D = sqr1 - 2 * np.matmul(pts1, pts2.T) + sqr2
+    euclidean_D = pairwise_distances(pts1, pts2)
 
     # add to overral keypoints distance
     D += euclidean_weight * euclidean_D
