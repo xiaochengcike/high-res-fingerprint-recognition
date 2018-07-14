@@ -66,7 +66,7 @@ def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
   return best_f_score, best_fdr, best_tdr
 
 
-def by_images(sess, pred_op, patches_pl, dataset):
+def by_images(sess, pred_op, patches_pl, dataset, discard=False):
   patch_size = dataset.patch_size
   half_patch_size = patch_size // 2
   preds = []
@@ -74,9 +74,7 @@ def by_images(sess, pred_op, patches_pl, dataset):
   print('Predicting pores...')
   for _ in range(dataset.num_images):
     # get next image and corresponding image label
-    img, label = dataset.next_image_batch(1)
-    img = img[0]
-    label = label[0]
+    (img, *_), (label, *_) = dataset.next_image_batch(1)
 
     # predict for each image
     pred = sess.run(
@@ -87,9 +85,13 @@ def by_images(sess, pred_op, patches_pl, dataset):
     pred = np.array(pred).reshape(img.shape[0] - patch_size + 1,
                                   img.shape[1] - patch_size + 1)
 
-    # add borders lost in convolution
-    pred = np.pad(pred, ((half_patch_size, half_patch_size),
-                         (half_patch_size, half_patch_size)), 'constant')
+    # treat borders lost in convolution
+    if discard:
+      label = label[half_patch_size:-half_patch_size, half_patch_size:
+                    -half_patch_size]
+    else:
+      pred = np.pad(pred, ((half_patch_size, half_patch_size),
+                           (half_patch_size, half_patch_size)), 'constant')
 
     # add image prediction to predictions
     preds.append(pred)
@@ -174,6 +176,10 @@ if __name__ == '__main__':
       '--model_dir_path', type=str, required=True, help='logging directory')
   parser.add_argument(
       '--patch_size', type=int, default=17, help='pore patch size')
+  parser.add_argument(
+      '--discard',
+      action='store_true',
+      help='use this flag to disconsider pores in ground truth borders')
   flags = parser.parse_args()
 
   # load polyu dataset
@@ -199,7 +205,7 @@ if __name__ == '__main__':
     print('Done.')
 
     image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = by_images(
-        sess, net.predictions, patches_pl, dataset.val)
+        sess, net.predictions, patches_pl, dataset.val, flags.discard)
     print('Whole image evaluation:')
     print('TDR = {}'.format(image_tdr))
     print('FDR = {}'.format(image_fdr))
