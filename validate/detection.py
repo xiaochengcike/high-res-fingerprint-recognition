@@ -177,6 +177,12 @@ if __name__ == '__main__':
   parser.add_argument(
       '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument(
+      '--fold',
+      type=str,
+      default='val',
+      help='which fold of the dataset to use. Can be "train", "val", or "test"'
+  )
+  parser.add_argument(
       '--discard',
       action='store_true',
       help='use this flag to disconsider pores in ground truth borders')
@@ -193,6 +199,17 @@ if __name__ == '__main__':
       patch_size=flags.patch_size)
   print('Loaded.')
 
+  # pick dataset fold
+  if flags.fold == 'train':
+    dataset = dataset.train
+  elif flags.fold == 'val':
+    dataset = dataset.val
+  elif flags.fold == 'test':
+    dataset = dataset.test
+  else:
+    raise ValueError(
+        'Unrecognized "fold" argument. Must be "train", "val", or "test"')
+
   # gets placeholders for patches and labels
   patches_pl, labels_pl = utils.placeholder_inputs()
 
@@ -205,7 +222,7 @@ if __name__ == '__main__':
     print('Done.')
 
     image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = by_images(
-        sess, net.predictions, patches_pl, dataset.val, flags.discard)
+        sess, net.predictions, patches_pl, dataset, flags.discard)
     print('Whole image evaluation:')
     print('TDR = {}'.format(image_tdr))
     print('FDR = {}'.format(image_fdr))
