@@ -169,11 +169,11 @@ if __name__ == '__main__':
       '--polyu_dir_path',
       required=True,
       type=str,
-      help='Path to PolyU-HRF dataset')
+      help='path to PolyU-HRF dataset')
   parser.add_argument(
-      '--model_dir_path', type=str, required=True, help='Logging directory.')
+      '--model_dir_path', type=str, required=True, help='logging directory')
   parser.add_argument(
-      '--patch_size', type=int, default=17, help='Pore patch size.')
+      '--patch_size', type=int, default=17, help='pore patch size')
   flags = parser.parse_args()
 
   # load polyu dataset
