@@ -36,9 +36,14 @@ def sift_patch(img_path, pts_path, scale=4):
     patch_kpt = cv2.KeyPoint.convert([(i, i)], size=scale)
     _, patched = sift.compute(patch, patch_kpt)
 
-    print(i, np.linalg.norm(original - patched))
+    if np.isclose(np.linalg.norm(original - patched), 0):
+      return i
+
+  return -1
 
 
 if __name__ == '__main__':
   import sys
-  sift_patch(sys.argv[1], sys.argv[2])
+  patch_size = sift_patch(sys.argv[1], sys.argv[2])
+  assert patch_size > 0
+  print('[OK - Sift Patch ({})]'.format(2 * patch_size + 1))
