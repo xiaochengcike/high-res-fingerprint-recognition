@@ -51,7 +51,7 @@ class Net:
 
   def build_loss(self, labels):
     with tf.variable_scope(self.scope, reuse=True):
-      with tf.variable_scope('loss'):
+      with tf.name_scope('loss'):
         # make labels' shape compatible with triplet loss
         labels = tf.reshape(labels, (-1, ))
 
@@ -62,7 +62,7 @@ class Net:
 
   def build_train(self, learning_rate):
     with tf.variable_scope(self.scope, reuse=True):
-      with tf.variable_scope('train'):
+      with tf.name_scope('train'):
         global_step = tf.Variable(1, name='global_step', trainable=False)
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -73,7 +73,7 @@ class Net:
 
   def build_validation(self, labels, thresholds):
     with tf.variable_scope(self.scope, reuse=True):
-      with tf.variable_scope('validation'):
+      with tf.name_scope('validation'):
         # flatten labels
         labels = tf.reshape(labels, (-1, ))
 
