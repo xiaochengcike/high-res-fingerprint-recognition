@@ -11,10 +11,7 @@ FLAGS = None
 def main():
   print('Loading description dataset...')
   dataset = polyu.description.Dataset(
-      FLAGS.dataset_path,
-      val_split=False,
-      should_shuffle=False,
-      balanced_batches=False).train
+      FLAGS.dataset_path, should_shuffle=False).val
   print('Done.')
 
   print('Unpacking dataset and extracting sift descriptors...')
@@ -62,7 +59,7 @@ def main():
       # compare pair-wise
       for (desc1, label1), (desc2, label2) in itertools.combinations(
           sample_examples, 2):
-        dist = np.sum((desc1 - desc2)**2)
+        dist = -np.sum((desc1 - desc2)**2)
         if label1 == label2:
           pos.append(dist)
         else:
