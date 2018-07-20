@@ -35,7 +35,11 @@ class Net:
 
         # ith max pooling
         net = tf.layers.max_pooling2d(
-            net, pool_size=3, strides=1, name='maxpool_{}'.format(i))
+            net,
+            pool_size=3,
+            strides=1,
+            padding='valid',
+            name='maxpool_{}'.format(i))
 
         i += 1
 
