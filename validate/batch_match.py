@@ -30,7 +30,7 @@ def main():
 
     print('Restoring model in {}...'.format(FLAGS.model_dir_path))
     utils.restore_model(sess, FLAGS.model_dir_path)
-    print('Done.')
+    print('Done')
 
     trained_descs = tf.gather_nd(tf.squeeze(net.spatial_descriptors), pts_pl)
     compute_descriptors = lambda img, pts: sess.run(trained_descs,
@@ -120,7 +120,7 @@ def main():
         index += 1
 
   id2index = lambda x: id2index_dict[tuple(x)]
-  print('Done.')
+  print('Done')
 
   print('Matching...')
   with open(FLAGS.results_path, 'w') as f:
@@ -134,8 +134,6 @@ def main():
           index2 = id2index((subject_id, 2, register_id2))
           descs2 = all_descs[index2]
           pts2 = all_pts[index2]
-          print('{}_{}_{} x {}_{}_{}'.format(subject_id, 1, register_id1,
-                                             subject_id, 2, register_id2))
           print(1, match(descs1, descs2, pts1, pts2, thr=FLAGS.thr), file=f)
 
     # different subject comparisons
@@ -150,9 +148,8 @@ def main():
           pts1 = all_pts[index1]
           pts2 = all_pts[index2]
 
-          print('{}_{}_{} x {}_{}_{}'.format(subject_id1, 1, 1, subject_id2, 2,
-                                             1))
           print(0, match(descs1, descs2, pts1, pts2, thr=FLAGS.thr), file=f)
+  print('Done')
 
 
 if __name__ == '__main__':
