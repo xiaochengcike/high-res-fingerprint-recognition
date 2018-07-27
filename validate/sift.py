@@ -44,26 +44,20 @@ def main():
     # compute mean rank-1
     print('Mean Rank-1 = {}'.format(np.mean(ranks)))
   elif FLAGS.mode == 'eer':
-    # perform 'repeats' samples of size 'sample_size'
     descs = np.squeeze(descs)
     labels = np.array(labels)
+    examples = zip(descs, labels)
     pos = []
     neg = []
-    for _ in range(FLAGS.repeats):
-      # sample randomly
-      sample = np.random.choice(len(descs), FLAGS.sample_size, replace=False)
-      sample_descs = descs[sample]
-      sample_labels = labels[sample]
-      sample_examples = zip(sample_descs, sample_labels)
 
-      # compare pair-wise
-      for (desc1, label1), (desc2, label2) in itertools.combinations(
-          sample_examples, 2):
-        dist = -np.sum((desc1 - desc2)**2)
-        if label1 == label2:
-          pos.append(dist)
-        else:
-          neg.append(dist)
+    # compare pair-wise
+    for (desc1, label1), (desc2, label2) in itertools.combinations(
+        examples, 2):
+      dist = -np.sum((desc1 - desc2)**2)
+      if label1 == label2:
+        pos.append(dist)
+      else:
+        neg.append(dist)
 
     # compute equal error rate
     print('EER = {}'.format(utils.eer(pos, neg)))
