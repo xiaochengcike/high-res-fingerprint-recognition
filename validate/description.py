@@ -1,59 +1,10 @@
 import numpy as np
+from itertools import combinations
 
 import utils
 
 
-def statistics_by_thresholds(patches_pl, labels_pl, thresholds_pl, dataset,
-                             thresholds, statistics_op, session, batch_size):
-  # initialize statistics
-  true_pos = np.zeros_like(thresholds, np.int32)
-  true_neg = np.zeros_like(thresholds, np.int32)
-  false_pos = np.zeros_like(thresholds, np.int32)
-  false_neg = np.zeros_like(thresholds, np.int32)
-
-  # validate in entire dataset, as specified by user
-  prev_epoch_n = dataset.epochs
-  while prev_epoch_n == dataset.epochs:
-    # sample mini-batch
-    feed_dict = utils.fill_feed_dict(dataset, patches_pl, labels_pl,
-                                     batch_size)
-    feed_dict[thresholds_pl] = thresholds
-
-    # evaluate on mini-batch
-    batch_true_pos, batch_true_neg, batch_false_pos, batch_false_neg = session.run(
-        statistics_op, feed_dict=feed_dict)
-
-    # update running statistics
-    true_pos += batch_true_pos
-    true_neg += batch_true_neg
-    false_pos += batch_false_pos
-    false_neg += batch_false_neg
-
-  return true_pos, true_neg, false_pos, false_neg
-
-
-def recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
-                    threshold_resolution, statistics_op, session, batch_size):
-  true_pos, true_neg, false_pos, false_neg = statistics_by_thresholds(
-      patches_pl, labels_pl, thresholds_pl, dataset,
-      np.arange(0, 4 + threshold_resolution, threshold_resolution),
-      statistics_op, session, batch_size)
-
-  # compute recall and specificity
-  eps = 1e-12
-  recall = true_pos / (true_pos + false_neg + eps)
-  specificity = false_pos / (true_neg + false_pos + eps)
-
-  # compute equal error rate
-  for i in range(0, len(recall)):
-    if recall[i] >= 1.0 - specificity[i]:
-      return 1 - (recall[i] + 1.0 - specificity[i]) / 2
-
-  return 0
-
-
-def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
-                   sample_size):
+def _dataset_descriptors(patches_pl, session, descs_op, dataset, batch_size):
   # extracting descriptors for entire dataset
   descs = []
   labels = []
@@ -64,7 +15,7 @@ def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
     feed_dict = {patches_pl: np.expand_dims(patches, axis=-1)}
 
     # describe batch
-    batch_descs = sess.run(descs_op, feed_dict=feed_dict)
+    batch_descs = session.run(descs_op, feed_dict=feed_dict)
 
     # add to overall
     descs.extend(batch_descs)
@@ -73,6 +24,37 @@ def dataset_rank_n(patches_pl, sess, descs_op, dataset, batch_size,
   # convert to np array and remove extra dims
   descs = np.squeeze(descs)
   labels = np.squeeze(labels)
+
+  return descs, labels
+
+
+def dataset_eer(patches_pl, session, descs_op, dataset, batch_size):
+  # extracting descriptors for entire dataset
+  descs, labels = _dataset_descriptors(patches_pl, session, descs_op, dataset,
+                                       batch_size)
+
+  # get pairwise comparisons
+  examples = zip(descs, labels)
+  pos = []
+  neg = []
+  for (desc1, label1), (desc2, label2) in combinations(examples, 2):
+    dist = -np.sum((desc1 - desc2)**2)
+    if label1 == label2:
+      pos.append(dist)
+    else:
+      neg.append(dist)
+
+  # compute eer
+  eer = utils.eer(pos, neg)
+
+  return eer
+
+
+def dataset_rank_1(patches_pl, session, descs_op, dataset, batch_size,
+                   sample_size):
+  # extracting descriptors for entire dataset
+  descs, labels = _dataset_descriptors(patches_pl, session, descs_op, dataset,
+                                       batch_size)
 
   # compute ranks
   ranks = utils.rank_n(descs, labels, sample_size)

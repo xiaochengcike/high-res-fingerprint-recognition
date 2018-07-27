@@ -58,7 +58,7 @@ def train(dataset, log_dir):
         # evaluate the model periodically
         if step % 1000 == 0:
           print('Validation:')
-          rank = validate.description.dataset_rank_n(
+          rank = validate.description.dataset_rank_1(
               patches_pl, sess, val_net.descriptors, dataset.val,
               FLAGS.batch_size, FLAGS.sample_size)
           print('Rank-1 = {}'.format(rank))
