@@ -36,7 +36,7 @@ def recognition_eer(patches_pl, labels_pl, thresholds_pl, dataset,
                     threshold_resolution, statistics_op, session, batch_size):
   true_pos, true_neg, false_pos, false_neg = statistics_by_thresholds(
       patches_pl, labels_pl, thresholds_pl, dataset,
-      np.arange(0, 2 + threshold_resolution, threshold_resolution),
+      np.arange(0, 4 + threshold_resolution, threshold_resolution),
       statistics_op, session, batch_size)
 
   # compute recall and specificity
