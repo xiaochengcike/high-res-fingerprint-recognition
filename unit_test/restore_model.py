@@ -21,7 +21,7 @@ def restore_description():
 
     # assign random values to variables
     # and save those values for comparison
-    for var in sorted(tf.trainable_variables(), key=lambda x: x.name):
+    for var in sorted(tf.global_variables(), key=lambda x: x.name):
       # create random values for variable
       var_val = np.random.random(var.shape)
 
@@ -42,7 +42,7 @@ def restore_description():
 
     # assert weights are different
     i = 0
-    for var in sorted(tf.trainable_variables(), key=lambda x: x.name):
+    for var in sorted(tf.global_variables(), key=lambda x: x.name):
       # get new var val
       var_val = sess.run(var)
 
@@ -56,7 +56,7 @@ def restore_description():
 
     # check if weights are equal
     i = 0
-    for var in sorted(tf.trainable_variables(), key=lambda x: x.name):
+    for var in sorted(tf.global_variables(), key=lambda x: x.name):
       # get new var val
       var_val = sess.run(var)
 
@@ -86,7 +86,7 @@ def restore_detection():
 
     # assign random values to variables
     # and save those values for comparison
-    for var in sorted(tf.trainable_variables(), key=lambda x: x.name):
+    for var in sorted(tf.global_variables(), key=lambda x: x.name):
       # create random values for variable
       var_val = np.random.random(var.shape)
 
@@ -107,7 +107,7 @@ def restore_detection():
 
     # assert weights are different
     i = 0
-    for var in sorted(tf.trainable_variables(), key=lambda x: x.name):
+    for var in sorted(tf.global_variables(), key=lambda x: x.name):
       # get new var val
       var_val = sess.run(var)
 
@@ -121,7 +121,7 @@ def restore_detection():
 
     # check if weights are equal
     i = 0
-    for var in sorted(tf.trainable_variables(), key=lambda x: x.name):
+    for var in sorted(tf.global_variables(), key=lambda x: x.name):
       # get new var val
       var_val = sess.run(var)
 
