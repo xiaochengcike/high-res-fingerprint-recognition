@@ -10,7 +10,7 @@ class Net:
     # capture scope
     self.scope = scope
 
-    with tf.variable_scope(scope):
+    with tf.variable_scope(scope, reuse=reuse):
       # reduction convolutions
       net = inputs
       filters_list = [64, 128, 128, 128]
