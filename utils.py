@@ -55,7 +55,7 @@ def _transform_mini_batch(sample):
 
     # transform patch
     point = cv2.warpAffine(point, A, point.shape[::-1])
-    point = cv2.warpAffine(point, B, point.shape[::-1])
+    point = cv2.warpAffine(point, B, point.shape[::-1], flags=cv2.INTER_LINEAR)
 
     # add to batch patches
     transformed.append(point)
