@@ -151,19 +151,6 @@ def pairwise_distances(x1, x2):
   return D
 
 
-def matmul_corr_finding(pores, dets):
-  # compute pair-wise distances
-  D = pairwise_distances(pores, dets)
-
-  # get pore-detection correspondences
-  pore_corrs = np.argmin(D, axis=1)
-
-  # get detection-pore correspondences
-  det_corrs = np.argmin(D, axis=0)
-
-  return pore_corrs, det_corrs
-
-
 def restore_model(sess, model_dir):
   saver = tf.train.Saver()
   ckpt = tf.train.get_checkpoint_state(model_dir)
