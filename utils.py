@@ -471,3 +471,22 @@ def rank_n(instances, labels, sample_size):
   ranks = ranks / ranks[-1]
 
   return ranks
+
+
+def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
+  # adjust for odd patch sizes
+  odd = 1 if patch_size % 2 != 0 else 0
+
+  # get patch locations at pts
+  half = patch_size // 2
+  patches = []
+  for pt in pts:
+    patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
+                pt[1] + half + odd]
+    patches.append(patch)
+
+  # describe patches
+  feed_dict = {imgs_pl: np.reshape(patches, np.shape(patches) + (1, ))}
+  descs = session.run(descs_op, feed_dict=feed_dict)
+
+  return descs

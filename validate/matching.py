@@ -24,20 +24,14 @@ def main():
     from models import description
 
     img_pl, _ = utils.placeholder_inputs()
-    pts_pl = tf.placeholder(tf.int32, shape=[None, 2])
-    net = description.Net(img_pl, training=False)
+    net = description.Net(img_pl, 0, training=False)
     sess = tf.Session()
 
     print('Restoring model in {}...'.format(FLAGS.model_dir_path))
     utils.restore_model(sess, FLAGS.model_dir_path)
     print('Done')
 
-    trained_descs = tf.gather_nd(tf.squeeze(net.spatial_descriptors), pts_pl)
-    compute_descriptors = lambda img, pts: sess.run(trained_descs,
-        feed_dict={
-          img_pl: np.reshape(img, (1,) + img.shape + (1,)),
-          pts_pl: np.array(pts) - FLAGS.patch_size // 2
-          })
+    compute_descriptors = lambda img, pts: utils.trained_descriptors(img, pts, FLAGS.patch_size, sess, img_pl, net.descriptors)
 
   # parse matching mode and adjust accordingly
   if FLAGS.mode == 'basic':
