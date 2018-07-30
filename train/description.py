@@ -16,14 +16,15 @@ def train(dataset, log_dir):
     patches_pl, labels_pl = utils.placeholder_inputs()
 
     # build net graph
-    net = description.Net(patches_pl)
+    net = description.Net(patches_pl, FLAGS.dropout_rate)
 
     # build training related ops
-    net.build_loss(labels_pl)
+    net.build_loss(labels_pl, FLAGS.weight_decay)
     net.build_train(FLAGS.learning_rate)
 
     # builds validation graph
-    val_net = description.Net(patches_pl, training=False, reuse=True)
+    val_net = description.Net(
+        patches_pl, FLAGS.dropout_rate, training=False, reuse=True)
 
     # add summary to plot loss and rank
     rank_pl = tf.placeholder(tf.float32, shape=(), name='rank_pl')
@@ -121,6 +122,12 @@ if __name__ == '__main__':
       '--augment',
       action='store_true',
       help='use this flag to perform dataset augmentation')
+  parser.add_argument(
+      '--dropout_rate',
+      type=float,
+      default=0.3,
+      help='dropout rate in last convolutional layer')
+  parser.add_argument('--weight_decay', type=float, help='weight decay lambda')
 
   FLAGS = parser.parse_args()
 
