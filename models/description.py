@@ -21,7 +21,7 @@ class Net:
         net = tf.layers.conv2d(
             net,
             filters=filters,
-            kernel_size=3,
+            kernel_size=5,
             strides=1,
             padding='valid',
             activation=activation,
@@ -36,7 +36,7 @@ class Net:
         # ith max pooling
         net = tf.layers.max_pooling2d(
             net,
-            pool_size=3,
+            pool_size=5,
             strides=1,
             padding='valid',
             name='maxpool_{}'.format(i))
