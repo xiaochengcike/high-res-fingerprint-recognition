@@ -2,7 +2,12 @@ import tensorflow as tf
 
 
 class Net:
-  def __init__(self, inputs, reuse=False, training=True, scope='description'):
+  def __init__(self,
+               inputs,
+               dropout_rate=None,
+               reuse=False,
+               training=True,
+               scope='description'):
     self.loss = None
     self.train = None
     self.validation = None
@@ -11,12 +16,11 @@ class Net:
     self.scope = scope
 
     with tf.variable_scope(scope, reuse=reuse):
-      # reduction convolutions
+      # conv layers
       net = inputs
-      filters_list = [64, 128, 128, 128]
-      activations = [tf.nn.relu for _ in range(3)] + [None]
+      filters_ls = [64, 128, 128]
       i = 1
-      for filters, activation in zip(filters_list, activations):
+      for filters in filters_ls:
         # ith conv layer
         net = tf.layers.conv2d(
             net,
@@ -24,16 +28,12 @@ class Net:
             kernel_size=5,
             strides=1,
             padding='valid',
-            activation=activation,
+            activation=tf.nn.relu,
             use_bias=False,
             name='conv_{}'.format(i),
             reuse=reuse)
-
-        # ith batch norm
         net = tf.layers.batch_normalization(
             net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
-
-        # ith max pooling
         net = tf.layers.max_pooling2d(
             net,
             pool_size=5,
@@ -43,20 +43,51 @@ class Net:
 
         i += 1
 
+      # last conv layer
+      net = tf.layers.conv2d(
+          net,
+          filters=128,
+          kernel_size=5,
+          strides=1,
+          padding='valid',
+          activation=None,
+          use_bias=False,
+          name='conv_{}'.format(i),
+          reuse=reuse)
+      net = tf.layers.batch_normalization(
+          net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
+      net = tf.layers.max_pooling2d(
+          net,
+          pool_size=5,
+          strides=1,
+          padding='valid',
+          name='maxpool_{}'.format(i))
+
+      # dropout
+      if dropout_rate is not None:
+        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
+
       # descriptors
       self.spatial_descriptors = tf.nn.l2_normalize(
           net, axis=-1, name='spatial_descriptors')
       self.descriptors = tf.reshape(
           self.spatial_descriptors, [-1, 128], name='descriptors')
 
-  def build_loss(self, labels):
+  def build_loss(self, labels, decay_weight=None):
     with tf.variable_scope(self.scope, reuse=True):
       with tf.name_scope('loss'):
-        # make labels' shape compatible with triplet loss
+        # triplet loss
         labels = tf.reshape(labels, (-1, ))
-
         self.loss = tf.contrib.losses.metric_learning.triplet_semihard_loss(
             labels, self.descriptors)
+
+        # weight decay
+        if decay_weight is not None:
+          weight_decay = 0
+          for var in tf.trainable_variables(self.scope):
+            if 'kernel' in var.name:
+              weight_decay += tf.nn.l2_loss(var)
+          self.loss += decay_weight * weight_decay
 
     return self.loss
 
