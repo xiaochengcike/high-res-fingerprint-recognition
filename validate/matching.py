@@ -117,37 +117,52 @@ def main():
   print('Done')
 
   print('Matching...')
-  with open(FLAGS.results_path, 'w') as f:
-    # same subject comparisons
-    for subject_id in subject_ids:
-      for register_id1 in register_ids:
-        index1 = id2index((subject_id, 1, register_id1))
+  pos = []
+  neg = []
+  # same subject comparisons
+  for subject_id in subject_ids:
+    for register_id1 in register_ids:
+      index1 = id2index((subject_id, 1, register_id1))
+      descs1 = all_descs[index1]
+      pts1 = all_pts[index1]
+      for register_id2 in register_ids:
+        index2 = id2index((subject_id, 2, register_id2))
+        descs2 = all_descs[index2]
+        pts2 = all_pts[index2]
+        pos.append(match(descs1, descs2, pts1, pts2, thr=FLAGS.thr))
+
+  # different subject comparisons
+  for subject_id1 in subject_ids:
+    for subject_id2 in subject_ids:
+      if subject_id1 != subject_id2:
+        index1 = id2index((subject_id1, 1, 1))
+        index2 = id2index((subject_id2, 2, 1))
+
         descs1 = all_descs[index1]
+        descs2 = all_descs[index2]
         pts1 = all_pts[index1]
-        for register_id2 in register_ids:
-          index2 = id2index((subject_id, 2, register_id2))
-          descs2 = all_descs[index2]
-          pts2 = all_pts[index2]
-          print(1, match(descs1, descs2, pts1, pts2, thr=FLAGS.thr), file=f)
+        pts2 = all_pts[index2]
 
-    # different subject comparisons
-    for subject_id1 in subject_ids:
-      for subject_id2 in subject_ids:
-        if subject_id1 != subject_id2:
-          index1 = id2index((subject_id1, 1, 1))
-          index2 = id2index((subject_id2, 2, 1))
+        neg.append(match(descs1, descs2, pts1, pts2, thr=FLAGS.thr))
 
-          descs1 = all_descs[index1]
-          descs2 = all_descs[index2]
-          pts1 = all_pts[index1]
-          pts2 = all_pts[index2]
+  # print equal error rate
+  print('EER = {}'.format(utils.eer(pos, neg)))
 
-          print(0, match(descs1, descs2, pts1, pts2, thr=FLAGS.thr), file=f)
+  # save results to file
+  if FLAGS.results_path is not None:
+    with open(FLAGS.results_path, 'w') as f:
+      # save same subject scores
+      for score in pos:
+        print(1, score, file=f)
+
+      # save different subject scores
+      for score in neg:
+        print(0, score, file=f)
+
   print('Done')
 
 
 if __name__ == '__main__':
-  # parse args
   parser = argparse.ArgumentParser()
   parser.add_argument(
       '--polyu_dir_path',
@@ -159,11 +174,7 @@ if __name__ == '__main__':
       type=str,
       required=True,
       help='path to chosen dataset keypoints detections')
-  parser.add_argument(
-      '--results_path',
-      type=str,
-      default='matching_results.txt',
-      help='path to results file')
+  parser.add_argument('--results_path', type=str, help='path to results file')
   parser.add_argument(
       '--descriptors',
       type=str,
