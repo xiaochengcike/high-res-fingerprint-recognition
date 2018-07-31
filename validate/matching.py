@@ -47,11 +47,13 @@ def main():
 
   # make dir path be full appropriate dir path
   imgs_dir_path = None
+  pts_dir_path = None
   subject_ids = None
   register_ids = None
   session_ids = None
   if FLAGS.fold == 'DBI-train':
     imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
+    pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBI', 'Training')
 
     subject_ids = [
         6, 9, 11, 13, 16, 18, 34, 41, 42, 47, 62, 67, 118, 186, 187, 188, 196,
@@ -63,8 +65,10 @@ def main():
   else:
     if FLAGS.fold == 'DBI-test':
       imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Test')
+      pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBI', 'Test')
     else:
       imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBII')
+      pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBII')
 
     subject_ids = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -96,7 +100,7 @@ def main():
         img = utils.load_image(img_path)
 
         # load detections
-        pts_path = os.path.join(FLAGS.pts_dir_path, '{}.txt'.format(instance))
+        pts_path = os.path.join(pts_dir_path, '{}.txt'.format(instance))
         pts = utils.load_dets_txt(pts_path)
 
         # filter detections at non valid border
