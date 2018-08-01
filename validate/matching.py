@@ -1,9 +1,98 @@
-import argparse
 import os
+import argparse
 
 import utils
 
 FLAGS = None
+
+
+def load_dataset(imgs_dir_path,
+                 pts_dir_path,
+                 subject_ids,
+                 session_ids,
+                 register_ids,
+                 compute_descriptors,
+                 patch_size=None):
+  id2index_dict = {}
+  all_descs = []
+  all_pts = []
+  index = 0
+  for subject_id in subject_ids:
+    for session_id in session_ids:
+      for register_id in register_ids:
+        instance = '{}_{}_{}'.format(subject_id, session_id, register_id)
+
+        # load image
+        img_path = os.path.join(imgs_dir_path, '{}.jpg'.format(instance))
+        img = utils.load_image(img_path)
+
+        # load detections
+        pts_path = os.path.join(pts_dir_path, '{}.txt'.format(instance))
+        pts = utils.load_dets_txt(pts_path)
+
+        # filter detections at non valid border
+        if patch_size is not None:
+          half = patch_size // 2
+          pts_ = []
+          for pt in pts:
+            if half <= pt[0] < img.shape[0] - half:
+              if half <= pt[1] < img.shape[1] - half:
+                pts_.append(pt)
+          pts = pts_
+
+        all_pts.append(pts)
+
+        # compute image descriptors
+        descs = compute_descriptors(img, pts)
+        all_descs.append(descs)
+
+        # make id2index correspondence
+        id2index_dict[(subject_id, session_id, register_id)] = index
+        index += 1
+
+  # turn id2index into conversion function
+  id2index = lambda x: id2index_dict[tuple(x)]
+
+  return all_descs, all_pts, id2index
+
+
+def polyu_match(all_descs,
+                all_pts,
+                subject_ids,
+                register_ids,
+                id2index,
+                match,
+                thr=None):
+  pos = []
+  neg = []
+
+  # same subject comparisons
+  for subject_id in subject_ids:
+    for register_id1 in register_ids:
+      index1 = id2index((subject_id, 1, register_id1))
+      descs1 = all_descs[index1]
+      pts1 = all_pts[index1]
+      for register_id2 in register_ids:
+        index2 = id2index((subject_id, 2, register_id2))
+        descs2 = all_descs[index2]
+        pts2 = all_pts[index2]
+        pos.append(match(descs1, descs2, pts1, pts2, thr=thr))
+
+  # different subject comparisons
+  for subject_id1 in subject_ids:
+    for subject_id2 in subject_ids:
+      if subject_id1 != subject_id2:
+        index1 = id2index((subject_id1, 1, 1))
+        index2 = id2index((subject_id2, 2, 1))
+
+        descs1 = all_descs[index1]
+        descs2 = all_descs[index2]
+        pts1 = all_pts[index1]
+        pts2 = all_pts[index2]
+
+        neg.append(match(descs1, descs2, pts1, pts2, thr=thr))
+
+  return pos, neg
 
 
 def main():
@@ -18,14 +107,12 @@ def main():
     if FLAGS.patch_size is None:
       raise TypeError('Patch size is required when using trained descriptor')
 
+    # create net graph and restore saved model
     import tensorflow as tf
-
     from models import description
-
     img_pl, _ = utils.placeholder_inputs()
     net = description.Net(img_pl, training=False)
     sess = tf.Session()
-
     print('Restoring model in {}...'.format(FLAGS.model_dir_path))
     utils.restore_model(sess, FLAGS.model_dir_path)
     print('Done')
@@ -45,9 +132,11 @@ def main():
   register_ids = None
   session_ids = None
   if FLAGS.fold == 'DBI-train':
+    # adjust paths for appropriate fold
     imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
     pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBI', 'Training')
 
+    # adjust ids for appropriate fold
     subject_ids = [
         6, 9, 11, 13, 16, 18, 34, 41, 42, 47, 62, 67, 118, 186, 187, 188, 196,
         198, 202, 207, 223, 225, 226, 228, 242, 271, 272, 278, 287, 293, 297,
@@ -56,6 +145,7 @@ def main():
     register_ids = [1, 2, 3]
     session_ids = [1, 2]
   else:
+    # adjust paths for appropriate fold
     if FLAGS.fold == 'DBI-test':
       imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Test')
       pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBI', 'Test')
@@ -63,6 +153,7 @@ def main():
       imgs_dir_path = os.path.join(FLAGS.polyu_dir_path, 'DBII')
       pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBII')
 
+    # adjust ids for appropriate fold
     subject_ids = [
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
@@ -79,80 +170,28 @@ def main():
 
   # load images, points, compute descriptors and make indices correspondences
   print('Loading images and detections, and computing descriptors...')
-  id2index_dict = {}
-  all_descs = []
-  all_pts = []
-  index = 0
-  for subject_id in subject_ids:
-    for session_id in session_ids:
-      for register_id in register_ids:
-        instance = '{}_{}_{}'.format(subject_id, session_id, register_id)
-
-        # load image
-        img_path = os.path.join(imgs_dir_path, '{}.jpg'.format(instance))
-        img = utils.load_image(img_path)
-
-        # load detections
-        pts_path = os.path.join(pts_dir_path, '{}.txt'.format(instance))
-        pts = utils.load_dets_txt(pts_path)
-
-        # filter detections at non valid border
-        if FLAGS.patch_size is not None:
-          half = FLAGS.patch_size // 2
-          pts_ = []
-          for pt in pts:
-            if half <= pt[0] < img.shape[0] - half:
-              if half <= pt[1] < img.shape[1] - half:
-                pts_.append(pt)
-          pts = pts_
-
-        all_pts.append(pts)
-
-        # compute image descriptors
-        descs = compute_descriptors(img, pts)
-        all_descs.append(descs)
-
-        # make id2index correspondence
-        id2index_dict[(subject_id, session_id, register_id)] = index
-        index += 1
-
-  id2index = lambda x: id2index_dict[tuple(x)]
+  all_descs, all_pts, id2index = load_dataset(
+      imgs_dir_path, pts_dir_path, subject_ids, session_ids, register_ids,
+      compute_descriptors)
   print('Done')
 
   print('Matching...')
-  pos = []
-  neg = []
-  # same subject comparisons
-  for subject_id in subject_ids:
-    for register_id1 in register_ids:
-      index1 = id2index((subject_id, 1, register_id1))
-      descs1 = all_descs[index1]
-      pts1 = all_pts[index1]
-      for register_id2 in register_ids:
-        index2 = id2index((subject_id, 2, register_id2))
-        descs2 = all_descs[index2]
-        pts2 = all_pts[index2]
-        pos.append(match(descs1, descs2, pts1, pts2, thr=FLAGS.thr))
-
-  # different subject comparisons
-  for subject_id1 in subject_ids:
-    for subject_id2 in subject_ids:
-      if subject_id1 != subject_id2:
-        index1 = id2index((subject_id1, 1, 1))
-        index2 = id2index((subject_id2, 2, 1))
-
-        descs1 = all_descs[index1]
-        descs2 = all_descs[index2]
-        pts1 = all_pts[index1]
-        pts2 = all_pts[index2]
-
-        neg.append(match(descs1, descs2, pts1, pts2, thr=FLAGS.thr))
+  pos, neg = polyu_match(
+      all_descs,
+      all_pts,
+      subject_ids,
+      register_ids,
+      id2index,
+      match,
+      thr=FLAGS.thr)
+  print('Done')
 
   # print equal error rate
   print('EER = {}'.format(utils.eer(pos, neg)))
 
   # save results to file
   if FLAGS.results_path is not None:
+    print('Saving results to file {}...'.format(FLAGS.results_path))
     with open(FLAGS.results_path, 'w') as f:
       # save same subject scores
       for score in pos:
@@ -161,8 +200,7 @@ def main():
       # save different subject scores
       for score in neg:
         print(0, score, file=f)
-
-  print('Done')
+    print('Done')
 
 
 if __name__ == '__main__':
