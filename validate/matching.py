@@ -1,9 +1,58 @@
 import os
 import argparse
+import tensorflow as tf
 
 import utils
+import matching
 
 FLAGS = None
+
+
+def validation_eer(images_pl, session, descs_op, dataset, patch_size):
+  # describe patches with detections and get
+  # subject and register ids from labels
+  all_descs = []
+  all_pts = []
+  subject_ids = set()
+  register_ids = set()
+  id2index_dict = {}
+  index = 0
+  for img, pts, label in dataset:
+    # add image detections to all detections
+    all_pts.append(pts)
+
+    # compute descriptors
+    descs = utils.trained_descriptors(img, pts, patch_size, session, images_pl,
+                                      descs_op)
+    all_descs.append(descs)
+
+    # add ids to all ids
+    subject_ids.add(label[0])
+    register_ids.add(label[2])
+
+    # make 'id2index' correspondence
+    id2index_dict[tuple(label)] = index
+    index += 1
+
+  # convert dict into function
+  id2index = lambda x: id2index_dict[tuple(x)]
+
+  # convert sets into lists
+  subject_ids = list(subject_ids)
+  register_ids = list(register_ids)
+
+  # match and compute eer
+  pos, neg = polyu_match(
+      all_descs,
+      all_pts,
+      subject_ids,
+      register_ids,
+      id2index,
+      matching.basic,
+      thr=0.7)
+  eer = utils.eer(pos, neg)
+
+  return eer
 
 
 def load_dataset(imgs_dir_path,
@@ -108,8 +157,8 @@ def main():
       raise TypeError('Patch size is required when using trained descriptor')
 
     # create net graph and restore saved model
-    import tensorflow as tf
     from models import description
+
     img_pl, _ = utils.placeholder_inputs()
     net = description.Net(img_pl, training=False)
     sess = tf.Session()
@@ -121,9 +170,9 @@ def main():
 
   # parse matching mode and adjust accordingly
   if FLAGS.mode == 'basic':
-    from matching import basic as match
+    match = matching.basic
   else:
-    from matching import spatial as match
+    match = matching.spatial
 
   # make dir path be full appropriate dir path
   imgs_dir_path = None
