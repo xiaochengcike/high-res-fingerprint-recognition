@@ -42,7 +42,7 @@ def _transform_mini_batch(sample):
 
   # translation and rotation
   transformed = []
-  for point in sample:
+  for image in sample:
     # random translation
     dx = np.random.normal(loc=0, scale=1)
     dy = np.random.normal(loc=0, scale=1)
@@ -50,15 +50,15 @@ def _transform_mini_batch(sample):
 
     # random rotation
     theta = np.random.normal(loc=0, scale=7.5)
-    center = (point.shape[1] // 2, point.shape[0] // 2)
+    center = (image.shape[1] // 2, image.shape[0] // 2)
     B = cv2.getRotationMatrix2D(center, theta, 1)
 
-    # transform patch
-    point = cv2.warpAffine(point, A, point.shape[::-1])
-    point = cv2.warpAffine(point, B, point.shape[::-1], flags=cv2.INTER_LINEAR)
+    # transform image
+    image = cv2.warpAffine(image, A, image.shape[::-1])
+    image = cv2.warpAffine(image, B, image.shape[::-1], flags=cv2.INTER_LINEAR)
 
-    # add to batch patches
-    transformed.append(point)
+    # add to batch images
+    transformed.append(image)
 
   return np.array(transformed)
 
