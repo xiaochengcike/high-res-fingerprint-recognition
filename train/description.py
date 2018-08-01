@@ -85,6 +85,10 @@ def train(dataset, log_dir):
               print('Training stopped early')
               break
 
+      # if no validation set, save model when training completes
+      if dataset.val is None:
+        saver.save(sess, os.path.join(log_dir, 'model.ckpt'))
+
   print('Finished')
   print('best EER = {}'.format(best_eer))
 
