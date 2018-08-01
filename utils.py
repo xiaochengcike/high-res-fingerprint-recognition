@@ -468,9 +468,11 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   half = patch_size // 2
   patches = []
   for pt in pts:
-    patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
-                pt[1] + half + odd]
-    patches.append(patch)
+    if half <= pt[0] < img.shape[0] - half - odd:
+      if half <= pt[1] < img.shape[1] - half - odd:
+        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
+                    pt[1] + half + odd]
+        patches.append(patch)
 
   # describe patches
   feed_dict = {imgs_pl: np.reshape(patches, np.shape(patches) + (1, ))}
