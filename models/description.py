@@ -4,7 +4,7 @@ import tensorflow as tf
 class Net:
   def __init__(self,
                inputs,
-               dropout_rate,
+               dropout_rate=None,
                reuse=False,
                training=True,
                scope='description'):
@@ -50,7 +50,8 @@ class Net:
           reuse=reuse)
       net = tf.layers.batch_normalization(
           net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
-      net = tf.layers.dropout(net, rate=dropout_rate, training=training)
+      if dropout_rate is not None:
+        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
 
       # descriptors
       self.spatial_descriptors = tf.nn.l2_normalize(
@@ -59,7 +60,7 @@ class Net:
           self.spatial_descriptors, [-1, 128], name='descriptors')
 
   def build_loss(self, labels, decay_weight=None):
-    with tf.variable_scope(self.scope, reuse=True):
+    with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
       with tf.name_scope('loss'):
         # triplet loss
         labels = tf.reshape(labels, (-1, ))
@@ -77,7 +78,7 @@ class Net:
     return self.loss
 
   def build_train(self, learning_rate):
-    with tf.variable_scope(self.scope, reuse=True):
+    with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
       with tf.name_scope('train'):
         global_step = tf.Variable(1, name='global_step', trainable=False)
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
