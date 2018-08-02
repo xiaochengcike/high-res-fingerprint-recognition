@@ -1,6 +1,7 @@
-import tensorflow as tf
 import os
 import argparse
+import numpy as np
+import tensorflow as tf
 
 from models import detection
 import polyu
@@ -140,7 +141,12 @@ if __name__ == '__main__':
       '--augment',
       action='store_true',
       help='use this flag to perform dataset augmentation')
+  parser.add_argument('--seed', type=int, help='random seed')
 
   FLAGS = parser.parse_args()
+
+  # set random seeds
+  tf.set_random_seed(FLAGS.seed)
+  np.random.seed(FLAGS.seed)
 
   main()

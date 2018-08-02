@@ -88,7 +88,11 @@ if __name__ == '__main__':
       default='rank-n',
       type=str,
       help='Mode of validation. Possible are "eer" and "rank-n".')
+  parser.add_argument('--seed', type=int, help='random seed')
 
   FLAGS = parser.parse_args()
+
+  # set random seed
+  np.random.seed(FLAGS.seed)
 
   main()

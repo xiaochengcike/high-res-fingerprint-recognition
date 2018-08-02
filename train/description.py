@@ -1,6 +1,7 @@
-import tensorflow as tf
 import os
 import argparse
+import numpy as np
+import tensorflow as tf
 
 from models import description
 import polyu
@@ -129,7 +130,12 @@ if __name__ == '__main__':
       type=float,
       help='dropout rate in last convolutional layer')
   parser.add_argument('--weight_decay', type=float, help='weight decay lambda')
+  parser.add_argument('--seed', type=int, help='random seed')
 
   FLAGS = parser.parse_args()
+
+  # set random seeds
+  tf.set_random_seed(FLAGS.seed)
+  np.random.seed(FLAGS.seed)
 
   main()

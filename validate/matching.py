@@ -1,5 +1,6 @@
 import os
 import argparse
+import numpy as np
 import tensorflow as tf
 
 import utils
@@ -287,6 +288,12 @@ if __name__ == '__main__':
       help=
       'choose what fold of polyu to use. Can be "DBI-train", "DBI-test" and "DBII"'
   )
+  parser.add_argument('--seed', type=int, help='random seed')
+
   FLAGS = parser.parse_args()
+
+  # set random seeds
+  tf.set_random_seed(FLAGS.seed)
+  np.random.seed(FLAGS.seed)
 
   main()

@@ -1,6 +1,7 @@
-import numpy as np
 import argparse
 import os
+import numpy as np
+import tensorflow as tf
 import cv2
 
 import utils
@@ -200,6 +201,12 @@ if __name__ == '__main__':
       '--for_sift',
       action='store_true',
       help='use this flag to generate patches fit for validate.sift use')
+  parser.add_argument('--seed', type=int, help='random seed')
+
   FLAGS = parser.parse_args()
+
+  # set random seeds
+  tf.set_random_seed(FLAGS.seed)
+  np.random.seed(FLAGS.seed)
 
   main()
