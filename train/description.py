@@ -33,7 +33,7 @@ def train(dataset, log_dir):
     loss_summary_op = tf.summary.scalar('loss', loss_pl)
 
     # early stopping vars
-    best_eer = 0
+    best_eer = 1
     faults = 0
     saver = tf.train.Saver()
     with tf.Session() as sess:
