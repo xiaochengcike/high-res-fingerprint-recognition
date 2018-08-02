@@ -5,7 +5,7 @@ class Net:
   def __init__(self,
                inputs,
                dropout_rate=None,
-               reuse=False,
+               reuse=tf.AUTO_REUSE,
                training=True,
                scope='description'):
     self.loss = None
@@ -74,7 +74,7 @@ class Net:
           self.spatial_descriptors, [-1, 128], name='descriptors')
 
   def build_loss(self, labels, decay_weight=None):
-    with tf.variable_scope(self.scope, reuse=True):
+    with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
       with tf.name_scope('loss'):
         # triplet loss
         labels = tf.reshape(labels, (-1, ))
@@ -92,7 +92,7 @@ class Net:
     return self.loss
 
   def build_train(self, learning_rate):
-    with tf.variable_scope(self.scope, reuse=True):
+    with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
       with tf.name_scope('train'):
         global_step = tf.Variable(1, name='global_step', trainable=False)
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
