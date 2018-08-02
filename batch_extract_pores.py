@@ -71,6 +71,12 @@ if __name__ == '__main__':
       type=str,
       default='result',
       help='path to folder in which results should be saved')
+  parser.add_argument('--seed', type=int, help='random seed')
+
   FLAGS = parser.parse_args()
+
+  # set random seeds
+  tf.set_random_seed(FLAGS.seed)
+  np.random.seed(FLAGS.seed)
 
   main()

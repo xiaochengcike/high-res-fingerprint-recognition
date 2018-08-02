@@ -181,7 +181,13 @@ if __name__ == '__main__':
       '--discard',
       action='store_true',
       help='use this flag to disconsider pores in ground truth borders')
+  parser.add_argument('--seed', type=int, help='random seed')
+
   flags = parser.parse_args()
+
+  # set random seeds
+  tf.set_random_seed(flags.seed)
+  np.random.seed(flags.seed)
 
   # load polyu dataset
   print('Loading PolyU-HRF dataset...')

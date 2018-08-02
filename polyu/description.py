@@ -1,9 +1,10 @@
+import os
 import numpy as np
 
 import utils
 
 
-class _Dataset:
+class TrainingSet:
   def __init__(self, images_by_labels, labels, should_shuffle,
                balanced_batches, incomplete_batches):
     self.n_labels = len(labels)
@@ -110,48 +111,37 @@ class _Dataset:
     return batch_images, batch_labels
 
 
+class ValidationSet:
+  def __init__(self, images, detections, labels):
+    self._images = np.array(images)
+    self._detections = np.array(detections)
+    self._labels = np.array(labels)
+
+  def __getitem__(self, val):
+    return self._images[val], self._detections[val], self._labels[val]
+
+
 class Dataset:
-  def __init__(self,
-               images_folder_path,
-               val_split=True,
-               should_shuffle=True,
-               balanced_batches=True):
-    images, labels = utils.load_images_with_labels(images_folder_path)
+  def __init__(self, path, should_shuffle=True, balanced_batches=True):
+    # split paths
+    train_path = os.path.join(path, 'train')
+    val_path = os.path.join(path, 'val')
+
+    # load training set
+    images, labels = utils.load_images_with_labels(train_path)
     images_by_labels, labels = self._group_images_by_labels(images, labels)
+    self.train = TrainingSet(
+        images_by_labels,
+        labels,
+        should_shuffle=should_shuffle,
+        balanced_batches=balanced_batches,
+        incomplete_batches=False)
 
-    # create separate validation set
-    if val_split:
-      # randomly pick subjects comprising 20% of
-      # whole dataset for validation set
-      val_images_by_labels = []
-      val_labels = []
-      val_size = 0
-      perm = np.random.permutation(len(images_by_labels))
-      i = 0
-      while val_size < 0.2 * len(images):
-        val_size += len(images_by_labels[perm[i]])
-        val_images_by_labels.append(images_by_labels[perm[i]])
-        val_labels.append(labels[perm[i]])
-        i += 1
-      self.val = _Dataset(
-          val_images_by_labels,
-          val_labels,
-          should_shuffle=should_shuffle,
-          balanced_batches=False,
-          incomplete_batches=True)
-
-      # remainder of images for training set
-      train_images_by_labels = []
-      train_labels = []
-      while i < len(perm):
-        train_images_by_labels.append(images_by_labels[perm[i]])
-        train_labels.append(labels[perm[i]])
-        i += 1
-      self.train = _Dataset(train_images_by_labels, train_labels,
-                            should_shuffle, balanced_batches, False)
-    else:
-      self.train = _Dataset(images_by_labels, labels, should_shuffle,
-                            balanced_batches, False)
+    # load validation set, if any
+    self.val = None
+    if os.path.exists(val_path):
+      images, detections, labels = self._load_validation_data(val_path)
+      self.val = ValidationSet(images, detections, labels)
 
   def _group_images_by_labels(self, images, labels):
     # convert to np array
@@ -164,3 +154,17 @@ class Dataset:
       indices = np.where(labels == label)
       grouped_images.append(images[indices])
     return grouped_images, all_labels
+
+  def _load_validation_data(self, path):
+    # load images with respective names
+    images, names = utils.load_images_with_names(path)
+
+    # convert 'names' to validation 'labels'
+    # each 'name' in 'names' is 'subject-id_session-id_register-rd'
+    labels = [tuple(map(int, name.split('_'))) for name in names]
+
+    # load detections, aligned with images and labels
+    paths = map(lambda name: os.path.join(path, name), names)
+    detections = [utils.load_dets_txt(path + '.txt') for path in paths]
+
+    return images, detections, labels

@@ -42,7 +42,7 @@ def _transform_mini_batch(sample):
 
   # translation and rotation
   transformed = []
-  for point in sample:
+  for image in sample:
     # random translation
     dx = np.random.normal(loc=0, scale=1)
     dy = np.random.normal(loc=0, scale=1)
@@ -50,15 +50,15 @@ def _transform_mini_batch(sample):
 
     # random rotation
     theta = np.random.normal(loc=0, scale=7.5)
-    center = (point.shape[1] // 2, point.shape[0] // 2)
+    center = (image.shape[1] // 2, image.shape[0] // 2)
     B = cv2.getRotationMatrix2D(center, theta, 1)
 
-    # transform patch
-    point = cv2.warpAffine(point, A, point.shape[::-1])
-    point = cv2.warpAffine(point, B, point.shape[::-1])
+    # transform image
+    image = cv2.warpAffine(image, A, image.shape[::-1])
+    image = cv2.warpAffine(image, B, image.shape[::-1], flags=cv2.INTER_LINEAR)
 
-    # add to batch patches
-    transformed.append(point)
+    # add to batch images
+    transformed.append(image)
 
   return np.array(transformed)
 
@@ -149,19 +149,6 @@ def pairwise_distances(x1, x2):
   D = sqr1 - 2 * np.matmul(x1, x2.T) + sqr2
 
   return D
-
-
-def matmul_corr_finding(pores, dets):
-  # compute pair-wise distances
-  D = pairwise_distances(pores, dets)
-
-  # get pore-detection correspondences
-  pore_corrs = np.argmin(D, axis=1)
-
-  # get detection-pore correspondences
-  det_corrs = np.argmin(D, axis=0)
-
-  return pore_corrs, det_corrs
 
 
 def restore_model(sess, model_dir):
@@ -481,9 +468,11 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   half = patch_size // 2
   patches = []
   for pt in pts:
-    patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
-                pt[1] + half + odd]
-    patches.append(patch)
+    if half <= pt[0] < img.shape[0] - half - odd:
+      if half <= pt[1] < img.shape[1] - half - odd:
+        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
+                    pt[1] + half + odd]
+        patches.append(patch)
 
   # describe patches
   feed_dict = {imgs_pl: np.reshape(patches, np.shape(patches) + (1, ))}

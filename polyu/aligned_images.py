@@ -94,10 +94,13 @@ class Handler:
       # retrieve coordinates for given index
       flip, (i, j) = self._inds[val]
 
+      # adjust for odd patch sizes
+      odd = 1 if self._patch_size % 2 != 0 else 0
+
       # add first image patch
       samples = [
-          self._imgs[0][i - self._half:i + self._half + 1, j - self._half:
-                        j + self._half + 1]
+          self._imgs[0][i - self._half:i + self._half + odd, j - self._half:
+                        j + self._half + odd]
       ]
 
       # add remaining image patches
@@ -110,8 +113,8 @@ class Handler:
         tj = int(np.round(tj))
 
         # add to overall
-        samples.append(img[ti - self._half:ti + self._half + 1,
-                           tj - self._half:tj + self._half + 1])
+        samples.append(img[ti - self._half:ti + self._half + odd,
+                           tj - self._half:tj + self._half + odd])
 
     # augment with flip
     if self._flip and flip != 0:
