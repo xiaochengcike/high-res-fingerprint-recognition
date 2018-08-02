@@ -37,9 +37,17 @@ def train(dataset, log_dir):
     faults = 0
     saver = tf.train.Saver()
     with tf.Session() as sess:
+      # initialize summary and variables
       summary_writer = tf.summary.FileWriter(log_dir, sess.graph)
-
       sess.run(tf.global_variables_initializer())
+
+      # 'compute_descriptors' function for validation
+      compute_descriptors = lambda img, pts: utils.trained_descriptors(img,
+          pts,
+          patch_size=dataset.train.images_shape[1],
+          session=sess,
+          imgs_pl=images_pl,
+          descs_op=val_net.descriptors)
 
       # train loop
       for step in range(1, FLAGS.steps + 1):
@@ -61,12 +69,8 @@ def train(dataset, log_dir):
         # evaluate model periodically
         if step % 1000 == 0 and dataset.val is not None:
           print('Validation:')
-          eer = validate.matching.validation_eer(
-              images_pl,
-              sess,
-              val_net.descriptors,
-              dataset.val,
-              patch_size=dataset.train.images_shape[1])
+          eer = validate.matching.validation_eer(dataset.val,
+                                                 compute_descriptors)
           print('EER = {}'.format(eer))
 
           # summarize eer

@@ -9,7 +9,7 @@ import matching
 FLAGS = None
 
 
-def validation_eer(images_pl, session, descs_op, dataset, patch_size):
+def validation_eer(dataset, compute_descriptors):
   # describe patches with detections and get
   # subject and register ids from labels
   all_descs = []
@@ -22,9 +22,8 @@ def validation_eer(images_pl, session, descs_op, dataset, patch_size):
     # add image detections to all detections
     all_pts.append(pts)
 
-    # compute descriptors
-    descs = utils.trained_descriptors(img, pts, patch_size, session, images_pl,
-                                      descs_op)
+    # add patches descriptors to all descriptors
+    descs = compute_descriptors(img, pts)
     all_descs.append(descs)
 
     # add ids to all ids
