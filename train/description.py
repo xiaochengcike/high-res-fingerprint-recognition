@@ -67,7 +67,7 @@ def train(dataset, log_dir):
           summary_writer.add_summary(loss_summary, step)
 
         # evaluate model periodically
-        if step % 1000 == 0 and dataset.val is not None:
+        if step % 500 == 0 and dataset.val is not None:
           print('Validation:')
           eer = validate.matching.validation_eer(dataset.val,
                                                  compute_descriptors)
