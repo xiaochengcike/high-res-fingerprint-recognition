@@ -32,7 +32,7 @@ def group_by_label(imgs, pts, labels):
   return grouped_imgs, grouped_pts, labels
 
 
-def create_dirs(path):
+def create_dirs(path, should_create_val):
   # create train path
   train_path = os.path.join(path, 'train')
   if not os.path.exists(train_path):
@@ -40,7 +40,7 @@ def create_dirs(path):
 
   # create val path
   val_path = os.path.join(path, 'val')
-  if not os.path.exists(val_path):
+  if not os.path.exists(val_path) and should_create_val:
     os.makedirs(val_path)
 
   return train_path, val_path
@@ -140,7 +140,8 @@ def main():
 
   # create 'train' & 'val' folders
   print('Creating directory tree...')
-  train_path, val_path = create_dirs(FLAGS.result_dir_path)
+  should_create_val = FLAGS.split < 1
+  train_path, val_path = create_dirs(FLAGS.result_dir_path, should_create_val)
   print('Done')
 
   # split dataset into train/val
