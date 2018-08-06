@@ -5,7 +5,7 @@ class Net:
   def __init__(self,
                inputs,
                dropout_rate=None,
-               reuse=False,
+               reuse=tf.AUTO_REUSE,
                training=True,
                scope='description'):
     self.loss = None
@@ -37,6 +37,10 @@ class Net:
 
         i += 1
 
+      # dropout
+      if dropout_rate is not None:
+        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
+
       # last conv layer
       net = tf.layers.conv2d(
           net,
@@ -50,8 +54,6 @@ class Net:
           reuse=reuse)
       net = tf.layers.batch_normalization(
           net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
-      if dropout_rate is not None:
-        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
 
       # descriptors
       self.spatial_descriptors = tf.nn.l2_normalize(
