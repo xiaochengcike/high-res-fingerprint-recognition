@@ -43,6 +43,10 @@ class Net:
 
         i += 1
 
+      # dropout
+      if dropout_rate is not None:
+        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
+
       # last conv layer
       net = tf.layers.conv2d(
           net,
@@ -62,10 +66,6 @@ class Net:
           strides=1,
           padding='valid',
           name='maxpool_{}'.format(i))
-
-      # dropout
-      if dropout_rate is not None:
-        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
 
       # descriptors
       self.spatial_descriptors = tf.nn.l2_normalize(
