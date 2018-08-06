@@ -286,7 +286,7 @@ def find_correspondences(descs1,
 
   # find bidirectional corresponding points
   pairs = []
-  if thr is None:
+  if thr is None or len(descs1) == 1 or len(descs2) == 1:
     # find the best correspondence of each element
     # in 'descs2' to an element in 'descs1'
     corrs2 = np.argmin(D, axis=0)
