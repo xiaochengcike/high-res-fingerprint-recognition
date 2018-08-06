@@ -5,10 +5,16 @@ import utils
 
 
 def basic(descs1, descs2, pts1=None, pts2=None, thr=None):
+  if len(descs1) == 0 or len(descs2) == 0:
+    return 0
+
   return len(utils.find_correspondences(descs1, descs2, thr=thr))
 
 
 def spatial(descs1, descs2, pts1, pts2, thr=None):
+  if len(descs1) == 0 or len(descs2) == 0:
+    return 0
+
   pairs = utils.find_correspondences(descs1, descs2, thr=thr)
 
   pts1 = np.array(pts1)
