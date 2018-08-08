@@ -2,14 +2,18 @@ import tensorflow as tf
 
 
 class Net:
-  def __init__(self, inputs, reuse=False, training=True, scope='detection'):
+  def __init__(self,
+               inputs,
+               dropout_rate=None,
+               reuse=tf.AUTO_REUSE,
+               training=True,
+               scope='detection'):
     with tf.variable_scope(scope, reuse=reuse):
       # reduction convolutions
       net = inputs
-      filters_list = [64, 128, 128, 128]
-      activations = [tf.nn.relu for _ in range(3)] + [None]
+      filters_ls = [32, 64, 128]
       i = 1
-      for filters, activation in zip(filters_list, activations):
+      for filters in filters_ls:
         # ith conv layer
         net = tf.layers.conv2d(
             net,
@@ -17,23 +21,34 @@ class Net:
             kernel_size=3,
             strides=1,
             padding='valid',
-            activation=activation,
+            activation=tf.nn.relu,
             use_bias=False,
             name='conv_{}'.format(i),
             reuse=reuse)
-
-        # ith batch norm
         net = tf.layers.batch_normalization(
             net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
-
-        # ith max pooling
         net = tf.layers.max_pooling2d(
             net, pool_size=3, strides=1, name='maxpool_{}'.format(i))
 
         i += 1
 
-      # logits is mean of descriptors
-      net = tf.reduce_mean(net, axis=-1, keepdims=True)
+      # dropout
+      if dropout_rate is not None:
+        net = tf.layers.dropout(net, rate=dropout_rate, training=training)
+
+      # logits
+      net = tf.layers.conv2d(
+          net,
+          filters=1,
+          kernel_size=5,
+          strides=1,
+          padding='valid',
+          activation=None,
+          use_bias=False,
+          name='conv_{}'.format(i),
+          reuse=reuse)
+      net = tf.layers.batch_normalization(
+          net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
       self.logits = tf.identity(net, name='logits')
 
       # build prediction op

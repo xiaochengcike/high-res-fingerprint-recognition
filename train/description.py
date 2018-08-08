@@ -17,7 +17,7 @@ def train(dataset, log_dir):
     images_pl, labels_pl = utils.placeholder_inputs()
 
     # build net graph
-    net = description.Net(images_pl, FLAGS.dropout_rate)
+    net = description.Net(images_pl, FLAGS.dropout)
 
     # build training related ops
     net.build_loss(labels_pl, FLAGS.weight_decay)
@@ -130,9 +130,7 @@ if __name__ == '__main__':
       action='store_true',
       help='use this flag to perform dataset augmentation')
   parser.add_argument(
-      '--dropout_rate',
-      type=float,
-      help='dropout rate in last convolutional layer')
+      '--dropout', type=float, help='dropout rate in last convolutional layer')
   parser.add_argument('--weight_decay', type=float, help='weight decay lambda')
   parser.add_argument('--seed', type=int, help='random seed')
 
