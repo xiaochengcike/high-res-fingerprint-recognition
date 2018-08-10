@@ -1,11 +1,33 @@
+import argparse
 import matplotlib.pyplot as plt
 
 import utils
 
 if __name__ == '__main__':
-  import sys
+  # parse arguments
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+      '--files',
+      required=True,
+      type=str,
+      nargs='+',
+      help='files containing results to plot')
+  parser.add_argument(
+      '--xrange',
+      default=[0, 0.1],
+      type=int,
+      nargs=2,
+      help='range to plot x axis')
+  parser.add_argument(
+      '--yrange',
+      default=[0, 0.1],
+      type=int,
+      nargs=2,
+      help='range to plot y axis')
 
-  for path in sys.argv[1:]:
+  flags = parser.parse_args()
+
+  for path in flags.files:
     # read comparisons file
     pos = []
     neg = []
@@ -27,6 +49,6 @@ if __name__ == '__main__':
   plt.legend(loc='upper right')
   plt.xlabel('FAR')
   plt.ylabel('FRR')
-  plt.axis([0, 0.1, 0, 0.1])
+  plt.axis(flags.xrange + flags.yrange)
   plt.grid()
   plt.show()
