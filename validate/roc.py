@@ -15,13 +15,13 @@ if __name__ == '__main__':
   parser.add_argument(
       '--xrange',
       default=[0, 0.1],
-      type=int,
+      type=float,
       nargs=2,
       help='range to plot x axis')
   parser.add_argument(
       '--yrange',
       default=[0, 0.1],
-      type=int,
+      type=float,
       nargs=2,
       help='range to plot y axis')
 
