@@ -18,28 +18,22 @@ class Net:
     with tf.variable_scope(scope, reuse=reuse):
       # conv layers
       net = inputs
-      filters_ls = [64, 128, 128]
+      filters_ls = [32, 32, 64, 64, 128, 128]
+      strides_ls = [1, 1, 2, 1, 2, 1]
       i = 1
-      for filters in filters_ls:
-        # ith conv layer
+      for filters, strides in zip(filters_ls, strides_ls):
         net = tf.layers.conv2d(
             net,
             filters=filters,
-            kernel_size=5,
-            strides=1,
-            padding='valid',
+            kernel_size=3,
+            strides=strides,
+            padding='same',
             activation=tf.nn.relu,
             use_bias=False,
             name='conv_{}'.format(i),
             reuse=reuse)
         net = tf.layers.batch_normalization(
             net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
-        net = tf.layers.max_pooling2d(
-            net,
-            pool_size=5,
-            strides=1,
-            padding='valid',
-            name='maxpool_{}'.format(i))
 
         i += 1
 
@@ -51,7 +45,7 @@ class Net:
       net = tf.layers.conv2d(
           net,
           filters=128,
-          kernel_size=5,
+          kernel_size=8,
           strides=1,
           padding='valid',
           activation=None,
@@ -60,12 +54,6 @@ class Net:
           reuse=reuse)
       net = tf.layers.batch_normalization(
           net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
-      net = tf.layers.max_pooling2d(
-          net,
-          pool_size=5,
-          strides=1,
-          padding='valid',
-          name='maxpool_{}'.format(i))
 
       # descriptors
       self.spatial_descriptors = tf.nn.l2_normalize(

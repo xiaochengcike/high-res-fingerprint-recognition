@@ -17,7 +17,7 @@ def train(dataset, log_dir):
     patches_pl, labels_pl = utils.placeholder_inputs()
 
     # build train related ops
-    net = detection.Net(patches_pl)
+    net = detection.Net(patches_pl, FLAGS.dropout)
     net.build_loss(labels_pl)
     net.build_train(FLAGS.learning_rate)
 
@@ -84,9 +84,11 @@ def train(dataset, log_dir):
           # write f score, tdr and fdr to summary
           scores_summary = sess.run(
               scores_summary_op,
-              feed_dict={f_score_pl: f_score,
-                         tdr_pl: tdr,
-                         fdr_pl: fdr})
+              feed_dict={
+                  f_score_pl: f_score,
+                  tdr_pl: tdr,
+                  fdr_pl: fdr
+              })
           summary_writer.add_summary(scores_summary, global_step=step)
 
   print('Finished')
@@ -127,20 +129,22 @@ if __name__ == '__main__':
   parser.add_argument(
       '--log_dir_path', type=str, default='log', help='logging directory')
   parser.add_argument(
+      '--dropout', type=float, help='dropout rate in last convolutional layer')
+  parser.add_argument(
+      '--augment',
+      action='store_true',
+      help='use this flag to perform dataset augmentation')
+  parser.add_argument(
       '--tolerance', type=int, default=5, help='early stopping tolerance')
   parser.add_argument('--batch_size', type=int, default=256, help='batch size')
   parser.add_argument(
       '--steps', type=int, default=100000, help='maximum training steps')
   parser.add_argument(
-      '--patch_size', type=int, default=17, help='pore patch size')
-  parser.add_argument(
       '--label_size', type=int, default=3, help='pore label size')
   parser.add_argument(
       '--label_mode', type=str, default='hard_bb', help='pore patch size')
   parser.add_argument(
-      '--augment',
-      action='store_true',
-      help='use this flag to perform dataset augmentation')
+      '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument('--seed', type=int, help='random seed')
 
   FLAGS = parser.parse_args()

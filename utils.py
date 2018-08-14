@@ -407,12 +407,12 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
   matches = np.argsort(dists)
   labels = labels[matches]
 
-  # find index of last instance of label 'probe_label'
-  last_ind = np.argwhere(labels == probe_label)[-1, 0]
+  # find index of first instance with label 'probe_label'
+  index = np.argwhere(labels == probe_label)[0, 0]
 
   # compute retrieval rank
-  labels_up_to_last_ind = np.unique(labels[:last_ind + 1])
-  rank = len(labels_up_to_last_ind)
+  labels_up_to_index = np.unique(labels[:index + 1])
+  rank = len(labels_up_to_index)
 
   return rank
 
