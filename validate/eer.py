@@ -5,15 +5,16 @@ if __name__ == '__main__':
 
   # read comparisons file
   for path in sys.argv[1:]:
-    pos = []
-    neg = []
-    with open(path, 'r') as f:
-      for line in f:
-        t, score = line.split()
-        score = float(score)
-        if int(t) == 1:
-          pos.append(score)
-        else:
-          neg.append(score)
+    if path.endswith('.txt'):
+      pos = []
+      neg = []
+      with open(path, 'r') as f:
+        for line in f:
+          t, score = line.split()
+          score = float(score)
+          if int(t) == 1:
+            pos.append(score)
+          else:
+            neg.append(score)
 
-    print(path, utils.eer(pos, neg))
+      print(path, utils.eer(pos, neg))

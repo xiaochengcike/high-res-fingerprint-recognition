@@ -28,23 +28,24 @@ if __name__ == '__main__':
   flags = parser.parse_args()
 
   for path in flags.files:
-    # read comparisons file
-    pos = []
-    neg = []
-    with open(path, 'r') as f:
-      for line in f:
-        t, score = line.split()
-        score = float(score)
-        if int(t) == 1:
-          pos.append(score)
-        else:
-          neg.append(score)
+    if path.endswith('.txt'):
+      # read comparisons file
+      pos = []
+      neg = []
+      with open(path, 'r') as f:
+        for line in f:
+          t, score = line.split()
+          score = float(score)
+          if int(t) == 1:
+            pos.append(score)
+          else:
+            neg.append(score)
 
-    # compute roc
-    fars, frrs = utils.roc(pos, neg)
+      # compute roc
+      fars, frrs = utils.roc(pos, neg)
 
-    # plot roc
-    plt.plot(fars, frrs, label=path)
+      # plot roc
+      plt.plot(fars, frrs, label=path)
 
   plt.legend(loc='upper right')
   plt.xlabel('FAR')
