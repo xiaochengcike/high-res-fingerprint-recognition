@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import numpy as np
 import tensorflow as tf
@@ -249,6 +250,8 @@ def main():
       # save different subject scores
       for score in neg:
         print(0, score, file=f)
+    with open(FLAGS.results_path + '.cmd', 'w') as f:
+      print(*sys.argv, file=f)
     print('Done')
 
 
