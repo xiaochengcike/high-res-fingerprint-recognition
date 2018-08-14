@@ -72,14 +72,12 @@ def create_dirs(log_dir_path,
   timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
   if batch_size2 is None or learning_rate2 is None:
     # individual training
-    log_dir = os.path.join(
-        log_dir_path, 'bs-{}_lr-{:.0e}_t-{}'.format(batch_size, learning_rate,
-                                                    timestamp))
+    log_dir = os.path.join(log_dir_path, 'bs-{}_lr-{:.0e}_t-{}'.format(
+        batch_size, learning_rate, timestamp))
   else:
     # approximate joint training
-    log_dir = os.path.join(
-        log_dir_path, 'bs-{}x{}_lr-{:.0e}x{}_t-{}'.format(
-            batch_size, batch_size2, learning_rate, learning_rate2, timestamp))
+    log_dir = os.path.join(log_dir_path, 'bs-{}x{}_lr-{:.0e}x{}_t-{}'.format(
+        batch_size, batch_size2, learning_rate, learning_rate2, timestamp))
 
   tf.gfile.MakeDirs(log_dir)
 
@@ -213,7 +211,8 @@ def draw_matches(img1, pts1, img2, pts2, pairs):
 
   pts1 = list(np.asarray(pts1)[:, [1, 0]])
   pts2 = list(np.asarray(pts2)[:, [1, 0]])
-  matched = cv2.drawMatches(img1, cv2.KeyPoint.convert(pts1), img2,
+  matched = cv2.drawMatches(img1,
+                            cv2.KeyPoint.convert(pts1), img2,
                             cv2.KeyPoint.convert(pts2), matches[:10], None)
 
   return matched
@@ -407,12 +406,12 @@ def retrieval_rank(probe_instance, probe_label, instances, labels):
   matches = np.argsort(dists)
   labels = labels[matches]
 
-  # find index of last instance of label 'probe_label'
-  last_ind = np.argwhere(labels == probe_label)[-1, 0]
+  # find index of first instance with label 'probe_label'
+  index = np.argwhere(labels == probe_label)[0, 0]
 
   # compute retrieval rank
-  labels_up_to_last_ind = np.unique(labels[:last_ind + 1])
-  rank = len(labels_up_to_last_ind)
+  labels_up_to_index = np.unique(labels[:index + 1])
+  rank = len(labels_up_to_index)
 
   return rank
 
@@ -475,8 +474,8 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   for pt in pts:
     if half <= pt[0] < img.shape[0] - half - odd:
       if half <= pt[1] < img.shape[1] - half - odd:
-        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:pt[1] +
-                    half + odd]
+        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
+                    pt[1] + half + odd]
         patches.append(patch)
 
   # empty detections set
