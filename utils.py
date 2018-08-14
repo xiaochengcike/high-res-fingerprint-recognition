@@ -19,11 +19,16 @@ def placeholder_inputs():
   return images, labels
 
 
-def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size, augment=False):
+def fill_feed_dict(dataset,
+                   patches_pl,
+                   labels_pl,
+                   batch_size,
+                   augment=False,
+                   translation=True):
   patches_feed, labels_feed = dataset.next_batch(batch_size)
 
   if augment:
-    patches_feed = _transform_mini_batch(patches_feed)
+    patches_feed = _transform_mini_batch(patches_feed, translation)
 
   feed_dict = {
       patches_pl: np.expand_dims(patches_feed, axis=-1),
@@ -33,7 +38,7 @@ def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size, augment=False):
   return feed_dict
 
 
-def _transform_mini_batch(sample):
+def _transform_mini_batch(sample, translation):
   # contrast and brightness variations
   contrast = np.random.normal(loc=1, scale=0.05, size=(sample.shape[0], 1, 1))
   brightness = np.random.normal(
@@ -54,7 +59,8 @@ def _transform_mini_batch(sample):
     B = cv2.getRotationMatrix2D(center, theta, 1)
 
     # transform image
-    image = cv2.warpAffine(image, A, image.shape[::-1])
+    if translation:
+      image = cv2.warpAffine(image, A, image.shape[::-1])
     image = cv2.warpAffine(image, B, image.shape[::-1], flags=cv2.INTER_LINEAR)
 
     # add to batch images
@@ -72,12 +78,14 @@ def create_dirs(log_dir_path,
   timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
   if batch_size2 is None or learning_rate2 is None:
     # individual training
-    log_dir = os.path.join(log_dir_path, 'bs-{}_lr-{:.0e}_t-{}'.format(
-        batch_size, learning_rate, timestamp))
+    log_dir = os.path.join(
+        log_dir_path, 'bs-{}_lr-{:.0e}_t-{}'.format(batch_size, learning_rate,
+                                                    timestamp))
   else:
     # approximate joint training
-    log_dir = os.path.join(log_dir_path, 'bs-{}x{}_lr-{:.0e}x{}_t-{}'.format(
-        batch_size, batch_size2, learning_rate, learning_rate2, timestamp))
+    log_dir = os.path.join(
+        log_dir_path, 'bs-{}x{}_lr-{:.0e}x{}_t-{}'.format(
+            batch_size, batch_size2, learning_rate, learning_rate2, timestamp))
 
   tf.gfile.MakeDirs(log_dir)
 
@@ -211,8 +219,7 @@ def draw_matches(img1, pts1, img2, pts2, pairs):
 
   pts1 = list(np.asarray(pts1)[:, [1, 0]])
   pts2 = list(np.asarray(pts2)[:, [1, 0]])
-  matched = cv2.drawMatches(img1,
-                            cv2.KeyPoint.convert(pts1), img2,
+  matched = cv2.drawMatches(img1, cv2.KeyPoint.convert(pts1), img2,
                             cv2.KeyPoint.convert(pts2), matches[:10], None)
 
   return matched
@@ -474,8 +481,8 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   for pt in pts:
     if half <= pt[0] < img.shape[0] - half - odd:
       if half <= pt[1] < img.shape[1] - half - odd:
-        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:
-                    pt[1] + half + odd]
+        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:pt[1] +
+                    half + odd]
         patches.append(patch)
 
   # empty detections set
