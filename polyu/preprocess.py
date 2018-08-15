@@ -83,12 +83,12 @@ def train_val_split(imgs, pts, labels, names, total_imgs, split):
   return train, val
 
 
-def save_patches(grouped_imgs, grouped_pts, path, patch_size, flip, for_sift):
+def save_patches(grouped_imgs, grouped_pts, path, patch_size):
   # 'patch_index' is a unique patch identifier
   patch_index = 1
   for imgs, pts in zip(grouped_imgs, grouped_pts):
     # align images
-    handler = aligned_images.Handler(imgs, pts, patch_size, flip, for_sift)
+    handler = aligned_images.Handler(imgs, pts, patch_size)
 
     # extract patches
     for patches in handler:
@@ -114,7 +114,8 @@ def save_dataset(grouped_imgs, grouped_pts, grouped_names, path):
 def main():
   # load detections
   print('Loading detections...')
-  pts = load_detections(FLAGS.pts_dir_path)
+  pts_dir_path = os.path.join(FLAGS.pts_dir_path, 'DBI', 'Training')
+  pts = load_detections(pts_dir_path)
   print('Done')
 
   # load images with names and retrieve labels
@@ -154,8 +155,7 @@ def main():
 
   # extract and save all patches from train images
   print('Creating training set patches...')
-  save_patches(train_imgs, train_pts, train_path, FLAGS.patch_size, FLAGS.flip,
-               FLAGS.for_sift)
+  save_patches(train_imgs, train_pts, train_path, FLAGS.patch_size)
   print('Done')
 
   # save validation images
@@ -188,20 +188,10 @@ if __name__ == '__main__':
       required=True,
       help='path to save description dataset')
   parser.add_argument(
-      '--flip',
-      action='store_true',
-      help=
-      'use this flag to also generate flipped patches, doubling the description dataset size'
-  )
-  parser.add_argument(
       '--split',
       default='0.5',
       type=float,
       help='floating point percentage of training set in train/val split')
-  parser.add_argument(
-      '--for_sift',
-      action='store_true',
-      help='use this flag to generate patches fit for validate.sift use')
   parser.add_argument('--seed', type=int, help='random seed')
 
   FLAGS = parser.parse_args()
