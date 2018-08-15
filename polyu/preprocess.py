@@ -189,7 +189,7 @@ if __name__ == '__main__':
       help='path to save description dataset')
   parser.add_argument(
       '--split',
-      default='0.5',
+      default='0.6',
       type=float,
       help='floating point percentage of training set in train/val split')
   parser.add_argument('--seed', type=int, help='random seed')
