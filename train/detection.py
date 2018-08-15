@@ -48,13 +48,8 @@ def train(dataset, log_dir):
       sess.run(init)
 
       for step in range(1, FLAGS.steps + 1):
-        feed_dict = utils.fill_feed_dict(
-            dataset.train,
-            patches_pl,
-            labels_pl,
-            FLAGS.batch_size,
-            FLAGS.augment,
-            translation=False)
+        feed_dict = utils.fill_feed_dict(dataset.train, patches_pl, labels_pl,
+                                         FLAGS.batch_size, FLAGS.augment)
 
         _, loss_value = sess.run([net.train, net.loss], feed_dict=feed_dict)
 

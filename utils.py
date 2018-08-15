@@ -19,16 +19,11 @@ def placeholder_inputs():
   return images, labels
 
 
-def fill_feed_dict(dataset,
-                   patches_pl,
-                   labels_pl,
-                   batch_size,
-                   augment=False,
-                   translation=True):
+def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size, augment=False):
   patches_feed, labels_feed = dataset.next_batch(batch_size)
 
   if augment:
-    patches_feed = _transform_mini_batch(patches_feed, translation)
+    patches_feed = _transform_mini_batch(patches_feed)
 
   feed_dict = {
       patches_pl: np.expand_dims(patches_feed, axis=-1),
@@ -38,7 +33,7 @@ def fill_feed_dict(dataset,
   return feed_dict
 
 
-def _transform_mini_batch(sample, translation):
+def _transform_mini_batch(sample):
   # contrast and brightness variations
   contrast = np.random.normal(loc=1, scale=0.05, size=(sample.shape[0], 1, 1))
   brightness = np.random.normal(
@@ -59,8 +54,7 @@ def _transform_mini_batch(sample, translation):
     B = cv2.getRotationMatrix2D(center, theta, 1)
 
     # transform image
-    if translation:
-      image = cv2.warpAffine(image, A, image.shape[::-1])
+    image = cv2.warpAffine(image, A, image.shape[::-1])
     image = cv2.warpAffine(image, B, image.shape[::-1], flags=cv2.INTER_LINEAR)
 
     # add to batch images
