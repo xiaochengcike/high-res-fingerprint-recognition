@@ -175,7 +175,7 @@ def iterative(img1,
       break
 
     # compute weight of correspondences' euclidean distance
-    euclidean_weight = euclidean_lambda / mse
+    euclidean_weight = euclidean_lambda / (mse + 1e-5)
 
     # find correspondences
     pairs = utils.find_correspondences(
