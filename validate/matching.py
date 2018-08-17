@@ -242,6 +242,13 @@ def main():
   # save results to file
   if FLAGS.results_path is not None:
     print('Saving results to file {}...'.format(FLAGS.results_path))
+
+    # create directory tree, if non-existing
+    dirname = os.path.dirname(FLAGS.results_path)
+    if not os.path.exists(dirname):
+      os.makedirs(dirname)
+
+    # save comparisons
     with open(FLAGS.results_path, 'w') as f:
       # save same subject scores
       for score in pos:
@@ -250,8 +257,11 @@ def main():
       # save different subject scores
       for score in neg:
         print(0, score, file=f)
+
+    # save invoking command string
     with open(FLAGS.results_path + '.cmd', 'w') as f:
       print(*sys.argv, file=f)
+
     print('Done')
 
 
