@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 
 import utils
@@ -181,6 +182,8 @@ if __name__ == '__main__':
       '--discard',
       action='store_true',
       help='use this flag to disconsider pores in ground truth borders')
+  parser.add_argument(
+      '--results_path', type=str, help='path in which to save results')
   parser.add_argument('--seed', type=int, help='random seed')
 
   flags = parser.parse_args()
@@ -198,7 +201,7 @@ if __name__ == '__main__':
       os.path.join(polyu_path, 'PoreGroundTruthMarked'),
       split=(15, 5, 10),
       patch_size=flags.patch_size)
-  print('Loaded.')
+  print('Loaded')
 
   # pick dataset fold
   if flags.fold == 'train':
@@ -220,13 +223,27 @@ if __name__ == '__main__':
   with tf.Session() as sess:
     print('Restoring model...')
     utils.restore_model(sess, flags.model_dir_path)
-    print('Done.')
+    print('Done')
 
-    image_f_score, image_tdr, image_fdr, inter_thr, prob_thr = by_images(
+    # find best threshold and statistics
+    f_score, tdr, fdr, inter_thr, prob_thr = by_images(
         sess, net.predictions, patches_pl, dataset, flags.discard)
-    print('Whole image evaluation:')
-    print('TDR = {}'.format(image_tdr))
-    print('FDR = {}'.format(image_fdr))
-    print('F score = {}'.format(image_f_score))
-    print('inter_thr = {}'.format(inter_thr))
-    print('prob_thr = {}'.format(prob_thr))
+
+    # direct output according to user specification
+    results_file = None
+    if flags.results_path is None:
+      results_file = sys.stdout
+    else:
+      # create path, if does not exist
+      dirname = os.path.dirname(flags.results_path)
+      if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+      results_file = open(flags.results_path, 'w')
+
+    print('Whole image evaluation:', file=results_file)
+    print('TDR = {}'.format(tdr), file=results_file)
+    print('FDR = {}'.format(fdr), file=results_file)
+    print('F score = {}'.format(f_score), file=results_file)
+    print('inter_thr = {}'.format(inter_thr), file=results_file)
+    print('prob_thr = {}'.format(prob_thr), file=results_file)
