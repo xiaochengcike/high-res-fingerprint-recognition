@@ -512,3 +512,46 @@ def compute_orientation(img):
   orientation = np.arctan2(phi_x, phi_y) / 2
 
   return orientation
+
+
+def dp_descriptors(img, pts, patch_size):
+  # adjust for odd patch sizes
+  odd = 1 if patch_size % 2 != 0 else 0
+
+  # compute image's orientation per pixel
+  orientation = compute_orientation(img)
+
+  # gaussian blur image
+  img = cv2.GaussianBlur(img, (3, 3), 0)
+
+  # get patch locations at 'pts'
+  half = patch_size // 2
+  center = (half, half)
+  descs = []
+  for pt in pts:
+    if half <= pt[0] < img.shape[0] - half - odd:
+      if half <= pt[1] < img.shape[1] - half - odd:
+        # extract patch at 'pt'
+        patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:pt[1] +
+                    half + odd]
+
+        # normalize orientation
+        theta = orientation[pt[0], pt[1]] - np.pi / 2
+        rot_mat = cv2.getRotationMatrix2D(center, 180 * theta / np.pi, 1)
+        patch = cv2.warpAffine(
+            patch, rot_mat, patch.shape[::-1], flags=cv2.INTER_LINEAR)
+
+        # circular mask
+        for i in range(patch_size):
+          for j in range(patch_size):
+            if np.hypot(i - half, j - half) > half:
+              patch[i, j] = 0
+
+        # reshape and normalize
+        patch = np.reshape(patch, -1)
+        patch -= np.mean(patch)
+        patch = patch / np.linalg.norm(patch)
+
+        descs.append(patch)
+
+  return np.array(descs)

@@ -150,6 +150,11 @@ def main():
   compute_descriptors = None
   if FLAGS.descriptors == 'sift':
     compute_descriptors = utils.sift_descriptors
+  elif FLAGS.descriptors == 'dp':
+    if FLAGS.patch_size is None:
+      raise TypeError('Patch size is required when using dp descriptor')
+
+    compute_descriptors = lambda img, pts: utils.dp_descriptors(img, pts, FLAGS.patch_size)
   else:
     if FLAGS.model_dir_path is None:
       raise TypeError(
@@ -282,7 +287,7 @@ if __name__ == '__main__':
       '--descriptors',
       type=str,
       default='sift',
-      help='which descriptors to use. Can be "sift" or "trained"')
+      help='which descriptors to use. Can be "sift", "dp" or "trained"')
   parser.add_argument(
       '--mode',
       type=str,
