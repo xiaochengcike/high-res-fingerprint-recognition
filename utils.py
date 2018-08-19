@@ -469,7 +469,7 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   # adjust for odd patch sizes
   odd = 1 if patch_size % 2 != 0 else 0
 
-  # get patch locations at pts
+  # get patch locations at 'pts'
   half = patch_size // 2
   patches = []
   for pt in pts:
@@ -488,3 +488,27 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   descs = session.run(descs_op, feed_dict=feed_dict)
 
   return descs
+
+
+def compute_orientation(img):
+  # compute gradients
+  dx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
+  dy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
+
+  # compute noisy orientation
+  nu_x = np.zeros_like(img, dtype=np.float32)
+  nu_y = np.zeros_like(img, dtype=np.float32)
+  for i in range(8, img.shape[0] - 8):
+    for j in range(8, img.shape[1] - 8):
+      sub_dx = np.reshape(dx[i - 8:i + 9, j - 8:j + 9], -1)
+      sub_dy = np.reshape(dy[i - 8:i + 9, j - 8:j + 9], -1)
+
+      nu_x[i, j] = 2 * np.dot(sub_dx, sub_dy)
+      nu_y[i, j] = np.dot(sub_dx + sub_dy, sub_dx - sub_dy)
+
+  # refine orientation
+  phi_x = cv2.GaussianBlur(nu_x, (5, 5), 0)
+  phi_y = cv2.GaussianBlur(nu_y, (5, 5), 0)
+  orientation = np.arctan2(phi_x, phi_y) / 2
+
+  return orientation
