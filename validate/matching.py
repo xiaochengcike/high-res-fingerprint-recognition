@@ -294,7 +294,7 @@ if __name__ == '__main__':
       default='basic',
       help='mode to match images. Can be "basic" or "spatial"')
   parser.add_argument(
-      '--thr', type=float, help='second correspondence elimination threshold')
+      '--thr', type=float, help='distance ratio check threshold')
   parser.add_argument(
       '--model_dir_path', type=str, help='trained model directory path')
   parser.add_argument('--patch_size', type=int, help='pore patch size')
