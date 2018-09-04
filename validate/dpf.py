@@ -15,12 +15,7 @@ def validate(pores_by_image, detections_by_image):
     # update totals
     total_pores += len(pores)
     total_dets += len(dets)
-
-    # coincidences in pore-detection and detection-pore correspondences are true detections
-    pore_corrs, det_corrs = utils.matmul_corr_finding(pores, dets)
-    for pore_ind, pore_corr in enumerate(pore_corrs):
-      if det_corrs[pore_corr] == pore_ind:
-        true_dets += 1
+    true_dets += len(utils.find_correspondences(pores, dets))
 
   # compute tdr, fdr and f score
   eps = 1e-12
