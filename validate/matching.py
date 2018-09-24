@@ -250,6 +250,7 @@ def main():
 
     # create directory tree, if non-existing
     dirname = os.path.dirname(FLAGS.results_path)
+    dirname = os.path.abspath(dirname)
     if not os.path.exists(dirname):
       os.makedirs(dirname)
 

@@ -236,6 +236,7 @@ if __name__ == '__main__':
     else:
       # create path, if does not exist
       dirname = os.path.dirname(flags.results_path)
+      dirname = os.path.dirname(dirname)
       if not os.path.exists(dirname):
         os.makedirs(dirname)
 
