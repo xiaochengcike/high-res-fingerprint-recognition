@@ -4,15 +4,6 @@ import numpy as np
 import cv2
 
 
-def to_patches(img, patch_size):
-  patches = []
-  for i in range(img.shape[0] - patch_size + 1):
-    for j in range(img.shape[1] - patch_size + 1):
-      patches.append(img[i:i + patch_size, j:j + patch_size])
-
-  return patches
-
-
 def placeholder_inputs():
   images = tf.placeholder(tf.float32, [None, None, None, 1], name='images')
   labels = tf.placeholder(tf.float32, [None, 1], name='labels')
@@ -84,27 +75,6 @@ def create_dirs(log_dir_path,
   tf.gfile.MakeDirs(log_dir)
 
   return log_dir
-
-
-def plot_precision_recall(tdr, fdr, path):
-  import matplotlib as mpl
-  mpl.use('Agg')
-  import matplotlib.pyplot as plt
-  import io
-
-  plt.plot(tdr, 1 - fdr, 'g-')
-  plt.xlabel('recall')
-  plt.ylabel('precision')
-  plt.axis([0, 1, 0, 1])
-  plt.grid()
-
-  buf = io.BytesIO()
-  plt.savefig(buf, format='png')
-  buf.seek(0)
-  plt.savefig(path)
-  plt.clf()
-
-  return buf
 
 
 def nms(centers, probs, patch_size, thr):
@@ -201,22 +171,6 @@ def load_dets_txt(pts_path):
       pts.append((row - 1, col - 1))
 
   return pts
-
-
-def draw_matches(img1, pts1, img2, pts2, pairs):
-  matches = []
-  for pair in pairs:
-    matches.append(
-        cv2.DMatch(
-            _distance=pair[2], _queryIdx=pair[0], _trainIdx=pair[1],
-            _imgIdx=0))
-
-  pts1 = list(np.asarray(pts1)[:, [1, 0]])
-  pts2 = list(np.asarray(pts2)[:, [1, 0]])
-  matched = cv2.drawMatches(img1, cv2.KeyPoint.convert(pts1), img2,
-                            cv2.KeyPoint.convert(pts2), matches[:10], None)
-
-  return matched
 
 
 def bilinear_interpolation(x, y, f):
