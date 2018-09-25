@@ -77,15 +77,15 @@ def create_dirs(log_dir_path,
   return log_dir
 
 
-def nms(centers, probs, patch_size, thr):
-  area = patch_size * patch_size
-  half_patch_size = patch_size // 2
+def nms(centers, probs, bb_size, thr):
+  area = bb_size * bb_size
+  half_bb_size = bb_size // 2
 
   xs, ys = np.transpose(centers)
-  x1 = xs - half_patch_size
-  x2 = xs + half_patch_size
-  y1 = ys - half_patch_size
-  y2 = ys + half_patch_size
+  x1 = xs - half_bb_size
+  x2 = xs + half_bb_size
+  y1 = ys - half_bb_size
+  y2 = ys + half_bb_size
 
   order = np.argsort(probs)[::-1]
 
