@@ -236,8 +236,8 @@ class _Dataset:
       image_index = indices[index]
 
       # retrieve image number, row and column from index
-      k = image_index // ((self._image_rows - size) *
-                          (self._image_cols - size))
+      k = image_index // (
+          (self._image_rows - size) * (self._image_cols - size))
       i = image_index // (self._image_cols - size) - k * (
           self._image_rows - size)
       j = image_index % (self._image_cols - size)
@@ -257,6 +257,14 @@ class _Dataset:
 
 
 class Dataset:
+  '''
+  PolyU-HRF detection dataset handler. Contains a _Dataset for
+  training and, depending on how it splits the entire dataset,
+  another one for validation and another for testing. It
+  converts ground truth coordinates into region labels according
+  to label_mode and label_size.
+  '''
+
   def __init__(self,
                images_folder_path,
                labels_folder_path,
@@ -266,6 +274,33 @@ class Dataset:
                label_size=3,
                should_shuffle=True,
                one_hot=False):
+    '''
+    Args:
+      images_folder_path: path from which to load images.
+      labels_folder_path: path from which to label txt files.
+        Must have name correspondence with images in
+        images_folder_path.
+      split: tuple determining how to split the detection dataset.
+        split[0] gives the number of training images, split[1]
+        the number of validation images, and split[2] the number
+        of test images. Images are split sequentially into these
+        sets, i.e. the training set takes the first split[0] images,
+        the validation set takes the next split[1] images etc.
+      patch_size: if not None, allows the sampling of patches,
+        instead of images, from the dataset. Patches are then
+        of size patch_size by patch_size.
+      label_mode: mode of converting detection coordinates to
+        labels. Can be either 'hard_bb', 'hard_l2' or 'hard_l1'.
+        'hard_bb' draws a bounding box of size 'label_size' around
+        each detection. 'hard_lX' draws an LX ball of radius
+        'label_size' around each detection.
+      label_size: see above, in label_mode description, for
+        meaning.
+      should_shuffle: whether the training set should be shuffled
+        between batches.
+      one_hot: whether the labels should be provided as one hot
+        vectors or with integer values.
+    '''
     self._images = utils.load_images(images_folder_path)
     self._labels = self._load_labels(labels_folder_path)
 
