@@ -56,10 +56,10 @@ class Net:
           net, training=training, name='batchnorm_{}'.format(i), reuse=reuse)
 
       # descriptors
-      self.spatial_descriptors = tf.nn.l2_normalize(
+      spatial_descriptors = tf.nn.l2_normalize(
           net, axis=-1, name='spatial_descriptors')
       self.descriptors = tf.reshape(
-          self.spatial_descriptors, [-1, 128], name='descriptors')
+          spatial_descriptors, [-1, 128], name='descriptors')
 
   def build_loss(self, labels, decay_weight=None):
     with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
