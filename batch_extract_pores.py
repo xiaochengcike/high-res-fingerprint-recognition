@@ -11,6 +11,23 @@ FLAGS = None
 
 def extract_pores(image, image_pl, predictions, half_patch_size, prob_thr,
                   inter_thr, sess):
+  '''
+  Extracts pores from an image, inferring from predictions and post-processing
+  with thresholding and NMS.
+
+  Args:
+    image: image in which to detect pores.
+    image_pl: tf placeholder holding net's image input.
+    predictions: tf tensor op of net's output.
+    half_patch_size: half the detection patch size. used for padding the
+      predictions to the input's original dimensions.
+    prob_thr: probability threshold.
+    inter_thr: NMS intersection threshold.
+    sess: tf session
+
+  Returns: 
+    detections for image in shape [N, 2]
+  '''
   # predict probability of pores
   pred = sess.run(
       predictions,
@@ -33,6 +50,18 @@ def extract_pores(image, image_pl, predictions, half_patch_size, prob_thr,
 
 
 def batch_extract(load_path, save_path, extract_fn):
+  '''
+  Extracts pores from all images in directory load_path
+  using extract_fn and saves corresponding detections
+  in save_path.
+
+  Args:
+    load_path: path to load image from.
+    save_path: path to save detections. will be created
+      if non existent.
+    extract_fn: function that receives an image and
+      returns an array of shape [N, 2] of detections.
+  '''
   # load images from 'load_path'
   images, names = utils.load_images_with_names(load_path)
 
