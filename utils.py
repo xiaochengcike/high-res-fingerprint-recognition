@@ -535,7 +535,7 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
     pts: [N, 2] keypoint coordinates for which descriptors
       should be computed.
     patch_size: patch size for descriptor.
-    session: tf session.
+    session: tf session with loaded descs_op variables.
     imgs_pl: image input placeholder for descs_op.
     descs_op: tf tensor op that describes images in imgs_pl.
 
