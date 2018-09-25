@@ -51,7 +51,24 @@ def _compute_valid_region(all_imgs, transfs, patch_size):
 
 
 class Handler:
+  '''
+  Handles alignable images, allowing the extraction of square patches of size
+  patch_size in the coordinates specified by the user in every image. It does
+  this by aligning all other images to the first one. Patches are then
+  accessed sequentially via the Handler.__getitem__ method.
+  '''
+
   def __init__(self, all_imgs, all_pts, patch_size):
+    '''
+    Aligns all images in all_imgs to the all_imgs[0] using the keypoints
+    all_pts. Discards keypoints whose corresponding patches would be
+    out of the images overlap.
+
+    Args:
+      all_imgs: alignable images.
+      all_pts: keypoints in every image of all_imgs.
+      patch_size: size of square patch to be extracted.
+    '''
     self._imgs = all_imgs
     self._patch_size = patch_size
     self._half = patch_size // 2
