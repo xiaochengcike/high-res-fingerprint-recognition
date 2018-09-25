@@ -11,6 +11,22 @@ FLAGS = None
 
 
 def validation_eer(dataset, compute_descriptors):
+  '''
+  Computes the validation Equal Error Rate (EER) in dataset
+  using descriptors computed with compute_descriptors and
+  matching them using SIFT's original criterion with
+  distance ratio check threshold of 0.7, following PolyU-HRF's
+  recognition protocol.
+
+  Args:
+    dataset: dataset for which EER should be computed.
+    compute_descriptors: function that receives image and
+      keypoint detections and computes keypoints at these
+      locations.
+
+  Returns:
+    computed EER.
+  '''
   # describe patches with detections and get
   # subject and register ids from labels
   all_descs = []
@@ -63,6 +79,37 @@ def load_dataset(imgs_dir_path,
                  register_ids,
                  compute_descriptors,
                  patch_size=None):
+  '''
+  Loads PolyU-HRF dataset with corresponding keypoint detections.
+  However, instead of keeping the images themselves, descriptors
+  are computed at keypoint locations and are returned instead.
+
+  Images must be named 'subject-id_session-id_register-id.jpg'
+  and corresponding keypoints must have same name and '.txt'
+  extension, instead of '.jpg'. Every file name from the
+  cartesian product of subject_ids with session_ids and
+  register_ids must have a corresponding image and keypoint
+  files.
+
+  Args:
+    imgs_dir_path: images directory path.
+    pts_dir_path: keypoint txt files directory path.
+    subject_ids: list of subject ids.
+    session_ids: list of session ids.
+    register_ids: list of register ids.
+    compute_descriptors: function to compute keypoints that
+      takes as arguments an image and its corresponding
+      keypoints.
+    patch_size: if not None, discards keypoints that are close
+      enough to the images' borders that they cannot have a
+      patch of size patch_size centered on them.
+  Returns:
+    all_descs: list of computed descriptors for every image.
+    all_pts: list of keypoint locations for every image.
+    id2index: function that converts tuples with
+      (subject_id, session_id, register_id) into corresponding
+      descriptor and keypoint valid index.
+  '''
   id2index_dict = {}
   all_descs = []
   all_pts = []
@@ -113,6 +160,27 @@ def polyu_match(all_descs,
                 id2index,
                 match,
                 thr=None):
+  '''
+  Implements PolyU-HRF recognition protocol comparisons with
+  given descriptors, keypoints, ids and matching algorithm.
+
+  Args:
+    all_descs: list of descriptors for every image.
+    all_pts: list of keypoint detections for every image.
+    subject_ids: list with all subject ids.
+    register_ids: list with all register ids.
+    id2index: function that converts tuples with
+      (subject_id, session_id, register_id) into descriptor
+      and keypoint set index.
+    match: function that receives as arguments two sets of
+      descriptors, two set of keypoint detections and a
+      threshold and returns a similarity score between
+      them.
+
+  Returns:
+    pos: genuine comparison scores.
+    neg: impostor comparison scores.
+  '''
   pos = []
   neg = []
 
