@@ -6,7 +6,7 @@ import utils
 
 class TrainingSet:
   '''
-  PolyU description training set handler. Manages images and
+  PolyU-HRF description training set handler. Manages images and
   corresponding labels in batches, possibly shuffled (shuffles
   the training data between epochs), balanced (same number of
   labels per batch) and incomplete (if the batch size is
@@ -146,8 +146,8 @@ class TrainingSet:
 
 class ValidationSet:
   '''
-  PolyU description validation set handler. Manages images and
-  corresponding labels and detections in batches.
+  PolyU-HRF description validation set handler. Manages images
+  and corresponding labels and detections in batches.
   ValidationSet.__getitem__ provides access to instances,
   returning aligned images, detections and labels.
   '''
@@ -169,7 +169,7 @@ class ValidationSet:
 
 class Dataset:
   '''
-  PolyU description dataset handler. Contains a TrainingSet, as
+  PolyU-HRF description dataset handler. Contains a TrainingSet, as
   Dataset.train, and a ValidationSet, as Dataset.val, if it exists
   in the provided dataset path.
   '''
