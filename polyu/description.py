@@ -5,8 +5,28 @@ import utils
 
 
 class TrainingSet:
+  '''
+  PolyU description training set handler. Manages images and
+  corresponding labels in batches, possibly shuffled (shuffles
+  the training data between epochs), balanced (same number of
+  labels per batch) and incomplete (if the batch size is
+  greater than number of available examples in epoch, return
+  only the examples in the current epoch).
+  '''
+
   def __init__(self, images_by_labels, labels, should_shuffle,
                balanced_batches, incomplete_batches):
+    '''
+    Args:
+      images_by_labels: list of images grouped by labels.
+      labels: labels aligned to images_by_labels.
+      should_shuffle: whether the training set should be
+        shuffled between epochs.
+      balanced_batches: whether batches should have the
+        same number of examples per label.
+      incomplete_batches: whether batches should avoid
+        examples from different epochs.
+    '''
     self.n_labels = len(labels)
     self._shuffle = should_shuffle
     self._balance = balanced_batches
@@ -53,6 +73,19 @@ class TrainingSet:
       self._index = 0
 
   def next_batch(self, batch_size):
+    '''
+    Samples a mini-batch of size batch_size. If balanced_batches
+    was True, then batches are sampled with equal label distribution.
+    If incomplete_batches was True, batches are only sampled inside
+    epochs, even if this means eventually sampling smaller batches.
+
+    Args:
+      batch_size: sampled mini-batch size.
+
+    Returns:
+      batch_images: sampled images.
+      batch_labels: sampled labels.
+    '''
     # adjust for balanced batch sampling
     if not self._balance:
       end = self.n_images
@@ -112,7 +145,20 @@ class TrainingSet:
 
 
 class ValidationSet:
+  '''
+  PolyU description validation set handler. Manages images and
+  corresponding labels and detections in batches.
+  ValidationSet.__getitem__ provides access to instances,
+  returning aligned images, detections and labels.
+  '''
+
   def __init__(self, images, detections, labels):
+    '''
+    Args:
+      images: validation images.
+      detections: corresponding detections.
+      labels: corresponding detections.
+    '''
     self._images = np.array(images)
     self._detections = np.array(detections)
     self._labels = np.array(labels)
@@ -122,7 +168,22 @@ class ValidationSet:
 
 
 class Dataset:
+  '''
+  PolyU description dataset handler. Contains a TrainingSet, as
+  Dataset.train, and a ValidationSet, as Dataset.val, if it exists
+  in the provided dataset path.
+  '''
+
   def __init__(self, path, should_shuffle=True, balanced_batches=True):
+    '''
+    Args:
+      path: path to preprocessed polyu description dataset that has
+        a train subfolder with properly annotated images.
+      should_shuffle: whether TrainingSet should shuffle its data
+        between epochs.
+      balanced_batches: whether TrainingSet should sample batches
+        with the same number of examples per label.
+    '''
     # split paths
     train_path = os.path.join(path, 'train')
     val_path = os.path.join(path, 'val')
