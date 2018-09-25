@@ -37,8 +37,8 @@ class TrainingSet:
       self._index = 0
     else:
       # images can be flattened
-      self._images = np.reshape(images_by_labels, (-1, self.images_shape[0],
-                                                   self.images_shape[1]))
+      self._images = np.reshape(
+          images_by_labels, (-1, self.images_shape[0], self.images_shape[1]))
       self._labels = np.repeat(labels, len(self._images) // len(labels))
       self.n_images = len(self._images)
 
@@ -155,16 +155,16 @@ class Dataset:
       grouped_images.append(images[indices])
     return grouped_images, all_labels
 
-  def _load_validation_data(self, path):
+  def _load_validation_data(self, val_path):
     # load images with respective names
-    images, names = utils.load_images_with_names(path)
+    images, names = utils.load_images_with_names(val_path)
 
     # convert 'names' to validation 'labels'
     # each 'name' in 'names' is 'subject-id_session-id_register-rd'
     labels = [tuple(map(int, name.split('_'))) for name in names]
 
     # load detections, aligned with images and labels
-    paths = map(lambda name: os.path.join(path, name), names)
+    paths = map(lambda name: os.path.join(val_path, name), names)
     detections = [utils.load_dets_txt(path + '.txt') for path in paths]
 
     return images, detections, labels
