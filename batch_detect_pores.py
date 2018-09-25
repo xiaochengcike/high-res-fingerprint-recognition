@@ -9,11 +9,12 @@ from models import detection
 FLAGS = None
 
 
-def extract_pores(image, image_pl, predictions, half_patch_size, prob_thr,
-                  inter_thr, sess):
+def detect_pores(image, image_pl, predictions, half_patch_size, prob_thr,
+                 inter_thr, sess):
   '''
-  Extracts pores from an image, inferring from predictions and post-processing
-  with thresholding and NMS.
+  Detects pores in an image. First, a pore probability map is computed
+  with the tf predictions op. This probability map is then thresholded
+  and converted to coordinates, which are filtered with NMS.
 
   Args:
     image: image in which to detect pores.
@@ -25,7 +26,7 @@ def extract_pores(image, image_pl, predictions, half_patch_size, prob_thr,
     inter_thr: NMS intersection threshold.
     sess: tf session
 
-  Returns: 
+  Returns:
     detections for image in shape [N, 2]
   '''
   # predict probability of pores
@@ -49,17 +50,17 @@ def extract_pores(image, image_pl, predictions, half_patch_size, prob_thr,
   return dets
 
 
-def batch_extract(load_path, save_path, extract_fn):
+def batch_detect(load_path, save_path, detect_fn):
   '''
-  Extracts pores from all images in directory load_path
-  using extract_fn and saves corresponding detections
+  Detects pores in all images in directory load_path
+  using detect_fn and saves corresponding detections
   in save_path.
 
   Args:
     load_path: path to load image from.
-    save_path: path to save detections. will be created
+    save_path: path to save detections. Will be created
       if non existent.
-    extract_fn: function that receives an image and
+    detect_fn: function that receives an image and
       returns an array of shape [N, 2] of detections.
   '''
   # load images from 'load_path'
@@ -69,10 +70,10 @@ def batch_extract(load_path, save_path, extract_fn):
   if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-  # extract from each image and save it
+  # detect in each image and save it
   for image, name in zip(images, names):
-    # extract pores
-    detections = extract_fn(image)
+    # detect pores
+    detections = detect_fn(image)
 
     # save results
     filename = os.path.join(save_path, '{}.txt'.format(name))
@@ -95,27 +96,27 @@ def main():
       print('Done')
 
       # capture arguments in lambda function
-      extract_fn = lambda image: extract_pores(image, image_pl, net.predictions, half_patch_size, FLAGS.prob_thr, FLAGS.inter_thr, sess)
+      detect_fn = lambda image: detect_pores(image, image_pl, net.predictions, half_patch_size, FLAGS.prob_thr, FLAGS.inter_thr, sess)
 
-      # batch extract from dbi training
-      print('Extracting pores from PolyU-HRF DBI Training images...')
+      # batch detect in dbi training
+      print('Detecting pores in PolyU-HRF DBI Training images...')
       load_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Training')
       save_path = os.path.join(FLAGS.results_dir_path, 'DBI', 'Training')
-      batch_extract(load_path, save_path, extract_fn)
+      batch_detect(load_path, save_path, detect_fn)
       print('Done')
 
-      # batch extract from dbi test
-      print('Extracting pores from PolyU-HRF DBI Test images...')
+      # batch detect in dbi test
+      print('Detecting pores in PolyU-HRF DBI Test images...')
       load_path = os.path.join(FLAGS.polyu_dir_path, 'DBI', 'Test')
       save_path = os.path.join(FLAGS.results_dir_path, 'DBI', 'Test')
-      batch_extract(load_path, save_path, extract_fn)
+      batch_detect(load_path, save_path, detect_fn)
       print('Done')
 
-      # batch extract from dbii
-      print('Extracting pores from PolyU-HRF DBII images...')
+      # batch detect in dbii
+      print('Detecting pores in PolyU-HRF DBII images...')
       load_path = os.path.join(FLAGS.polyu_dir_path, 'DBII')
       save_path = os.path.join(FLAGS.results_dir_path, 'DBII')
-      batch_extract(load_path, save_path, extract_fn)
+      batch_detect(load_path, save_path, detect_fn)
       print('Done')
 
 
