@@ -5,6 +5,21 @@ import utils
 
 
 def _dataset_descriptors(patches_pl, session, descs_op, dataset, batch_size):
+  '''
+  Computes descriptors with descs_op for the entire dataset, in batches of
+  size batch_size.
+
+  Args:
+    patches_pl: patch input tf placeholder for descs_op.
+    session: tf session with descs_op variables loaded.
+    descs_op: tf op for describing patches in patches_pl.
+    dataset: dataset for which descriptors will be computed.
+    batch_size: size of batch to describe patches from dataset.
+
+  Returns:
+    descs: computed descriptors.
+    labels: corresponding labels.
+  '''
   # extracting descriptors for entire dataset
   descs = []
   labels = []
@@ -29,6 +44,20 @@ def _dataset_descriptors(patches_pl, session, descs_op, dataset, batch_size):
 
 
 def dataset_eer(patches_pl, session, descs_op, dataset, batch_size):
+  '''
+  Computes the Equal Error Rate (EER) of the descriptors computed with
+  descs_op in the dataset dataset.
+
+  Args:
+    patches_pl: patch input tf placeholder for descs_op.
+    session: tf session with descs_op variables loaded.
+    descs_op: tf op for describing patches in patches_pl.
+    dataset: dataset for which descriptors will be computed.
+    batch_size: size of batch to describe patches from dataset.
+
+  Returns:
+    the computed EER.
+  '''
   # extracting descriptors for entire dataset
   descs, labels = _dataset_descriptors(patches_pl, session, descs_op, dataset,
                                        batch_size)
