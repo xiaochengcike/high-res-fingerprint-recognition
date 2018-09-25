@@ -45,8 +45,8 @@ def _transform_mini_batch(sample):
   translations and rotations. These transformations are sampled from a
   multivariate normal distribution with zero covariance or, equivalently,
   from individual normal distributions. Rotations and translations are
-  done as if each image of sample is zero-padded. Rotations are also done
-  by linearly interpolating the image.
+  done as if each image of sample is zero-padded and are obtained by
+  linearly interpolating the image.
 
   Args:
     sample: array of images to be transformed.
@@ -74,7 +74,7 @@ def _transform_mini_batch(sample):
     B = cv2.getRotationMatrix2D(center, theta, 1)
 
     # transform image
-    image = cv2.warpAffine(image, A, image.shape[::-1])
+    image = cv2.warpAffine(image, A, image.shape[::-1], flags=cv2.INTER_LINEAR)
     image = cv2.warpAffine(image, B, image.shape[::-1], flags=cv2.INTER_LINEAR)
 
     # add to batch images
