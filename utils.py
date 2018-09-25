@@ -11,6 +11,21 @@ def placeholder_inputs():
 
 
 def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size, augment=False):
+  '''
+  Creates a tf feed_dict containing patches and corresponding labels from a
+  mini-batch of size batch_size sampled from dataset, possibly transforming it
+  for online dataset augmentation.
+
+  Args:
+    dataset: dataset object satisfying polyu._Dataset.next_batch signature.
+    patches_pl: tf placeholder for patches.
+    labels_pl: tf placeholder for labels.
+    batch_size: size of mini-batch to be sampled.
+    augment: whether or not this mini-batch should be transformed.
+
+  Returns:
+    tf feed_dict containing possibly augmented patches and corresponding labels.
+  '''
   patches_feed, labels_feed = dataset.next_batch(batch_size)
 
   if augment:
@@ -25,6 +40,20 @@ def fill_feed_dict(dataset, patches_pl, labels_pl, batch_size, augment=False):
 
 
 def _transform_mini_batch(sample):
+  '''
+  Transforms an image sample with contrast and brightness variations,
+  translations and rotations. These transformations are sampled from a
+  multivariate normal distribution with zero covariance or, equivalently,
+  from individual normal distributions. Rotations and translations are
+  done as if each image of sample is zero-padded. Rotations are also done
+  by linearly interpolating the image.
+
+  Args:
+    sample: array of images to be transformed.
+
+  Returns:
+    randomly transformed sample.
+  '''
   # contrast and brightness variations
   contrast = np.random.normal(loc=1, scale=0.05, size=(sample.shape[0], 1, 1))
   brightness = np.random.normal(
@@ -78,6 +107,20 @@ def create_dirs(log_dir_path,
 
 
 def nms(centers, probs, bb_size, thr):
+  '''
+  Converts each center in centers into center centered bb_size x bb_size
+  bounding boxes and applies Non-Maximum-Suppression to them.
+
+  Args:
+    centers: centers of detection bounding boxes.
+    probs: probabilities for each of the detections.
+    bb_size: bounding box size.
+    thr: NMS discarding intersection threshold.
+
+  Returns:
+    dets: np.array of NMS filtered detections.
+    det_probs: np.array of corresponding detection probabilities.
+  '''
   area = bb_size * bb_size
   half_bb_size = bb_size // 2
 
@@ -187,6 +230,22 @@ def bilinear_interpolation(x, y, f):
 
 
 def sift_descriptors(img, pts, scale=4, normalize=True):
+  '''
+  Computes SIFT descriptors in pts keypoints of the image img.
+  If normalize is True, image is normalized with median blur and
+  CLAHE.
+
+  Args:
+    img: image from which descriptors will be computed.
+    pts: [N, 2] coordinates of N keypoints in img from which
+      descriptors will be computed.
+    scale: SIFT scale.
+    normalize: whether to normalize image with median blur and
+      CLAHE prior to descriptor computation.
+
+  Returns:
+    [N, 128] np.array of N SIFT descriptors.
+  '''
   # empty detections set
   if len(pts) == 0:
     return []
@@ -219,6 +278,29 @@ def find_correspondences(descs1,
                          euclidean_weight=0,
                          transf=None,
                          thr=None):
+  '''
+  Finds bidirectional correspondences between descs1 descriptors and
+  descs2 descriptors. If thr is provided, discards correspondences
+  that fail a distance ratio check with threshold thr. If pts1, pts2,
+  and transf are give, the metric considered when finding correspondences
+  is
+    d(i, j) = ||descs1(j) - descs2(j)||^2 + euclidean_weight *
+      * ||transf(pts1(i)) - pts2(j)||^2
+
+  Args:
+    descs1: [N, M] np.array of N descriptors of dimension M each.
+    descs2: [N, M] np.array of N descriptors of dimension M each.
+    pts1: [N, 2] np.array of N coordinates for each descriptor in descs1.
+    pts2: [N, 2] np.array of N coordinates for each descriptor in descs2.
+    euclidean_weight: weight given to spatial constraint in comparison
+      metric.
+    transf: alignment transformation that aligns pts1 to pts2.
+    thr: distance ratio check threshold.
+
+  Returns:
+    list of correspondence tuples (j, i, d) in which index j of
+      descs2 corresponds with i of descs1 with distance d.
+  '''
   # compute descriptors' pairwise distances
   D = pairwise_distances(descs1, descs2)
 
@@ -291,6 +373,17 @@ def retrieve_label_from_image_path(image_path):
 
 
 def eer(pos, neg):
+  '''
+  Computes the Equal Error Rate of given comparison scores.
+  If FAR and FRR crossing is not exact, lineary interpolate for EER.
+
+  Args:
+    pos: scores of genuine comparisons.
+    neg: scores of impostor comparisons.
+
+  Returns:
+    EER of comparisons.
+  '''
   # compute roc curve
   fars, frrs = roc(pos, neg)
 
@@ -315,6 +408,17 @@ def eer(pos, neg):
 
 
 def roc(pos, neg):
+  '''
+  Computes Receiver Operating Characteristic curve for given comparison scores.
+
+  Args:
+    pos: scores of genuine comparisons.
+    neg: scores of impostor comparisons.
+
+  Returns:
+    fars: False Acceptance Rates (FARs) over all possible thresholds.
+    frrs: False Rejection Rates (FRRs) over all possible thresholds.
+  '''
   # sort comparisons arrays for efficiency
   pos = sorted(pos, reverse=True)
   neg = sorted(neg, reverse=True)
@@ -420,6 +524,24 @@ def rank_n(instances, labels, sample_size):
 
 
 def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
+  '''
+  Computes descriptors according to descs_op tf tensor operation for
+  pts keypoints and patch size of patch_size in the given image.
+  If patch_size is even, the last row and last column of the patch
+  centered on each keypoint is discarded before descriptor computation.
+
+  Args:
+    img: image in which keypoints were detected.
+    pts: [N, 2] keypoint coordinates for which descriptors
+      should be computed.
+    patch_size: patch size for descriptor.
+    session: tf session.
+    imgs_pl: image input placeholder for descs_op.
+    descs_op: tf tensor op that describes images in imgs_pl.
+
+  Returns:
+    [N, M] np.array of N descriptors of descs_op of dimension M.
+  '''
   # adjust for odd patch sizes
   odd = 1 if patch_size % 2 != 0 else 0
 
@@ -445,6 +567,17 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
 
 
 def compute_orientation(img):
+  '''
+  Computes fingerprint ridge orientation for every spatial location using
+  the method proposed by Hong et al. (Fingerprint Image Enhancement:
+  Algorithm and Performance Evaluation, 1998).
+
+  Args:
+    img: fingerprint image for which orientation will be computed.
+
+  Returns:
+    matrix with ridge orientation per spatial location.
+  '''
   # compute gradients
   dx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
   dy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
@@ -469,6 +602,22 @@ def compute_orientation(img):
 
 
 def dp_descriptors(img, pts, patch_size):
+  '''
+  Computes Direct Pore (DP) descriptors (Direct Pore Matching for
+  Fingerprint Recognition, 2009) for pts keypoints and patch
+  size of patch_size in the given image. If patch_size is even,
+  the last row and last column of the patch centered on each keypoint
+  is discarded before descriptor computation.
+
+  Args:
+    img: image in which keypoints were detected.
+    pts: [N, 2] keypoint coordinates for which DP descriptors
+      should be computed.
+    patch_size: patch size for DP descriptor.
+
+  Returns:
+    [N, M] np.array of N DP descriptors of dimension M.
+  '''
   # adjust for odd patch sizes
   odd = 1 if patch_size % 2 != 0 else 0
 
