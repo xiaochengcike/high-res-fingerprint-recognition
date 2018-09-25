@@ -5,6 +5,25 @@ import utils
 
 
 def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
+  '''
+  Computes detection parameters that optimize the patch-based keypoint
+  detection F-score in the dataset with a grid search. This is done
+  efficiently, by sorting probability scores and iterating over them.
+
+  Args:
+    sess: tf session with loaded preds variables.
+    preds: tf op for detection probability prediction.
+    batch_size: size of mini-batch.
+    patches_pl: patch input placeholder for preds op.
+    labels_pl: label input placeholder to retrieve labels from
+      tf input feed dict.
+    dataset: dataset to perform grid-search on.
+
+  Returns:
+    best_f_score: value of best found F-score.
+    best_fdr: corresponding value of False Detection Rate.
+    best_tdr: corresponding value of True Detection Rate.
+  '''
   # initialize dataset statistics
   true_preds = []
   false_preds = []
@@ -68,6 +87,29 @@ def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
 
 
 def by_images(sess, pred_op, patches_pl, dataset, discard=False):
+  '''
+  Computes detection parameters that optimize the keypoint detection
+  F-score in the dataset with a grid search. This differs from
+  by_patches because images are post-processed with thresholding and
+  NMS. Parameters of both methods are included in the grid-search.
+
+  Args:
+    sess: tf session with loaded pred_op variables.
+    pred_op: tf op for detection probability prediction.
+    patches_pl: patch input placeholder for pred_op op.
+    dataset: dataset to perform grid-search on.
+    discard: whether to only consider keypoints in the area in which
+      method is capable of detecting.
+
+  Returns:
+    best_f_score: value of best found F-score.
+    best_fdr: corresponding value of False Detection Rate.
+    best_tdr: corresponding value of True Detection Rate.
+    best_inter_thr: NMS intersection threshold that achieves found
+      F-score.
+    best_prob_thr: probability threshold that achieves found
+      F-score.
+  '''
   patch_size = dataset.patch_size
   half_patch_size = patch_size // 2
   preds = []
