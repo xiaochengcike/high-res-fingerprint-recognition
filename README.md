@@ -84,11 +84,12 @@ optional arguments:
 ```
 for more details, refer to the code documentation.
 
-### Validating trained detection models
+### Validating the trained model
 To evaluate the model trained above, run:
 ```
 python3 -m validate.detection --polyu_dir_path polyu_hrf --model_dir_path log/detection/[det_model_dir] --fold test --discard
 ```
+The results will most likely differ from the ones reported in the paper. To reproduce those, read below about the trained models.
 
 The options for validating the detection model are:
 ```
@@ -277,3 +278,6 @@ optional arguments:
                         "DBI-test" and "DBII"
   --seed SEED           random seed
 ```
+
+## Pre-trained models and reproducing paper results
+The pre-trained [detection](https://drive.google.com/open?id=1U9rm_5za2kRU2FsviCe-qrZoouwUGyzI) and [description](https://drive.google.com/open?id=16GiLG7xBj64SOjCJwlCfbBcb-DORzYg1) models are required to ensure that you get the exact same results as those of the paper. After downloading them, follow the batch detection and fingerprint recognition steps replacing `[det_model_dir]` and `[desc_model_dir]` where appropriate.
