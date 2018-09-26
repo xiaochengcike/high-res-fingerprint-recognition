@@ -253,7 +253,7 @@ Other options for `validate.matching` are:
 ```
 usage: validate.matching [-h] --polyu_dir_path POLYU_DIR_PATH --pts_dir_path
                          PTS_DIR_PATH [--results_path RESULTS_PATH]
-                         [--descriptors DESCRIPTORS] [--mode MODE] [--thr THR]
+                         [--descriptors DESCRIPTORS] [--thr THR]
                          [--model_dir_path MODEL_DIR_PATH] [--patch_size PATCH_SIZE]
                          [--fold FOLD] [--seed SEED]
 
@@ -268,7 +268,6 @@ optional arguments:
   --descriptors DESCRIPTORS
                         which descriptors to use. Can be "sift", "dp" or
                         "trained"
-  --mode MODE           mode to match images. Can be "basic" or "spatial"
   --thr THR             distance ratio check threshold
   --model_dir_path MODEL_DIR_PATH
                         trained model directory path

@@ -242,12 +242,6 @@ def main():
 
     compute_descriptors = lambda img, pts: utils.trained_descriptors(img, pts, FLAGS.patch_size, sess, img_pl, net.descriptors)
 
-  # parse matching mode and adjust accordingly
-  if FLAGS.mode == 'basic':
-    match = matching.basic
-  else:
-    match = matching.spatial
-
   # make dir path be full appropriate dir path
   imgs_dir_path = None
   pts_dir_path = None
@@ -305,7 +299,7 @@ def main():
       subject_ids,
       register_ids,
       id2index,
-      match,
+      matching.basic,
       thr=FLAGS.thr)
   print('Done')
 
@@ -357,11 +351,6 @@ if __name__ == '__main__':
       type=str,
       default='sift',
       help='which descriptors to use. Can be "sift", "dp" or "trained"')
-  parser.add_argument(
-      '--mode',
-      type=str,
-      default='basic',
-      help='mode to match images. Can be "basic" or "spatial"')
   parser.add_argument(
       '--thr', type=float, help='distance ratio check threshold')
   parser.add_argument(
