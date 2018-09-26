@@ -186,6 +186,8 @@ python3 -m train.description --dataset_path log/patch_polyu --log_dir_path log/d
 ```
 This will train a description model with the hyper-parameters we used for the model in our paper, but we recommend tuning them manually by observing the EER in the validation set. The above values usually provide excelent results. However, if the model fails to achieve 0% EER in the validation set, you should probably investigate other values. Training without augmentation has disastrous results, so always train with it.
 
+Running the script above will create a folder inside `log/description` for the trained model's resources. We will call it `[desc_model_dir]` for the rest of the instructions.
+
 Options for training the description model are:
 ```
 usage: train.description [-h] --dataset_path DATASET_PATH
@@ -213,4 +215,35 @@ optional arguments:
   --weight_decay WEIGHT_DECAY
                         weight decay lambda
   --seed SEED           random seed
+```
+
+## Fingerprint recogntion experiments
+### SIFT descriptors
+In order to reproduce the SIFT descriptors experiment in DBI Test, run:
+```
+python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors sift --thr 0.7 --fold DBI-test
+```
+For the DBII experiment:
+```
+python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors sift --thr 0.7 --fold DBII
+```
+
+### DP descriptors
+For the DBI Test, run:
+```
+python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors dp --thr 0.7 --fold DBI-test --patch_size 32
+```
+For the DBII experiment:
+```
+python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors dp --thr 0.7 --fold DBII --patch_size 32
+```
+
+### Trained descriptors
+For the DBI Test experiment:
+```
+python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors trained --thr 0.7 --model_dir_path log/description/[desc_model_dir] --fold DBI-test --patch_size 32
+```
+For the DBII experiment:
+```
+python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors trained --thr 0.7 --model_dir_path log/description/[desc_model_dir] --fold DBII --patch_size 32
 ```
