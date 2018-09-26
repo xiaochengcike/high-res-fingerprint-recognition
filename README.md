@@ -247,3 +247,33 @@ For the DBII experiment:
 ```
 python3 -m validate.matching --polyu_dir_path polyu_hrf --pts_dir_path log/pores --descriptors trained --thr 0.7 --model_dir_path log/description/[desc_model_dir] --fold DBII --patch_size 32
 ```
+
+Other options for `validate.matching` are:
+```
+usage: validate.matching [-h] --polyu_dir_path POLYU_DIR_PATH --pts_dir_path
+                         PTS_DIR_PATH [--results_path RESULTS_PATH]
+                         [--descriptors DESCRIPTORS] [--mode MODE] [--thr THR]
+                         [--model_dir_path MODEL_DIR_PATH] [--patch_size PATCH_SIZE]
+                         [--fold FOLD] [--seed SEED]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --polyu_dir_path POLYU_DIR_PATH
+                        path to PolyU-HRF dataset
+  --pts_dir_path PTS_DIR_PATH
+                        path to chosen dataset keypoints detections
+  --results_path RESULTS_PATH
+                        path to results file
+  --descriptors DESCRIPTORS
+                        which descriptors to use. Can be "sift", "dp" or
+                        "trained"
+  --mode MODE           mode to match images. Can be "basic" or "spatial"
+  --thr THR             distance ratio check threshold
+  --model_dir_path MODEL_DIR_PATH
+                        trained model directory path
+  --patch_size PATCH_SIZE
+                        pore patch size
+  --fold FOLD           choose what fold of polyu to use. Can be "DBI-train",
+                        "DBI-test" and "DBII"
+  --seed SEED           random seed
+```
