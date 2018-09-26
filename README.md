@@ -277,6 +277,3 @@ optional arguments:
                         "DBI-test" and "DBII"
   --seed SEED           random seed
 ```
-
-## Pre-trained models and reproducing paper results
-The pre-trained [detection](https://drive.google.com/open?id=1U9rm_5za2kRU2FsviCe-qrZoouwUGyzI) and [description](https://drive.google.com/open?id=16GiLG7xBj64SOjCJwlCfbBcb-DORzYg1) models are required to ensure that you get the exact same results as those of the paper. After downloading them, follow the batch detection and fingerprint recognition steps replacing `[det_model_dir]` and `[desc_model_dir]` where appropriate.
