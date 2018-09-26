@@ -16,3 +16,26 @@ polyu_hrf/
       PoreGroundTruthMarked/
       PoreGroundTruthSampleimage/
 ```
+
+## Requirements
+The code in this repository was tested for Ubuntu 16.04 and Python 3.5.2, but we believe any newer version of both will do.
+
+We recomend installing Python's virtualenv (tested for version 15.0.1) to run the experiments. To do it in Ubuntu 16.04:
+```
+sudo apt install python3-virtualenv
+```
+
+Then, create and activate a virtualenv:
+```
+python3 -m venv env
+source env/bin/activate
+```
+
+To install the requirements either run, for CPU usage:
+```
+pip install -r cpu-requirements.txt
+```
+or run, for GPU usage, which requires the [Tensorflow GPU dependencies](https://www.tensorflow.org/install/gpu):
+```
+pip install -r gpu-requirements.txt
+```
