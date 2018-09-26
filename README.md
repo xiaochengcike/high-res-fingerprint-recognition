@@ -83,3 +83,32 @@ optional arguments:
 
 ```
 for more details, refer to the code documentation.
+
+### Validating trained detection models
+To evaluate the model trained above, run:
+```
+python3 -m validate.detection --polyu_dir_path polyu_hrf --model_dir_path log/detection/[det_model_dir] --fold test --discard
+```
+
+The options for validating the detection model are:
+```
+usage: validate.detection [-h] --polyu_dir_path POLYU_DIR_PATH --model_dir_path
+                          MODEL_DIR_PATH [--patch_size PATCH_SIZE] [--fold FOLD]
+                          [--discard] [--results_path RESULTS_PATH] [--seed SEED]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --polyu_dir_path POLYU_DIR_PATH
+                        path to PolyU-HRF dataset
+  --model_dir_path MODEL_DIR_PATH
+                        logging directory
+  --patch_size PATCH_SIZE
+                        pore patch size
+  --fold FOLD           which fold of the dataset to use. Can be "train",
+                        "val", or "test"
+  --discard             use this flag to disconsider pores in ground truth
+                        borders
+  --results_path RESULTS_PATH
+                        path in which to save results
+  --seed SEED           random seed
+```
