@@ -178,3 +178,39 @@ optional arguments:
                         split
   --seed SEED           random seed
 ```
+
+### Training the model
+To train the pore description model, run:
+```
+python3 -m train.description --dataset_path log/patch_polyu --log_dir_path log/description/ --augment --dropout 0.3
+```
+This will train a description model with the hyper-parameters we used for the model in our paper, but we recommend tuning them manually by observing the EER in the validation set. The above values usually provide excelent results. However, if the model fails to achieve 0% EER in the validation set, you should probably investigate other values. Training without augmentation has disastrous results, so always train with it.
+
+Options for training the description model are:
+```
+usage: train.description [-h] --dataset_path DATASET_PATH
+                         [--learning_rate LEARNING_RATE]
+                         [--log_dir_path LOG_DIR_PATH] [--tolerance TOLERANCE]
+                         [--batch_size BATCH_SIZE] [--steps STEPS] [--augment]
+                         [--dropout DROPOUT] [--weight_decay WEIGHT_DECAY]
+                         [--seed SEED]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --dataset_path DATASET_PATH
+                        path to dataset
+  --learning_rate LEARNING_RATE
+                        learning rate
+  --log_dir_path LOG_DIR_PATH
+                        logging directory
+  --tolerance TOLERANCE
+                        early stopping tolerance
+  --batch_size BATCH_SIZE
+                        batch size
+  --steps STEPS         maximum training steps
+  --augment             use this flag to perform dataset augmentation
+  --dropout DROPOUT     dropout rate in last convolutional layer
+  --weight_decay WEIGHT_DECAY
+                        weight decay lambda
+  --seed SEED           random seed
+```
