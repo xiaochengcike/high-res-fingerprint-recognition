@@ -142,7 +142,10 @@ if __name__ == '__main__':
   parser.add_argument(
       '--label_size', type=int, default=3, help='pore label size')
   parser.add_argument(
-      '--label_mode', type=str, default='hard_bb', help='pore patch size')
+      '--label_mode',
+      type=str,
+      default='hard_bb',
+      help='how to convert pore coordinates into labels')
   parser.add_argument(
       '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument('--seed', type=int, help='random seed')
