@@ -39,3 +39,47 @@ or run, for GPU usage, which requires the [Tensorflow GPU dependencies](https://
 ```
 pip install -r gpu-requirements.txt
 ```
+
+## Pore detection
+### Training the model
+Throught our experiments, we will assume that PolyU-HRF is inside a local folder name `polyu_hrf`. To train a pore detection network with our best found parameters, run:
+```
+python3 -m train.detection --polyu_dir_path polyu_hrf --log_dir_path log/detection --dropout 0.5 --augment
+```
+This will create a folder inside `log/detection` for the trained model's resources. We will call it `[det_model_dir]` for the rest of the instructions.
+
+The options for training the detection net are:
+```
+usage: train.detection [-h] --polyu_dir_path POLYU_DIR_PATH
+                       [--learning_rate LEARNING_RATE]
+                       [--log_dir_path LOG_DIR_PATH] [--dropout DROPOUT]
+                       [--augment] [--tolerance TOLERANCE]
+                       [--batch_size BATCH_SIZE] [--steps STEPS]
+                       [--label_size LABEL_SIZE] [--label_mode LABEL_MODE]
+                       [--patch_size PATCH_SIZE] [--seed SEED]
+                       
+optional arguments:
+  -h, --help            show this help message and exit
+  --polyu_dir_path POLYU_DIR_PATH
+                        path to PolyU-HRF dataset
+  --learning_rate LEARNING_RATE
+                        learning rate
+  --log_dir_path LOG_DIR_PATH
+                        logging directory
+  --dropout DROPOUT     dropout rate in last convolutional layer
+  --augment             use this flag to perform dataset augmentation
+  --tolerance TOLERANCE
+                        early stopping tolerance
+  --batch_size BATCH_SIZE
+                        batch size
+  --steps STEPS         maximum training steps
+  --label_size LABEL_SIZE
+                        pore label size
+  --label_mode LABEL_MODE
+                        how to convert pore coordinates into labels
+  --patch_size PATCH_SIZE
+                        pore patch size
+  --seed SEED           random seed
+
+```
+for more details, refer to the code documentation.
