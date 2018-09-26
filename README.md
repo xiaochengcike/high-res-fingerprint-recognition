@@ -144,3 +144,37 @@ optional arguments:
                         nms intersection threshold
 
 ```
+
+### Generating pore identity annotations
+It is also required to have pore identity annotations to train a pore descriptor. To do this, run:
+```
+python3 -m polyu.preprocess --polyu_dir_path polyu_hrf --pts_dir_path log/pores --patch_size 32 --result_dir_path log/patch_polyu
+```
+This splits DBI Training in two subject independent subsets, one for training, another for validation. The default split creates the training subset with 60% of the subject identities. All other identites go to the validation subset.
+`polyu.preprocess` separates these subsets in subfolders of `log/patch_polyu`: `train` and `val`.
+
+`train` contains pore patch images named `pore-id_register-id.png`. It has exactly 6 images for each pore identity that is visible in every image of the training subset.
+
+`val` contains the images of the validation subset, with their original names, and their corresponding pore detection files.
+
+The options for generating pore identity annotations are:
+```
+usage: polyu.preprocess [-h] --polyu_dir_path POLYU_DIR_PATH --pts_dir_path
+                        PTS_DIR_PATH --patch_size PATCH_SIZE --result_dir_path
+                        RESULT_DIR_PATH [--split SPLIT] [--seed SEED]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --polyu_dir_path POLYU_DIR_PATH
+                        path to PolyU-HRF dataset
+  --pts_dir_path PTS_DIR_PATH
+                        path to PolyU-HRF DBI Training dataset keypoints
+                        detections
+  --patch_size PATCH_SIZE
+                        image patch size for descriptor
+  --result_dir_path RESULT_DIR_PATH
+                        path to save description dataset
+  --split SPLIT         floating point percentage of training set in train/val
+                        split
+  --seed SEED           random seed
+```
