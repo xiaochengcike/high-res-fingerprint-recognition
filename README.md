@@ -112,3 +112,35 @@ optional arguments:
                         path in which to save results
   --seed SEED           random seed
 ```
+
+## Pore description
+### Detecing pores in every image
+To train a pore descriptor, pore detections are required for every image. To do this, run:
+```
+python3 -m batch_detect_pores --polyu_dir_path polyu_hrf --model_dir_path log/detection/[det_model_dir] --results_dir_path log/pores
+```
+This will detect pores for every image in PolyU-HRF and store them in `[image_name].txt` format inside `log/pores` subfolders `DBI/Training`, `DBI/Test` and `DBII`.
+
+The options for batch detecting pores are:
+```
+usage: batch_detect_pores [-h] --polyu_dir_path POLYU_DIR_PATH
+                          --model_dir_path MODEL_DIR_PATH
+                          [--patch_size PATCH_SIZE]
+                          [--results_dir_path RESULTS_DIR_PATH]
+                          [--prob_thr PROB_THR] [--inter_thr INTER_THR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --polyu_dir_path POLYU_DIR_PATH
+                        path to PolyU-HRF dataset
+  --model_dir_path MODEL_DIR_PATH
+                        path from which to restore trained model
+  --patch_size PATCH_SIZE
+                        pore patch size
+  --results_dir_path RESULTS_DIR_PATH
+                        path to folder in which results should be saved
+  --prob_thr PROB_THR   probability threshold to filter detections
+  --inter_thr INTER_THR
+                        nms intersection threshold
+
+```
