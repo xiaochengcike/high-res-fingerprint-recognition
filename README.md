@@ -282,6 +282,44 @@ optional arguments:
 ## Pre-trained models and reproducing paper results
 The pre-trained [detection](https://drive.google.com/open?id=1U9rm_5za2kRU2FsviCe-qrZoouwUGyzI) and [description](https://drive.google.com/open?id=16GiLG7xBj64SOjCJwlCfbBcb-DORzYg1) models are required to ensure that you get the exact same results as those of the paper. After downloading them, follow the batch detection and fingerprint recognition steps replacing `[det_model_dir]` and `[desc_model_dir]` where appropriate.
 
+## Recognizing fingerprints
+We also provide a script `recognize.py` to, given two high resolution fingerprint images and a model trained to detect pores and another one to describe them, determine if they are from the same subject or not. To use it, run:
+```
+python3 -m recognize --image_paths [image01_path] [image02_path] --det_model_dir [det_model_dir] --desc_model_dir [desc_model_dir]
+```
+
+There is also a command line parameter, `score_thr`, to control the minimum number of established correspondences to determine that the images belong to the same subject. Its default value is 244, the EER threshold for DBI test. For DBII, this value is 692.
+
+Other options for this script are:
+```
+usage: recognize [-h] --img_paths IMG_PATHS IMG_PATHS --det_model_dir
+                 DET_MODEL_DIR --desc_model_dir DESC_MODEL_DIR
+                 [--score_thr SCORE_THR] [--det_patch_size DET_PATCH_SIZE]
+                 [--det_prob_thr DET_PROB_THR]
+                 [--nms_inter_thr NMS_INTER_THR]
+                 [--desc_patch_size DESC_PATCH_SIZE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --img_paths IMG_PATHS IMG_PATHS
+                        path to images to be recognized
+  --det_model_dir DET_MODEL_DIR
+                        path to pore detection trained model
+  --desc_model_dir DESC_MODEL_DIR
+                        path to pore description trained model
+  --score_thr SCORE_THR
+                        score threshold to determine if pair is genuine or
+                        impostor
+  --det_patch_size DET_PATCH_SIZE
+                        detection patch size
+  --det_prob_thr DET_PROB_THR
+                        probability threshold for discarding detections
+  --nms_inter_thr NMS_INTER_THR
+                        NMS area intersection threshold
+  --desc_patch_size DESC_PATCH_SIZE
+                        patch size around each detected keypoint to describe
+```
+
 ## Reference
 If you find the code in this repository useful for your research, please consider citing:
 ```
