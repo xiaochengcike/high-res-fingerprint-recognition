@@ -20,12 +20,12 @@ polyu_hrf/
 ## Requirements
 The code in this repository was tested for Ubuntu 16.04 and Python 3.5.2, but we believe any newer version of both will do.
 
-We recomend installing Python's virtualenv (tested for version 15.0.1) to run the experiments. To do it in Ubuntu 16.04:
+We recomend installing Python's venv (tested for version 15.0.1) to run the experiments. To do it in Ubuntu 16.04:
 ```
-sudo apt install python3-virtualenv
+sudo apt install python3-venv
 ```
 
-Then, create and activate a virtualenv:
+Then, create and activate a venv:
 ```
 python3 -m venv env
 source env/bin/activate
