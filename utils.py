@@ -404,7 +404,7 @@ def eer(pos, neg):
   if far == frr:
     return far
   else:
-    return (old_far + far + frr + old_frr) / 4
+    return (far * old_frr - old_far * frr) / (far - old_far - (frr - old_frr))
 
 
 def roc(pos, neg):
