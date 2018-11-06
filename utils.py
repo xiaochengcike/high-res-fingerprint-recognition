@@ -375,7 +375,8 @@ def retrieve_label_from_image_path(image_path):
 def eer(pos, neg):
   '''
   Computes the Equal Error Rate of given comparison scores.
-  If FAR and FRR crossing is not exact, lineary interpolate for EER.
+  If FAR and FRR crossing is not exact, lineary interpolate the ROC and
+  compute its intersection with the identity line f(x) = x.
 
   Args:
     pos: scores of genuine comparisons.
@@ -399,8 +400,8 @@ def eer(pos, neg):
       old_frr = frr
 
   # if crossing is precisely found, return it
-  # otherwise, approximate it though linear
-  # interpolation and mean of curves
+  # otherwise, approximate it though ROC linear
+  # interpolation and intersection with f(x) = x
   if far == frr:
     return far
   else:
