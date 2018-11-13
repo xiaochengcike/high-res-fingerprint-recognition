@@ -221,10 +221,6 @@ if __name__ == '__main__':
       help='which fold of the dataset to use. Can be "train", "val", or "test"'
   )
   parser.add_argument(
-      '--discard',
-      action='store_true',
-      help='use this flag to disconsider pores in ground truth borders')
-  parser.add_argument(
       '--results_path', type=str, help='path in which to save results')
   parser.add_argument('--seed', type=int, help='random seed')
 
@@ -269,7 +265,7 @@ if __name__ == '__main__':
 
     # find best threshold and statistics
     f_score, tdr, fdr, inter_thr, prob_thr = by_images(
-        sess, net.predictions, patches_pl, dataset, flags.discard)
+        sess, net.predictions, patches_pl, dataset, discard=True)
 
     # direct output according to user specification
     results_file = None
