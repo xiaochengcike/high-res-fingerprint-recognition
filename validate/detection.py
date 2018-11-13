@@ -86,7 +86,13 @@ def by_patches(sess, preds, batch_size, patches_pl, labels_pl, dataset):
   return best_f_score, best_fdr, best_tdr
 
 
-def by_images(sess, pred_op, patches_pl, dataset, discard=False):
+def by_images(sess,
+              pred_op,
+              patches_pl,
+              dataset,
+              inter_thrs=None,
+              prob_thrs=None,
+              discard=False):
   '''
   Computes detection parameters that optimize the keypoint detection
   F-score in the dataset with a grid search. This differs from
@@ -98,6 +104,10 @@ def by_images(sess, pred_op, patches_pl, dataset, discard=False):
     pred_op: tf op for detection probability prediction.
     patches_pl: patch input placeholder for pred_op op.
     dataset: dataset to perform grid-search on.
+    inter_thrs: iterable of values for NMS threshold. If `None`,
+      uses {0.7, 0.6, ..., 0}.
+    prob_thrs: iterable of values for probability threshold. If
+      `None`, uses {0.9, 0.8, ..., 0.1}.
     discard: whether to only consider keypoints in the area in which
       method is capable of detecting.
 
@@ -141,11 +151,13 @@ def by_images(sess, pred_op, patches_pl, dataset, discard=False):
 
     # turn pore label image into list of pore coordinates
     pores.append(np.argwhere(label))
-  print('Done.')
+  print('Done')
 
   # validate over thresholds
-  inter_thrs = np.arange(0.7, 0, -0.1)
-  prob_thrs = np.arange(0.9, 0, -0.1)
+  if inter_thrs is None:
+    inter_thrs = np.arange(0.7, -0.1, -0.1)
+  if prob_thrs is None:
+    prob_thrs = np.arange(0.9, 0, -0.1)
   best_f_score = 0
   best_tdr = None
   best_fdr = None
@@ -215,12 +227,6 @@ if __name__ == '__main__':
   parser.add_argument(
       '--patch_size', type=int, default=17, help='pore patch size')
   parser.add_argument(
-      '--fold',
-      type=str,
-      default='val',
-      help='which fold of the dataset to use. Can be "train", "val", or "test"'
-  )
-  parser.add_argument(
       '--results_path', type=str, help='path in which to save results')
   parser.add_argument('--seed', type=int, help='random seed')
 
@@ -241,17 +247,6 @@ if __name__ == '__main__':
       patch_size=flags.patch_size)
   print('Loaded')
 
-  # pick dataset fold
-  if flags.fold == 'train':
-    dataset = dataset.train
-  elif flags.fold == 'val':
-    dataset = dataset.val
-  elif flags.fold == 'test':
-    dataset = dataset.test
-  else:
-    raise ValueError(
-        'Unrecognized "fold" argument. Must be "train", "val", or "test"')
-
   # gets placeholders for patches and labels
   patches_pl, labels_pl = utils.placeholder_inputs()
 
@@ -263,9 +258,19 @@ if __name__ == '__main__':
     utils.restore_model(sess, flags.model_dir_path)
     print('Done')
 
-    # find best threshold and statistics
-    f_score, tdr, fdr, inter_thr, prob_thr = by_images(
-        sess, net.predictions, patches_pl, dataset, discard=True)
+    # find best thresholds in validation set
+    _, _, _, inter_thr, prob_thr = by_images(
+        sess, net.predictions, patches_pl, dataset.val, discard=True)
+
+    # compute statistics in test set
+    f_score, tdr, fdr, _, _ = by_images(
+        sess,
+        net.predictions,
+        patches_pl,
+        dataset.test,
+        inter_thrs=[inter_thr],
+        prob_thrs=[prob_thr],
+        discard=True)
 
     # direct output according to user specification
     results_file = None

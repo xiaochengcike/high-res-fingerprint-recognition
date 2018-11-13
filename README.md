@@ -87,15 +87,15 @@ for more details, refer to the code documentation.
 ### Validating the trained model
 To evaluate the model trained above, run:
 ```
-python3 -m validate.detection --polyu_dir_path polyu_hrf --model_dir_path log/detection/[det_model_dir] --fold test
+python3 -m validate.detection --polyu_dir_path polyu_hrf --model_dir_path log/detection/[det_model_dir]
 ```
 The results will most likely differ from the ones reported in the paper. To reproduce those, read below about the trained models.
 
 The options for validating the detection model are:
 ```
 usage: validate.detection [-h] --polyu_dir_path POLYU_DIR_PATH --model_dir_path
-                          MODEL_DIR_PATH [--patch_size PATCH_SIZE] [--fold FOLD]
-                          [--discard] [--results_path RESULTS_PATH] [--seed SEED]
+                          MODEL_DIR_PATH [--patch_size PATCH_SIZE]
+                          [--results_path RESULTS_PATH] [--seed SEED]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -105,11 +105,13 @@ optional arguments:
                         logging directory
   --patch_size PATCH_SIZE
                         pore patch size
-  --fold FOLD           which fold of the dataset to use. Can be "train",
-                        "val", or "test"
   --results_path RESULTS_PATH
                         path in which to save results
   --seed SEED           random seed
+
+usage: validate.detection [-h] --polyu_dir_path POLYU_DIR_PATH --model_dir_path
+                          MODEL_DIR_PATH [--patch_size PATCH_SIZE] [--fold FOLD]
+                          [--results_path RESULTS_PATH] [--seed SEED]
 ```
 
 ## Pore description
