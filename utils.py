@@ -375,7 +375,8 @@ def retrieve_label_from_image_path(image_path):
 def eer(pos, neg):
   '''
   Computes the Equal Error Rate of given comparison scores.
-  If FAR and FRR crossing is not exact, lineary interpolate for EER.
+  If FAR and FRR crossing is not exact, lineary interpolate the ROC and
+  compute its intersection with the identity line f(x) = x.
 
   Args:
     pos: scores of genuine comparisons.
@@ -399,12 +400,12 @@ def eer(pos, neg):
       old_frr = frr
 
   # if crossing is precisely found, return it
-  # otherwise, approximate it though linear
-  # interpolation and mean of curves
+  # otherwise, approximate it though ROC linear
+  # interpolation and intersection with f(x) = x
   if far == frr:
     return far
   else:
-    return (old_far + far + frr + old_frr) / 4
+    return (far * old_frr - old_far * frr) / (far - old_far - (frr - old_frr))
 
 
 def roc(pos, neg):
@@ -658,3 +659,44 @@ def dp_descriptors(img, pts, patch_size):
         descs.append(patch)
 
   return np.array(descs)
+
+
+def detect_pores(image, image_pl, predictions, half_patch_size, prob_thr,
+                 inter_thr, sess):
+  '''
+  Detects pores in an image. First, a pore probability map is computed
+  with the tf predictions op. This probability map is then thresholded
+  and converted to coordinates, which are filtered with NMS.
+
+  Args:
+    image: image in which to detect pores.
+    image_pl: tf placeholder holding net's image input.
+    predictions: tf tensor op of net's output.
+    half_patch_size: half the detection patch size. used for padding the
+      predictions to the input's original dimensions.
+    prob_thr: probability threshold.
+    inter_thr: NMS intersection threshold.
+    sess: tf session
+
+  Returns:
+    detections for image in shape [N, 2]
+  '''
+  # predict probability of pores
+  pred = sess.run(
+      predictions,
+      feed_dict={image_pl: np.reshape(image, (1, ) + image.shape + (1, ))})
+
+  # add borders lost in convolution
+  pred = np.reshape(pred, pred.shape[1:-1])
+  pred = np.pad(pred, ((half_patch_size, half_patch_size),
+                       (half_patch_size, half_patch_size)), 'constant')
+
+  # convert into coordinates
+  pick = pred > prob_thr
+  coords = np.argwhere(pick)
+  probs = pred[pick]
+
+  # filter detections with nms
+  dets, _ = nms(coords, probs, 7, inter_thr)
+
+  return dets
