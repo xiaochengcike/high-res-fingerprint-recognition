@@ -1,5 +1,5 @@
 # High-resolution fingerprint recognition
-This repository contains the original implementation of the fingerprint pore detection and description models from [CNN-based Pore Detection and Description for High-Resolution Fingerprint Recognition](https://arxiv.org/abs/1809.10229).
+This repository contains the original implementation of the fingerprint pore detection and description models from [Automatic Dataset Annotation to Learn CNN Pore Description for Fingerprint Recognition](https://arxiv.org/abs/1809.10229).
 
 ## PolyU-HRF dataset
 The Hong Kong Polytechnic University (PolyU) High-Resolution-Fingerprint (HRF) Database is a high-resolution fingerprint dataset for fingerprint recognition. We ran all of our experiments in the PolyU-HRF dataset, so it is required to reproduce them. PolyU-HRF can be obtained by following the instructions from its authors [here](http://www4.comp.polyu.edu.hk/~biometrics/HRF/HRF_old.htm).
@@ -324,7 +324,7 @@ optional arguments:
 If you find the code in this repository useful for your research, please consider citing:
 ```
 @article{dahia2018cnn,
-  title={CNN-based Pore Detection and Description for High-Resolution Fingerprint Recognition},
+  title={Automatic Dataset Annotation to Learn CNN Pore Description for Fingerprint Recognition},
   author={Dahia, Gabriel and Segundo, Maur{\'\i}cio Pamplona},
   journal={arXiv preprint arXiv:1809.10229},
   year={2018}
