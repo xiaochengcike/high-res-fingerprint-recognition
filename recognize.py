@@ -1,5 +1,4 @@
 import tensorflow as tf
-import cv2
 
 import utils
 import matching
@@ -24,13 +23,13 @@ def detect_pores(imgs):
       print('Done')
 
       # capture detection arguments in function
-      def detect_pores(image):
-        return utils.detect_pores(image, image_pl, det_net.predictions,
-                                  FLAGS.det_patch_size, FLAGS.det_prob_thr,
-                                  FLAGS.nms_inter_thr, sess)
+      def single_detect_pores(image):
+        return utils.detect_pores(
+            image, image_pl, det_net.predictions, FLAGS.det_patch_size // 2,
+            FLAGS.det_prob_thr, FLAGS.nms_inter_thr, sess)
 
       # detect pores
-      dets = [detect_pores(img) for img in imgs]
+      dets = [single_detect_pores(img) for img in imgs]
 
   return dets
 
@@ -67,7 +66,7 @@ def describe_detections(imgs, dets):
 
 def main():
   # load images
-  imgs = [cv2.imread(path, 0) for path in FLAGS.img_paths]
+  imgs = [utils.load_image(path) for path in FLAGS.img_paths]
 
   dets = detect_pores(imgs)
 
@@ -105,7 +104,7 @@ if __name__ == '__main__':
       help='path to pore description trained model')
   parser.add_argument(
       '--score_thr',
-      default=244,
+      default=3,
       type=int,
       help='score threshold to determine if pair is genuine or impostor')
   parser.add_argument(
