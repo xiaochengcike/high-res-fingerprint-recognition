@@ -56,12 +56,14 @@ def describe_detections(imgs, dets):
                                          sess, image_pl, desc_net.descriptors)
 
       # compute descriptors
-      descs = [
-          compute_descriptors(img, img_dets)
-          for img, img_dets in zip(imgs, dets)
-      ]
+      descs = []
+      dets = []
+      for img, img_dets in zip(imgs, dets):
+        img_descs, img_new_dets = compute_descriptors(img, img_dets)
+        descs.append(descs)
+        dets.append(dets)
 
-  return descs
+  return descs, dets
 
 
 def main():
@@ -72,9 +74,9 @@ def main():
 
   tf.reset_default_graph()
 
-  descs = describe_detections(imgs, dets)
+  descs, dets = describe_detections(imgs, dets)
 
-  score = matching.basic(descs[0], descs[1], dets[0], dets[1], thr=0.7)
+  score = matching.basic(descs[0], descs[1], thr=0.7)
   print('similarity score = {}'.format(score))
   if score > FLAGS.score_thr:
     print('genuine pair')

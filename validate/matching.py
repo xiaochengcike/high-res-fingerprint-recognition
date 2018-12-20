@@ -21,7 +21,7 @@ def validation_eer(dataset, compute_descriptors):
   Args:
     dataset: dataset for which EER should be computed.
     compute_descriptors: function that receives image and
-      keypoint detections and computes keypoints at these
+      keypoint detections and computes descriptors at these
       locations.
 
   Returns:
@@ -36,12 +36,10 @@ def validation_eer(dataset, compute_descriptors):
   id2index_dict = {}
   index = 0
   for img, pts, label in dataset:
-    # add image detections to all detections
-    all_pts.append(pts)
-
-    # add patches descriptors to all descriptors
-    descs = compute_descriptors(img, pts)
+    # add patch descriptors to all descriptors
+    descs, new_pts = compute_descriptors(img, pts)
     all_descs.append(descs)
+    all_pts.append(new_pts)
 
     # add ids to all ids
     subject_ids.add(label[0])
@@ -97,7 +95,7 @@ def load_dataset(imgs_dir_path,
     subject_ids: list of subject ids.
     session_ids: list of session ids.
     register_ids: list of register ids.
-    compute_descriptors: function to compute keypoints that
+    compute_descriptors: function to compute descriptors that
       takes as arguments an image and its corresponding
       keypoints.
     patch_size: if not None, discards keypoints that are close
@@ -140,7 +138,7 @@ def load_dataset(imgs_dir_path,
         all_pts.append(pts)
 
         # compute image descriptors
-        descs = compute_descriptors(img, pts)
+        descs, *_ = compute_descriptors(img, pts)
         all_descs.append(descs)
 
         # make id2index correspondence
@@ -222,7 +220,8 @@ def main():
     if FLAGS.patch_size is None:
       raise TypeError('Patch size is required when using dp descriptor')
 
-    compute_descriptors = lambda img, pts: utils.dp_descriptors(img, pts, FLAGS.patch_size)
+    def compute_descriptors(img, pts):
+      return utils.dp_descriptors(img, pts, FLAGS.patch_size)
   else:
     if FLAGS.model_dir_path is None:
       raise TypeError(
@@ -240,7 +239,9 @@ def main():
     utils.restore_model(sess, FLAGS.model_dir_path)
     print('Done')
 
-    compute_descriptors = lambda img, pts: utils.trained_descriptors(img, pts, FLAGS.patch_size, sess, img_pl, net.descriptors)
+    def compute_descriptors(img, pts):
+      return utils.trained_descriptors(img, pts, FLAGS.patch_size, sess,
+                                       img_pl, net.descriptors)
 
   # parse matching mode and adjust accordingly
   if FLAGS.mode == 'basic':

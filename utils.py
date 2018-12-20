@@ -541,7 +541,10 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
     descs_op: tf tensor op that describes images in imgs_pl.
 
   Returns:
-    [N, M] np.array of N descriptors of descs_op of dimension M.
+    descs: [N, M] np.array of N descriptors of descs_op of dimension
+      M.
+    new_pts: [N, 2] keypoint coordinates filtered so its indices match
+      those of `descs`.
   '''
   # adjust for odd patch sizes
   odd = 1 if patch_size % 2 != 0 else 0
@@ -549,22 +552,24 @@ def trained_descriptors(img, pts, patch_size, session, imgs_pl, descs_op):
   # get patch locations at 'pts'
   half = patch_size // 2
   patches = []
+  new_pts = []
   for pt in pts:
     if half <= pt[0] < img.shape[0] - half - odd:
       if half <= pt[1] < img.shape[1] - half - odd:
         patch = img[pt[0] - half:pt[0] + half + odd, pt[1] - half:pt[1] +
                     half + odd]
+        new_pts.append(pt)
         patches.append(patch)
 
   # empty detections set
   if len(patches) == 0:
-    return []
+    return [], []
 
   # describe patches
   feed_dict = {imgs_pl: np.reshape(patches, np.shape(patches) + (1, ))}
   descs = session.run(descs_op, feed_dict=feed_dict)
 
-  return descs
+  return descs, new_pts
 
 
 def compute_orientation(img):

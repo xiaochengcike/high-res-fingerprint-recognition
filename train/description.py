@@ -42,12 +42,14 @@ def train(dataset, log_dir):
       sess.run(tf.global_variables_initializer())
 
       # 'compute_descriptors' function for validation
-      compute_descriptors = lambda img, pts: utils.trained_descriptors(img,
-          pts,
-          patch_size=dataset.train.images_shape[1],
-          session=sess,
-          imgs_pl=images_pl,
-          descs_op=val_net.descriptors)
+      def compute_descriptors(img, pts):
+        return utils.trained_descriptors(
+            img,
+            pts,
+            patch_size=dataset.train.images_shape[1],
+            session=sess,
+            imgs_pl=images_pl,
+            descs_op=val_net.descriptors)
 
       # train loop
       for step in range(1, FLAGS.steps + 1):
