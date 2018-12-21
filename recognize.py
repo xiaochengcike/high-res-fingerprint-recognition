@@ -57,13 +57,13 @@ def describe_detections(imgs, dets):
 
       # compute descriptors
       descs = []
-      dets = []
+      new_dets = []
       for img, img_dets in zip(imgs, dets):
         img_descs, img_new_dets = compute_descriptors(img, img_dets)
-        descs.append(descs)
-        dets.append(dets)
+        descs.append(img_descs)
+        new_dets.append(img_new_dets)
 
-  return descs, dets
+  return descs, new_dets
 
 
 def main():
