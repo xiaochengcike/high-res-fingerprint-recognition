@@ -106,7 +106,7 @@ if __name__ == '__main__':
       help='path to pore description trained model')
   parser.add_argument(
       '--score_thr',
-      default=3,
+      default=2,
       type=int,
       help='score threshold to determine if pair is genuine or impostor')
   parser.add_argument(
