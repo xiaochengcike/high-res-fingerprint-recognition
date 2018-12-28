@@ -40,80 +40,6 @@ or run, for GPU usage, which requires the [Tensorflow GPU dependencies](https://
 pip install -r gpu-requirements.txt
 ```
 
-## Pore detection
-### Training the model
-Throught our experiments, we will assume that PolyU-HRF is inside a local folder name `polyu_hrf`. To train a pore detection network with our best found parameters, run:
-```
-python3 -m train.detection --polyu_dir_path polyu_hrf --log_dir_path log/detection --dropout 0.5 --augment
-```
-This will create a folder inside `log/detection` for the trained model's resources. We will call it `[det_model_dir]` for the rest of the instructions.
-
-The options for training the detection net are:
-```
-usage: train.detection [-h] --polyu_dir_path POLYU_DIR_PATH
-                       [--learning_rate LEARNING_RATE]
-                       [--log_dir_path LOG_DIR_PATH] [--dropout DROPOUT]
-                       [--augment] [--tolerance TOLERANCE]
-                       [--batch_size BATCH_SIZE] [--steps STEPS]
-                       [--label_size LABEL_SIZE] [--label_mode LABEL_MODE]
-                       [--patch_size PATCH_SIZE] [--seed SEED]
-                       
-optional arguments:
-  -h, --help            show this help message and exit
-  --polyu_dir_path POLYU_DIR_PATH
-                        path to PolyU-HRF dataset
-  --learning_rate LEARNING_RATE
-                        learning rate
-  --log_dir_path LOG_DIR_PATH
-                        logging directory
-  --dropout DROPOUT     dropout rate in last convolutional layer
-  --augment             use this flag to perform dataset augmentation
-  --tolerance TOLERANCE
-                        early stopping tolerance
-  --batch_size BATCH_SIZE
-                        batch size
-  --steps STEPS         maximum training steps
-  --label_size LABEL_SIZE
-                        pore label size
-  --label_mode LABEL_MODE
-                        how to convert pore coordinates into labels
-  --patch_size PATCH_SIZE
-                        pore patch size
-  --seed SEED           random seed
-
-```
-for more details, refer to the code documentation.
-
-### Validating the trained model
-To evaluate the model trained above, run:
-```
-python3 -m validate.detection --polyu_dir_path polyu_hrf --model_dir_path log/detection/[det_model_dir]
-```
-The results will most likely differ from the ones reported in the paper. To reproduce those, read below about the trained models.
-
-The options for validating the detection model are:
-```
-usage: validate.detection [-h] --polyu_dir_path POLYU_DIR_PATH --model_dir_path
-                          MODEL_DIR_PATH [--patch_size PATCH_SIZE]
-                          [--results_path RESULTS_PATH] [--seed SEED]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --polyu_dir_path POLYU_DIR_PATH
-                        path to PolyU-HRF dataset
-  --model_dir_path MODEL_DIR_PATH
-                        logging directory
-  --patch_size PATCH_SIZE
-                        pore patch size
-  --results_path RESULTS_PATH
-                        path in which to save results
-  --seed SEED           random seed
-
-usage: validate.detection [-h] --polyu_dir_path POLYU_DIR_PATH --model_dir_path
-                          MODEL_DIR_PATH [--patch_size PATCH_SIZE] [--fold FOLD]
-                          [--results_path RESULTS_PATH] [--seed SEED]
-```
-
 ## Pore description
 ### Detecing pores in every image
 To train a pore descriptor, pore detections are required for every image. To do this, run:
@@ -183,7 +109,7 @@ optional arguments:
 ### Training the model
 To train the pore description model, run:
 ```
-python3 -m train.description --dataset_path log/patch_polyu --log_dir_path log/description/ --augment --dropout 0.3
+python3 -m train --dataset_path log/patch_polyu --log_dir_path log/description/ --augment --dropout 0.3
 ```
 This will train a description model with the hyper-parameters we used for the model in our paper, but we recommend tuning them manually by observing the EER in the validation set. The above values usually provide excelent results. However, if the model fails to achieve 0% EER in the validation set, you should probably investigate other values. Training without augmentation has disastrous results, so always train with it.
 
@@ -191,12 +117,11 @@ Running the script above will create a folder inside `log/description` for the t
 
 Options for training the description model are:
 ```
-usage: train.description [-h] --dataset_path DATASET_PATH
-                         [--learning_rate LEARNING_RATE]
-                         [--log_dir_path LOG_DIR_PATH] [--tolerance TOLERANCE]
-                         [--batch_size BATCH_SIZE] [--steps STEPS] [--augment]
-                         [--dropout DROPOUT] [--weight_decay WEIGHT_DECAY]
-                         [--seed SEED]
+usage: train [-h] --dataset_path DATASET_PATH
+             [--learning_rate LEARNING_RATE] [--log_dir_path LOG_DIR_PATH]
+             [--tolerance TOLERANCE] [--batch_size BATCH_SIZE]
+             [--steps STEPS] [--augment] [--dropout DROPOUT]
+             [--weight_decay WEIGHT_DECAY] [--seed SEED]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -280,7 +205,7 @@ optional arguments:
 ```
 
 ## Pre-trained models and reproducing paper results
-The pre-trained [detection](https://drive.google.com/open?id=1U9rm_5za2kRU2FsviCe-qrZoouwUGyzI) and [description](https://drive.google.com/open?id=16GiLG7xBj64SOjCJwlCfbBcb-DORzYg1) models are required to ensure that you get the exact same results as those of the paper. After downloading them, follow the batch detection and fingerprint recognition steps replacing `[det_model_dir]` and `[desc_model_dir]` where appropriate.
+The pre-trained [description model](https://drive.google.com/open?id=16GiLG7xBj64SOjCJwlCfbBcb-DORzYg1) is required to ensure that you get the exact same results as those of the paper. It is also required to use the same pore detection model we did; this model is available to download [here](https://drive.google.com/open?id=1U9rm_5za2kRU2FsviCe-qrZoouwUGyzI). After downloading both models, follow the batch pore detection and fingerprint recognition steps replacing `[det_model_dir]` and `[desc_model_dir]` where appropriate.
 
 ## Recognizing fingerprints
 We also provide `recognize.py`, a script to, given two high resolution fingerprint images and a model trained to detect pores and another one to describe them, determine if they are from the same subject or not. To use it, run:
