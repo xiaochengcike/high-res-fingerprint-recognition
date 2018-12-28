@@ -283,12 +283,12 @@ optional arguments:
 The pre-trained [detection](https://drive.google.com/open?id=1U9rm_5za2kRU2FsviCe-qrZoouwUGyzI) and [description](https://drive.google.com/open?id=16GiLG7xBj64SOjCJwlCfbBcb-DORzYg1) models are required to ensure that you get the exact same results as those of the paper. After downloading them, follow the batch detection and fingerprint recognition steps replacing `[det_model_dir]` and `[desc_model_dir]` where appropriate.
 
 ## Recognizing fingerprints
-We also provide a script `recognize.py` to, given two high resolution fingerprint images and a model trained to detect pores and another one to describe them, determine if they are from the same subject or not. To use it, run:
+We also provide `recognize.py`, a script to, given two high resolution fingerprint images and a model trained to detect pores and another one to describe them, determine if they are from the same subject or not. To use it, run:
 ```
 python3 -m recognize --image_paths [image01_path] [image02_path] --det_model_dir [det_model_dir] --desc_model_dir [desc_model_dir]
 ```
 
-There is also a command line parameter, `score_thr`, to control the minimum number of established correspondences to determine that the images belong to the same subject. Its default value is 244, the EER threshold for DBI test. For DBII, this value is 692.
+There is also a command line parameter, `score_thr`, to control the minimum number of established correspondences to determine that the images belong to the same subject. Its default value is 2, the EER threshold for the partial fingerprints in DBI-test. For the full fingerprints of DBII, this value should be set to 9.
 
 Other options for this script are:
 ```
